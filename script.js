@@ -302,8 +302,9 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else rentalAmount = rate12;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
-    const chauffeur = document.getElementById('booking-driver')?.checked ? 30000 : 0;
-    return { hours, days: Math.max(1, Math.ceil(hours / 24)), rate12, rate24, rentalAmount, delivery, recovery, chauffeur, total: rentalAmount + delivery + recovery + chauffeur };
+    const days = Math.max(1, Math.ceil(hours / 24));
+    const chauffeur = document.getElementById('booking-driver')?.checked ? 30000 * days : 0;
+    return { hours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur, total: rentalAmount + delivery + recovery + chauffeur };
 }
 
 function updateBookingQuote() {
@@ -415,7 +416,7 @@ async function verifyInvoiceOtp(event) {
     const reste = Math.max(0, Number(data.total_amount||0) - Number(data.deposit_amount||0));
     const vehicle = `${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}`.trim();
     const shared = `<p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Adresse : ${data.customer_address || '—'}<br>Véhicule : ${vehicle}<br>Immatriculation : ${data.vehicles?.registration_number || '—'}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Nombre de jour(s) : ${data.days || 1}<br>Formule : ${typeLabel}</p>`;
-    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Forfait chauffeur : ${formatMGA(data.chauffeur_fee)}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p>`;
+    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Chauffeur : ${formatMGA(data.chauffeur_fee)} (30 000 Ar / jour × ${data.days || 1})<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p>`;
     const html = `<html><head><title>Facture et contrat ${data.reference}</title><style>body{font:15px Arial;padding:35px;color:#0b1f33;max-width:820px;margin:auto;line-height:1.45}h1{color:#0d5c8f}h2{border-bottom:1px solid #ddd;padding-bottom:8px}.total{font-size:22px;font-weight:bold}.page-break{page-break-before:always}.sign{display:flex;justify-content:space-between;margin-top:90px}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><h2>FACTURE</h2>${shared}${finance}<div class="page-break"><h1>RENT CAR SERVICES</h1><h2>CONTRAT DE LOCATION</h2>${shared}<p>Le présent contrat concerne la location du véhicule indiqué ci-dessus. Le locataire reconnaît avoir fourni les informations nécessaires et accepte les conditions de location, de vérification, de reprise et de restitution du véhicule.</p>${finance}<p>Le locataire doit présenter une pièce d’identité et un permis de conduire valide. Toute restitution tardive, dommage, perte de clé, accident ou utilisation non autorisée est soumise aux conditions du loueur.</p><div class="sign"><span>LOCATAIRE<br>Lu et approuvé<br><br>Signature :</span><span>LOUEUR<br>Lu et approuvé<br><br>Signature :</span></div></div><script>window.print()<\/script></body></html>`;
     const win = window.open('', '_blank'); win.document.write(html); win.document.close();
 }
