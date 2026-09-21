@@ -294,8 +294,12 @@ async function submitReservation(event) {
     event.preventDefault();
     const result = document.getElementById('booking-result');
     const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle').value);
-    const start = document.getElementById('booking-start').value;
-    const end = document.getElementById('booking-end').value;
+    const startDate = document.getElementById('booking-start-date').value;
+    const startTime = document.getElementById('booking-start-time').value;
+    const endDate = document.getElementById('booking-end-date').value;
+    const endTime = document.getElementById('booking-end-time').value;
+    const start = startDate && startTime ? `${startDate}T${startTime}` : '';
+    const end = endDate && endTime ? `${endDate}T${endTime}` : '';
     if (!vehicle || new Date(end) <= new Date(start)) {
         result.className = 'booking-result booking-error';
         result.textContent = 'Vérifiez le véhicule et les dates choisies.';

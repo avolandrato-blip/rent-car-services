@@ -76,8 +76,10 @@
                         <label>Téléphone<input id="booking-phone" required placeholder="034 91 207 26"></label>
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                         <div class="date-range">
-                            <label>Départ<input id="booking-start" type="datetime-local" required></label>
-                            <label>Retour<input id="booking-end" type="datetime-local" required></label>
+                            <label>Date de départ<input id="booking-start-date" type="date" required></label>
+                            <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
+                            <label>Date de retour<input id="booking-end-date" type="date" required></label>
+                            <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
                         </div>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur</label>
                         <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
