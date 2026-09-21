@@ -62,6 +62,7 @@
                 <div class="booking-panel">
                     <h3>Vérifier les disponibilités</h3>
                     <div class="date-range">
+                        <label>Voiture<select id="availability-vehicle"><option value="all">Toutes les voitures</option></select></label>
                         <label>Date de départ<input id="availability-start" type="date"></label>
                         <label>Date de retour<input id="availability-end" type="date"></label>
                     </div>
@@ -93,9 +94,9 @@
                         </div>
                         <div class="date-range">
                             <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label>
-                            <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
-                            <label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
-                            <label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
+                        <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
+                            <label id="mobile-reference-field">Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
+                            <label id="mobile-number-field">Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
                         </div>
                         <p id="booking-quote" class="booking-result" role="status"></p>
                         <p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>

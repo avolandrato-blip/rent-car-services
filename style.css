@@ -16,6 +16,8 @@ body {
     background-color: transparent; /* Pour laisser voir le fond du html */
 }
 
+.hidden { display: none !important; }
+
 /* Boutons réutilisables */
 .btn {
   padding: 12px 30px;
@@ -77,6 +79,7 @@ body {
 .btn-primary, .btn-whatsapp { /* garde l'ancienne compatibilité si référencés ailleurs */ }
 .btn-primary { background: var(--primary); color: white; }
 .btn-whatsapp { background: var(--accent); color: white; }
+.btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
 
 /* --- FLIP CARDS (Pourquoi nous choisir & Conditions) --- */
 .features-grid, .conditions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px; }

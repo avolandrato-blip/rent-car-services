@@ -159,7 +159,8 @@ async function loadCars() {
                 </div>
                 <p class="car-desc">${car.description}</p>
                 <div class="car-actions">
-                    <button class="btn btn-primary btn-reserve" onclick="prefill('${car.nom}')">Réserver</button>
+                    <button class="btn btn-primary btn-reserve" onclick="openBookingForVehicle('${car.id || ''}','${car.nom}')">Réserver</button>
+                    <button class="btn btn-outline" onclick="openLongTermQuote('${car.nom}')">Contactez-nous</button>
                     <a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a>
                     <a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a>
                 </div>
@@ -242,6 +243,23 @@ function prefill(car) {
     }, 300);
 }
 
+function openBookingForVehicle(vehicleId, vehicleName) {
+    openTab('booking');
+    const select = document.getElementById('booking-vehicle');
+    if (select && vehicleId && [...select.options].some(option => option.value === vehicleId)) select.value = vehicleId;
+    updateBookingQuote();
+    document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function openLongTermQuote(vehicleName) {
+    openTab('contact');
+    setTimeout(() => {
+        const message = document.getElementById('message');
+        if (message) message.value = `Bonjour, je souhaite demander un devis pour une location longue durée${vehicleName ? ` de la ${vehicleName}` : ''}.`;
+        document.getElementById('dynamic-form')?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+}
+
 function sendWhatsApp(e) {
     e.preventDefault();
     const inputs = document.querySelectorAll('#dynamic-form input, #dynamic-form select, #dynamic-form textarea');
@@ -262,7 +280,7 @@ async function loadBookingData() {
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
         db.from('vehicles').select('*').eq('status', 'available').order('name'),
-        db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status', ['pre_reserved', 'reserved']),
+        db.from('reservations').select('vehicle_id,start_at,end_at,status').eq('status', 'reserved'),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
     if (vehicleError) {
@@ -274,6 +292,8 @@ async function loadBookingData() {
     bookingMaintenance = maintenance || [];
     const select = document.getElementById('booking-vehicle');
     if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${formatMGA(v.price_per_day)}/jour</option>`).join('');
+    const availabilityVehicle = document.getElementById('availability-vehicle');
+    if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}`;
 }
 
 function overlaps(start, end, item) {
@@ -325,9 +345,11 @@ function checkAvailability() {
         list.innerHTML = '<p class="booking-error">Veuillez choisir une période valide.</p>';
         return;
     }
-    list.innerHTML = bookingVehicles.map(vehicle => {
-        const status = getVehicleAvailability(vehicle.id, `${start}T00:00:00`, `${end}T23:59:59`);
-        return `<div class="availability-row"><div><strong>${vehicle.name}</strong><small>${formatMGA(vehicle.price_per_day)} / jour</small></div><span class="availability-badge ${status}">${availabilityLabel(status)}</span></div>`;
+    const selectedVehicle = document.getElementById('availability-vehicle')?.value || 'all';
+    list.innerHTML = bookingVehicles.filter(vehicle => selectedVehicle === 'all' || vehicle.id === selectedVehicle).map(vehicle => {
+        const rawStatus = getVehicleAvailability(vehicle.id, `${start}T00:00:00`, `${end}T23:59:59`);
+        const status = rawStatus === 'available' ? 'available' : 'reserved';
+        return `<div class="availability-row"><div><strong>${vehicle.name}</strong><small>${formatMGA(vehicle.price_per_day)} / jour</small></div><span class="availability-badge ${status}">${status === 'available' ? 'Disponible' : 'Réservé'}</span></div>`;
     }).join('') || '<p class="muted">Aucun véhicule actif pour le moment.</p>';
 }
 
@@ -435,3 +457,18 @@ function syncRentalTimes() {
 }
 document.getElementById('booking-rental-type')?.addEventListener('change', syncRentalTimes);
 document.getElementById('booking-start-time')?.addEventListener('change', () => { if (document.getElementById('booking-rental-type')?.value === '24h') { document.getElementById('booking-end-time').value = document.getElementById('booking-start-time').value === '07:00' ? '06:00' : '18:00'; } updateBookingQuote(); });
+
+
+function updatePaymentFields() {
+    const method = document.getElementById('booking-payment-method')?.value;
+    const visible = method === 'mobile_money';
+    ['mobile-reference-field','mobile-number-field'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', !visible));
+    if (!visible) {
+        const ref = document.getElementById('booking-mobile-reference'), number = document.getElementById('booking-mobile-number');
+        if (ref) ref.value = '';
+        if (number) number.value = '';
+    }
+}
+document.getElementById('booking-payment-method')?.addEventListener('change', updatePaymentFields);
+document.getElementById('availability-vehicle')?.addEventListener('change', checkAvailability);
+updatePaymentFields();
