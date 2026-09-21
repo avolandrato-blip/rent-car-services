@@ -122,13 +122,32 @@ async function loadCards() {
 
 // Galerie des véhicules
 async function loadCars() {
-    const res = await fetch('cars.json');
-    const data = await res.json();
-    
-    document.getElementById('cars-grid').innerHTML = data.liste.map(car => `
+    const localResponse = await fetch('cars.json', { cache: 'no-store' });
+    const localData = await localResponse.json();
+    const localCars = localData.liste || [];
+    let cars = localCars;
+    if (window.rentCarSupabase) {
+        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('*').neq('status', 'inactive').order('name');
+        if (!error && remoteCars?.length) {
+            cars = remoteCars.map(car => {
+                const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {};
+                return {
+                    ...car,
+                    nom: car.name,
+                    prix: `${formatMGA(car.price_per_day)} / jour`,
+                    transmission: car.transmission || local.transmission || '—',
+                    carburant: car.fuel || local.carburant || '—',
+                    places: car.seats || local.places || '—',
+                    description: car.description || local.description || '',
+                    photos: (car.image_urls && car.image_urls.length) ? car.image_urls : (local.photos || [])
+                };
+            });
+        }
+    }
+    document.getElementById('cars-grid').innerHTML = cars.map(car => `
         <div class="car-card">
             <div class="car-gallery">
-                ${car.photos.map(photo => `<img src="${photo}" loading="lazy">`).join('')}
+                ${(car.photos || []).map(photo => `<img src="${photo}" loading="lazy" alt="${car.nom}">`).join('')}
             </div>
             <div class="car-info">
                 <h3>${car.nom}</h3>
@@ -141,12 +160,8 @@ async function loadCars() {
                 <p class="car-desc">${car.description}</p>
                 <div class="car-actions">
                     <button class="btn btn-primary btn-reserve" onclick="prefill('${car.nom}')">Réserver</button>
-                    <a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}">
-                        <i class="fab fa-whatsapp"></i>
-                    </a>
-                    <a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}">
-                        <i class="fas fa-phone"></i>
-                    </a>
+                    <a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a>
+                    <a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a>
                 </div>
             </div>
         </div>
