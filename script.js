@@ -302,7 +302,8 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else rentalAmount = rate12;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
-    return { hours, days: Math.max(1, Math.ceil(hours / 24)), rate12, rate24, rentalAmount, delivery, recovery, total: rentalAmount + delivery + recovery };
+    const chauffeur = document.getElementById('booking-driver')?.checked ? 30000 : 0;
+    return { hours, days: Math.max(1, Math.ceil(hours / 24)), rate12, rate24, rentalAmount, delivery, recovery, chauffeur, total: rentalAmount + delivery + recovery + chauffeur };
 }
 
 function updateBookingQuote() {
@@ -312,7 +313,7 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    if (quote) quote.textContent = `Estimation : location ${formatMGA(q.rentalAmount)} + livraison ${formatMGA(q.delivery)} + récupération ${formatMGA(q.recovery)} = ${formatMGA(q.total)}. Acompte : ${formatMGA(deposit)}. Reste : ${formatMGA(Math.max(0, q.total - deposit))}.`;
+    if (quote) quote.textContent = `Estimation : location ${formatMGA(q.rentalAmount)} + livraison ${formatMGA(q.delivery)} + récupération ${formatMGA(q.recovery)} + chauffeur ${formatMGA(q.chauffeur)} = ${formatMGA(q.total)}. Acompte : ${formatMGA(deposit)}. Reste : ${formatMGA(Math.max(0, q.total - deposit))}.`;
 }
 
 function checkAvailability() {
@@ -377,6 +378,7 @@ async function submitReservation(event) {
         trip_to: document.getElementById('booking-trip-to').value.trim(),
         delivery_fee: quote.delivery,
         recovery_fee: quote.recovery,
+        chauffeur_fee: quote.chauffeur,
         extra_fees: quote.delivery + quote.recovery,
         total_amount: quote.total,
         deposit_amount: deposit,
@@ -407,9 +409,14 @@ async function verifyInvoiceOtp(event) {
     const phone = document.getElementById('invoice-phone').value.trim();
     const otp = document.getElementById('invoice-otp').value.trim();
     const { data, error } = await window.rentCarSupabase.from('reservations').select('*,vehicles(name,make,model,registration_number)').eq('reference', reference).eq('customer_phone', phone).eq('invoice_released', true).eq('otp_code', otp).single();
-    if (error || !data) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture doit d’abord être validée par Rent Car Services.'; return; }
-    await window.rentCarSupabase.from('reservations').update({ otp_verified_at: new Date().toISOString() }).eq('id', data.id);
-    const html = `<html><head><title>Facture ${data.reference}</title><style>body{font:16px Arial;padding:45px;color:#0b1f33;max-width:760px;margin:auto}h1{color:#0d5c8f}.total{font-size:24px;font-weight:bold}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><hr><h2>FACTURE</h2><p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Véhicule : ${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}</p><p><b>Important :</b> Prix total hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p><p>Location : ${formatMGA(data.total_amount - Number(data.delivery_fee || 0) - Number(data.recovery_fee || 0))}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste : ${formatMGA(Math.max(0, Number(data.total_amount) - Number(data.deposit_amount || 0)))}</p><script>window.print()<\/script></body></html>`;
+    if (error || !data) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
+    const typeLabel = data.rental_type === 'night' ? 'Nuit — 12 h (19h00 à 06h00)' : data.rental_type === '24h' ? '24 heures' : 'Jour — 12 h (07h00 à 18h00)';
+    const rentalOnly = Number(data.total_amount||0) - Number(data.delivery_fee||0) - Number(data.recovery_fee||0) - Number(data.chauffeur_fee||0);
+    const reste = Math.max(0, Number(data.total_amount||0) - Number(data.deposit_amount||0));
+    const vehicle = `${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}`.trim();
+    const shared = `<p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Adresse : ${data.customer_address || '—'}<br>Véhicule : ${vehicle}<br>Immatriculation : ${data.vehicles?.registration_number || '—'}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Nombre de jour(s) : ${data.days || 1}<br>Formule : ${typeLabel}</p>`;
+    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Forfait chauffeur : ${formatMGA(data.chauffeur_fee)}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p>`;
+    const html = `<html><head><title>Facture et contrat ${data.reference}</title><style>body{font:15px Arial;padding:35px;color:#0b1f33;max-width:820px;margin:auto;line-height:1.45}h1{color:#0d5c8f}h2{border-bottom:1px solid #ddd;padding-bottom:8px}.total{font-size:22px;font-weight:bold}.page-break{page-break-before:always}.sign{display:flex;justify-content:space-between;margin-top:90px}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><h2>FACTURE</h2>${shared}${finance}<div class="page-break"><h1>RENT CAR SERVICES</h1><h2>CONTRAT DE LOCATION</h2>${shared}<p>Le présent contrat concerne la location du véhicule indiqué ci-dessus. Le locataire reconnaît avoir fourni les informations nécessaires et accepte les conditions de location, de vérification, de reprise et de restitution du véhicule.</p>${finance}<p>Le locataire doit présenter une pièce d’identité et un permis de conduire valide. Toute restitution tardive, dommage, perte de clé, accident ou utilisation non autorisée est soumise aux conditions du loueur.</p><div class="sign"><span>LOCATAIRE<br>Lu et approuvé<br><br>Signature :</span><span>LOUEUR<br>Lu et approuvé<br><br>Signature :</span></div></div><script>window.print()<\/script></body></html>`;
     const win = window.open('', '_blank'); win.document.write(html); win.document.close();
 }
 
