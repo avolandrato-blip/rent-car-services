@@ -73,13 +73,22 @@
                     <form id="booking-form" onsubmit="submitReservation(event)">
                         <label>Voiture<select id="booking-vehicle" required></select></label>
                         <label>Nom complet<input id="booking-name" required placeholder="Votre nom et prénom"></label>
+                        <label>Adresse<input id="booking-address" required placeholder="Adresse complète"></label>
                         <label>Téléphone<input id="booking-phone" required placeholder="034 91 207 26"></label>
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
+                        <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"></label>
+                        <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"></label>
                         <div class="date-range">
                             <label>Date de départ<input id="booking-start-date" type="date" required></label>
                             <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
                             <label>Date de retour<input id="booking-end-date" type="date" required></label>
                             <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
+                        </div>
+                        <div class="date-range">
+                            <label>Trajet : départ de<input id="booking-trip-from" required placeholder="Ville / lieu de départ"></label>
+                            <label>Trajet : destination<input id="booking-trip-to" required placeholder="Ville / lieu d’arrivée"></label>
+                            <label>Frais de livraison (Ar)<input id="booking-delivery-fee" type="number" min="0" value="0"></label>
+                            <label>Frais de récupération (Ar)<input id="booking-recovery-fee" type="number" min="0" value="0"></label>
                         </div>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur</label>
                         <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
