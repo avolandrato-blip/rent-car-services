@@ -285,7 +285,8 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else if (hours > 24 && hours <= 48) rentalAmount = rate24 * 2;
     else if (hours > 48) rentalAmount = rate12 * Math.ceil(hours / 24);
     else rentalAmount = rate12;
-    const delivery = 20000, recovery = 20000;
+    const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
+    const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
     return { hours, days: Math.max(1, Math.ceil(hours / 24)), rate12, rate24, rentalAmount, delivery, recovery, total: rentalAmount + delivery + recovery };
 }
 
@@ -393,11 +394,11 @@ async function verifyInvoiceOtp(event) {
     const { data, error } = await window.rentCarSupabase.from('reservations').select('*,vehicles(name,make,model,registration_number)').eq('reference', reference).eq('customer_phone', phone).eq('invoice_released', true).eq('otp_code', otp).single();
     if (error || !data) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture doit d’abord être validée par Rent Car Services.'; return; }
     await window.rentCarSupabase.from('reservations').update({ otp_verified_at: new Date().toISOString() }).eq('id', data.id);
-    const html = `<html><head><title>Facture ${data.reference}</title><style>body{font:16px Arial;padding:45px;color:#0b1f33;max-width:760px;margin:auto}h1{color:#0d5c8f}.total{font-size:24px;font-weight:bold}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><hr><h2>FACTURE</h2><p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Véhicule : ${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}</p><p>Location : ${formatMGA(data.total_amount - Number(data.delivery_fee || 0) - Number(data.recovery_fee || 0))}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste : ${formatMGA(Math.max(0, Number(data.total_amount) - Number(data.deposit_amount || 0)))}</p><script>window.print()<\/script></body></html>`;
+    const html = `<html><head><title>Facture ${data.reference}</title><style>body{font:16px Arial;padding:45px;color:#0b1f33;max-width:760px;margin:auto}h1{color:#0d5c8f}.total{font-size:24px;font-weight:bold}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><hr><h2>FACTURE</h2><p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Véhicule : ${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}</p><p><b>Important :</b> Prix total hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p><p>Location : ${formatMGA(data.total_amount - Number(data.delivery_fee || 0) - Number(data.recovery_fee || 0))}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste : ${formatMGA(Math.max(0, Number(data.total_amount) - Number(data.deposit_amount || 0)))}</p><script>window.print()<\/script></body></html>`;
     const win = window.open('', '_blank'); win.document.write(html); win.document.close();
 }
 
-['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 
 
 function syncRentalTimes() {

@@ -88,8 +88,8 @@
                         <div class="date-range">
                             <label>Trajet : départ de<input id="booking-trip-from" required placeholder="Ville / lieu de départ"></label>
                             <label>Trajet : destination<input id="booking-trip-to" required placeholder="Ville / lieu d’arrivée"></label>
-                            <label>Livraison forfaitaire<input id="booking-delivery-fee" type="number" min="0" value="20000" readonly></label>
-                            <label>Récupération forfaitaire<input id="booking-recovery-fee" type="number" min="0" value="20000" readonly></label>
+                            <label class="checkbox-line"><input id="booking-delivery" type="checkbox"> Livraison — 20 000 Ar</label>
+                            <label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération — 20 000 Ar</label>
                         </div>
                         <div class="date-range">
                             <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label>
@@ -98,6 +98,7 @@
                             <label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
                         </div>
                         <p id="booking-quote" class="booking-result" role="status"></p>
+                        <p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur</label>
                         <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
                         <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer la demande</button>
