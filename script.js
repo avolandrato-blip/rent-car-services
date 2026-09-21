@@ -1,10 +1,14 @@
 let siteConfig = {};
+let activePromo = null;
+function setClientTheme(theme) { document.body.dataset.theme = theme; localStorage.setItem("rentcar-theme", theme); }
+function initClientTheme() { setClientTheme(localStorage.getItem("rentcar-theme") || "royal-night"); }
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initSite();
 });
 
 async function initSite() {
+        initClientTheme();
     try {
         const resConfig = await fetch('config.json');
         siteConfig = await resConfig.json();
@@ -127,7 +131,7 @@ async function loadCars() {
     const localCars = localData.liste || [];
     let cars = localCars;
     if (window.rentCarSupabase) {
-        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('*').neq('status', 'inactive').order('name');
+        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h').neq('status', 'inactive').order('name');
         if (!error && remoteCars?.length) {
             cars = remoteCars.map(car => {
                 const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {};
@@ -172,7 +176,8 @@ async function loadCars() {
 // Musique et Divertissement
 async function loadFun() {
     const res = await fetch('fun.json');
-    const data = await res.json();
+    let data = await res.json();
+    if (window.rentCarSupabase) { const {data: custom} = await window.rentCarSupabase.from('entertainment_items').select('*').eq('active', true).order('sort_order'); if (custom?.length) data = { radios: custom.filter(x=>x.kind==='radio').map(x=>({nom:x.name,logo:x.logo_url,url:x.stream_url})), playlists: custom.filter(x=>x.kind==='playlist').map(x=>({nom:x.name,logo:x.logo_url,link:x.link_url})) }; }
     
     let contentHtml = '';
     contentHtml += data.radios.map(r => `
@@ -279,7 +284,7 @@ async function loadBookingData() {
     if (!window.rentCarSupabase) return;
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
-        db.from('vehicles').select('*').eq('status', 'available').order('name'),
+        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h').eq('status', 'available').order('name'),
         db.from('reservations').select('vehicle_id,start_at,end_at,status').eq('status', 'reserved'),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
@@ -357,7 +362,7 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    if (quote) quote.textContent = `Estimation : location ${formatMGA(q.rentalAmount)} + livraison ${formatMGA(q.delivery)} + récupération ${formatMGA(q.recovery)} + chauffeur ${formatMGA(q.chauffeur)} = ${formatMGA(q.total)}. Acompte : ${formatMGA(deposit)}. Reste : ${formatMGA(Math.max(0, q.total - deposit))}.`;
+    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `Location ${formatMGA(q.rentalAmount)} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
 }
 
 function checkAvailability() {
@@ -429,7 +434,9 @@ async function submitReservation(event) {
         recovery_fee: quote.recovery,
         chauffeur_fee: quote.chauffeur,
         extra_fees: quote.delivery + quote.recovery,
-        total_amount: quote.total,
+        total_amount: Math.max(0, quote.total - (activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0)),
+        promo_code: document.getElementById('booking-promo')?.value.trim().toUpperCase() || null,
+        promo_discount: activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0,
         deposit_amount: deposit,
         payment_method: paymentMethod,
         mobile_reference: document.getElementById('booking-mobile-reference').value.trim() || null,
@@ -446,7 +453,7 @@ async function submitReservation(event) {
     }
     result.className = 'booking-result booking-success';
     result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée.` : `Demande ${data.reference} enregistrée. La date reste disponible jusqu’au paiement de l’acompte.`;
-    document.getElementById('booking-form').reset();
+    document.getElementById('booking-form').reset(); activePromo = null; activePromo = null;
     await loadBookingData();
 }
 
@@ -485,6 +492,14 @@ function syncRentalTimes() {
 document.getElementById('booking-rental-type')?.addEventListener('change', syncRentalTimes);
 document.getElementById('booking-start-time')?.addEventListener('change', () => { if (document.getElementById('booking-rental-type')?.value === '24h') { document.getElementById('booking-end-time').value = document.getElementById('booking-start-time').value === '07:00' ? '06:00' : '18:00'; } updateBookingQuote(); });
 
+
+async function validatePromoCode() { const input=document.getElementById('booking-promo'); const code=input?.value.trim().toUpperCase(); activePromo=null; if(code && window.rentCarSupabase){ const {data}=await window.rentCarSupabase.from('promo_codes').select('code,discount_type,discount_value').eq('code',code).eq('active',true).maybeSingle(); activePromo=data||null; input.setCustomValidity(data?'':'Code promo invalide ou inactif.'); } else if(input) input.setCustomValidity(''); updateBookingQuote(); }
+document.getElementById('booking-promo')?.addEventListener('change', validatePromoCode);
+document.getElementById('booking-promo')?.addEventListener('blur', validatePromoCode);
+
+async function validatePromoCode() { const input=document.getElementById('booking-promo'); const code=input?.value.trim().toUpperCase(); activePromo=null; if(code && window.rentCarSupabase){ const {data}=await window.rentCarSupabase.from('promo_codes').select('code,discount_type,discount_value').eq('code',code).eq('active',true).maybeSingle(); activePromo=data||null; input.setCustomValidity(data?'':'Code promo invalide ou inactif.'); } else if(input) input.setCustomValidity(''); updateBookingQuote(); }
+document.getElementById('booking-promo')?.addEventListener('change', validatePromoCode);
+document.getElementById('booking-promo')?.addEventListener('blur', validatePromoCode);
 
 function updatePaymentFields() {
     const method = document.getElementById('booking-payment-method')?.value;

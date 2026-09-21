@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <div class="theme-switcher" aria-label="Choisir le thème"><span>Thème :</span><button type="button" onclick="setClientTheme('royal-night')">Nuit royal</button><button type="button" onclick="setClientTheme('premium-white')">Blanc premium</button></div>
+    <div class="theme-switcher" aria-label="Choisir le thème"><span>Thème :</span><button type="button" onclick="setClientTheme('royal-night')">Nuit royal</button><button type="button" onclick="setClientTheme('premium-white')">Blanc premium</button></div>
 
 <header class="header">
     <div class="nav-container">
@@ -77,8 +79,8 @@
                         <label>Adresse<input id="booking-address" required placeholder="Adresse complète"></label>
                         <label>Téléphone<input id="booking-phone" required placeholder="034 91 207 26"></label>
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
-                        <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"></label>
-                        <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"></label>
+                        <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
+                        <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
                         <label>Formule de location<select id="booking-rental-type" required><option value="day">Jour — 07h00 à 18h00</option><option value="night">Nuit — 19h00 à 06h00</option><option value="24h">24 heures — 07h00 à 06h00 ou 19h00 à 18h00</option></select></label>
                         <div class="date-range">
                             <label>Date de départ<input id="booking-start-date" type="date" required></label>
@@ -93,13 +95,13 @@
                             <label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération — 20 000 Ar</label>
                         </div>
                         <div class="date-range">
-                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label>
+                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Code promo<input id="booking-promo" placeholder="Code promo (facultatif)"></label><label>Code promo<input id="booking-promo" placeholder="Code promo (facultatif)"></label>
                         <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
                             <label id="mobile-reference-field">Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
                             <label id="mobile-number-field">Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
                         </div>
                         <p id="booking-quote" class="booking-result" role="status"></p>
-                        <p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>
+                        <p id="booking-balance-note" class="booking-result"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur — 30 000 Ar / jour</label>
                         <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
                         <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer la demande</button>
@@ -109,10 +111,10 @@
             </div>
             <div class="booking-panel invoice-access-panel">
                 <h3>Télécharger une facture</h3>
-                <p class="muted">La facture est accessible uniquement après validation de l’acompte par Rent Car Services.</p>
+                <p class="muted">La facture et le contrat sont accessibles uniquement après validation de l’acompte par Rent Car Services. Le reste à payer doit être réglé au moment de récupérer la voiture.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
                     <div class="date-range"><label>Référence réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
-                    <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture</button>
+                    <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture et le contrat et le contrat</button>
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
             </div>
