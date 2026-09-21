@@ -8,12 +8,12 @@
     "card_bg": "rgba(255, 255, 255, 0.9)"
   },
   "header": {
-    "nom": "RENT CAR",
-    "suffixe": "SERVICES",
+    "nom": "Rent Car Service",
+    "suffixe": "",
     "logo_url": "images/logo.png"
   },
   "social_links": {
-    "facebook": "https://www.facebook.com/share/1HckYysdQm/",
+    "facebook": "",
     "tiktok": "",
     "instagram": "",
     "maps": ""

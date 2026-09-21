@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Car Services | Location de voiture à Antananarivo</title>
+    <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="theme-switcher auto-theme-indicator" aria-label="Thème automatique"><span>Thème automatique</span><i class="fas fa-sun" aria-hidden="true"></i><i class="fas fa-moon" aria-hidden="true"></i></div>
 
 <header class="header">
     <div class="nav-container">
-        <h1 id="brand-name">RENT CAR <span>SERVICES</span></h1>
+        <h1 id="brand-name">Rent Car Service</h1>
         <div class="menu-burger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
         <nav id="nav-menu">
             <button onclick="openTab('home')">Accueil</button>
@@ -110,7 +109,7 @@
             </div>
             <div class="booking-panel invoice-access-panel">
                 <h3>Télécharger une facture</h3>
-                <p class="muted">La facture et le contrat sont accessibles uniquement après validation de l’acompte par Rent Car Services. Le reste à payer doit être réglé au moment de récupérer la voiture.</p>
+                <p class="muted">La facture et le contrat sont accessibles uniquement après validation de l’acompte par Rent Car Service. Le reste à payer doit être réglé au moment de récupérer la voiture.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
                     <div class="date-range"><label>Référence réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
                     <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture et le contrat</button>

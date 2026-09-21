@@ -187,3 +187,9 @@ body[data-theme="premium-white"] .tab { background: rgba(255,255,255,.97); }
 .return-panel { margin-top: 30px; }
 .return-panel h3 { color: var(--primary); }
 @media (max-width: 768px) { .theme-switcher { top: 74px; right: 8px; } }
+/* Footer lisible en thème noir ; aucun libellé de thème visible. */
+.theme-switcher { display: none !important; }
+body[data-theme="royal-night"] footer,
+body[data-theme="royal-night"] footer .footer-text,
+body[data-theme="royal-night"] footer p { background: #12182d !important; color: #f5f7ff !important; }
+body[data-theme="royal-night"] footer .social-footer a { color: #e6b85c !important; }
