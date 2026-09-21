@@ -1,93 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>ADMIN - Panneau de Contrôle</title>
-    <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .box { background: white; padding: 20px; border-radius: 10px; max-width: 900px; margin: 20px auto; border-left: 5px solid #0d47a1; }
-        input, textarea { width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
-        pre { background: #222; color: #0f0; padding: 15px; border-radius: 5px; overflow-x: auto; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administration — Rent Car Services</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    :root{--navy:#0b1f33;--blue:#0d5c8f;--gold:#d9a441;--bg:#f4f7fa;--card:#fff;--muted:#66788a;--line:#e4ebf1;--green:#16803c;--red:#b42318}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font-family:"DM Sans",sans-serif}.shell{min-height:100vh;display:grid;grid-template-columns:250px 1fr}.sidebar{background:var(--navy);color:white;padding:28px 18px}.brand{font-family:"Space Grotesk";font-size:20px;letter-spacing:-.5px;padding:0 12px 30px}.brand span{color:var(--gold)}.nav button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#bdd0df;padding:13px 14px;border-radius:10px;cursor:pointer;font:inherit;margin:3px 0}.nav button.active,.nav button:hover{background:#173b59;color:white}.side-note{color:#89a0b5;font-size:12px;line-height:1.5;margin:32px 12px}.main{padding:32px 4vw;max-width:1500px;width:100%;margin:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:30px}.topbar h1{font:700 30px "Space Grotesk";margin:0}.eyebrow{text-transform:uppercase;letter-spacing:1.5px;font-size:12px;color:var(--blue);font-weight:700}.btn{border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:white}.outline{border:1px solid var(--line);background:white;color:var(--navy)}.danger{background:#fff1f0;color:var(--red)}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 8px 22px rgba(11,31,51,.04)}.metric-label{color:var(--muted);font-size:13px}.metric{font:700 28px "Space Grotesk";margin-top:10px}.metric.gold{color:#a7700d}.section{margin-top:24px}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.section h2{font:600 20px "Space Grotesk";margin:0}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:760px}.table th,.table td{text-align:left;padding:13px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}.table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px}.pill{display:inline-block;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700}.pill.pre_reserved{background:#fff4cc;color:#8a6000}.pill.reserved,.pill.paid{background:#dff7e8;color:#166534}.pill.cancelled{background:#ffe2df;color:#a42017}.pill.pending{background:#e8eef4;color:#536779}.empty{padding:24px;color:var(--muted);text-align:center}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.field label{display:block;color:var(--muted);font-size:12px;font-weight:700;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;font:inherit}.field.full{grid-column:1/-1}.login{max-width:420px;margin:12vh auto}.login h1{font:700 30px "Space Grotesk"}.login .card{padding:30px}.login .field{margin-bottom:14px}.notice{padding:12px;border-radius:9px;background:#edf5fb;color:var(--blue);font-size:13px;margin-bottom:14px}.hidden{display:none!important}.actions{display:flex;gap:7px;flex-wrap:wrap}.tab{display:none}.tab.active{display:block}.calendar-key{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px}.key{display:flex;align-items:center;gap:6px}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.available{background:#29a35a}.reserved{background:#c92f2f}.maintenance{background:#d99b20}@media(max-width:900px){.shell{display:block}.sidebar{padding:15px}.side-note{display:none}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap;width:auto}.main{padding:24px 16px}.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.grid,.form-grid{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}}
+  </style>
 </head>
 <body>
-
-    <div class="box">
-        <h2>1. Apparence & Liens (config.json)</h2>
-        <label>Couleur Primaire</label><input type="color" id="c-primary">
-        <label>Image Hero (URL)</label><input type="text" id="c-hero">
-        <label>Lien Facebook</label><input type="text" id="s-fb">
-        <label>Lien YouTube Playlist</label><input type="text" id="p-yt">
-        <label>Lien Spotify Playlist</label><input type="text" id="p-sp">
-        <button class="btn" style="background:#0d47a1" onclick="genConfig()">Générer CONFIG.JSON</button>
-    </div>
-
-    <div class="box">
-        <h2>2. Web Radios (data.json)</h2>
-        <div id="radio-list"></div>
-        <button class="btn" style="background:#25d366" onclick="addRadioForm()">+ Ajouter une Radio</button>
-        <button class="btn" style="background:#333" onclick="genData()">Générer DATA.JSON</button>
-    </div>
-
-    <div class="box" id="result-box" style="display:none">
-        <h2>Résultat à copier</h2>
-        <pre id="output"></pre>
-    </div>
-
-    <script>
-        async function load() {
-            const r1 = await fetch('config.json');
-            const c = await r1.json();
-            document.getElementById('c-primary').value = c.theme.primary;
-            document.getElementById('c-hero').value = c.theme.hero_bg;
-            document.getElementById('s-fb').value = c.social.facebook;
-            document.getElementById('p-yt').value = c.playlists.youtube;
-            document.getElementById('p-sp').value = c.playlists.spotify;
-
-            const r2 = await fetch('data.json');
-            const d = await r2.json();
-            d.radios.forEach(r => addRadioForm(r));
-        }
-
-        function addRadioForm(r = {}) {
-            const div = document.createElement('div');
-            div.className = 'radio-item';
-            div.innerHTML = `
-                <hr><label>Nom Radio</label><input type="text" class="r-nom" value="${r.nom || ''}">
-                <label>URL Stream</label><input type="text" class="r-url" value="${r.url || ''}">
-                <label>Logo URL</label><input type="text" class="r-logo" value="${r.logo || ''}">
-            `;
-            document.getElementById('radio-list').appendChild(div);
-        }
-
-        async function genConfig() {
-            const r = await fetch('config.json');
-            let c = await r.json();
-            c.theme.primary = document.getElementById('c-primary').value;
-            c.theme.hero_bg = document.getElementById('c-hero').value;
-            c.social.facebook = document.getElementById('s-fb').value;
-            c.playlists.youtube = document.getElementById('p-yt').value;
-            c.playlists.spotify = document.getElementById('p-sp').value;
-            show(c);
-        }
-
-        async function genData() {
-            const r = await fetch('data.json');
-            let d = await r.json();
-            d.radios = Array.from(document.querySelectorAll('.radio-item')).map(el => ({
-                nom: el.querySelector('.r-nom').value,
-                url: el.querySelector('.r-url').value,
-                logo: el.querySelector('.r-logo').value
-            }));
-            show(d);
-        }
-
-        function show(obj) {
-            document.getElementById('result-box').style.display = 'block';
-            document.getElementById('output').innerText = JSON.stringify(obj, null, 2);
-        }
-        load();
-    </script>
+  <div id="login-view" class="login">
+    <div class="card"><div class="eyebrow">Rent Car Services</div><h1>Administration</h1><div class="notice">Connectez-vous avec un compte administrateur Supabase.</div><form id="login-form"><div class="field"><label>Email</label><input id="login-email" type="email" required placeholder="admin@rentcar.mg"></div><div class="field"><label>Mot de passe</label><input id="login-password" type="password" required></div><button class="btn primary" type="submit">Se connecter</button></form><p id="login-error" class="booking-error"></p></div>
+  </div>
+  <div id="app-view" class="shell hidden">
+    <aside class="sidebar"><div class="brand">RENT CAR <span>SERVICES</span></div><nav class="nav"><button class="active" data-tab="overview">Tableau de bord</button><button data-tab="reservations">Réservations</button><button data-tab="vehicles">Véhicules</button><button data-tab="customers">Clients</button></nav><p class="side-note">Adresse<br>67 Ha Nord Ouest, Parking FJKM SALEMA<br><br>034 91 207 26</p><button id="logout" class="btn outline">Se déconnecter</button></aside>
+    <main class="main"><div class="topbar"><div><div class="eyebrow">Espace sécurisé</div><h1 id="page-title">Tableau de bord</h1></div><a class="btn outline" href="index.html">Voir le site</a></div>
+      <section id="overview" class="tab active"><div class="grid"><div class="card"><div class="metric-label">Chiffre d'affaires confirmé</div><div id="revenue" class="metric gold">—</div></div><div class="card"><div class="metric-label">Demandes en attente</div><div id="pending" class="metric">—</div></div><div class="card"><div class="metric-label">Réservations confirmées</div><div id="confirmed" class="metric">—</div></div><div class="card"><div class="metric-label">Véhicules actifs</div><div id="vehicle-count" class="metric">—</div></div></div><div class="section card"><div class="section-head"><h2>Calendrier des disponibilités</h2><div class="calendar-key"><span class="key"><i class="dot available"></i>Disponible</span><span class="key"><i class="dot reserved"></i>Réservé</span><span class="key"><i class="dot maintenance"></i>Maintenance</span></div></div><div id="calendar" class="table-wrap"></div></div></section>
+      <section id="reservations" class="tab"><div class="card"><div class="section-head"><h2>Réservations</h2><button class="btn primary" onclick="refreshAll()">Actualiser</button></div><div id="reservations-table" class="table-wrap"></div></div></section>
+      <section id="vehicles" class="tab"><div class="card"><div class="section-head"><h2>Véhicules</h2><button class="btn primary" onclick="toggleVehicleForm()">+ Ajouter une voiture</button></div><form id="vehicle-form" class="form-grid hidden"><div class="field"><label>Nom</label><input id="v-name" required></div><div class="field"><label>Prix / jour (Ar)</label><input id="v-price" type="number" min="0" required></div><div class="field"><label>Transmission</label><input id="v-transmission"></div><div class="field"><label>Carburant</label><input id="v-fuel"></div><div class="field"><label>Places</label><input id="v-seats" type="number"></div><div class="field"><label>Statut</label><select id="v-status"><option value="available">Disponible</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option></select></div><div class="field full"><label>Description</label><textarea id="v-description"></textarea></div><div class="field full"><button class="btn primary">Enregistrer</button></div></form><div id="vehicles-table" class="table-wrap"></div></div></section>
+      <section id="customers" class="tab"><div class="card"><div class="section-head"><h2>Fiches clients</h2></div><div id="customers-table" class="table-wrap"></div></div></section>
+    </main>
+  </div>
+  <script>
+    const db = window.rentCarSupabase;
+    let reservations = [], vehicles = [], customers = [];
+    const money = window.formatMGA;
+    document.querySelector('#login-form').addEventListener('submit', async e => { e.preventDefault(); const { error } = await db.auth.signInWithPassword({ email: loginEmail.value, password: loginPassword.value }); if (error) loginError.textContent = error.message; else showApp(); });
+    document.querySelector('#logout').addEventListener('click', async () => { await db.auth.signOut(); location.reload(); });
+    document.querySelectorAll('.nav button').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); document.getElementById(btn.dataset.tab).classList.add('active'); pageTitle.textContent = btn.textContent; }));
+    async function showApp(){ loginView.classList.add('hidden'); appView.classList.remove('hidden'); await refreshAll(); }
+    async function refreshAll(){ const [r,v,c] = await Promise.all([db.from('reservations').select('*,vehicles(name)').order('start_at',{ascending:false}),db.from('vehicles').select('*').order('name'),db.from('customers').select('*').order('created_at',{ascending:false})]); reservations=r.data||[]; vehicles=v.data||[]; customers=c.data||[]; render(); }
+    function render(){ const confirmed=reservations.filter(x=>x.status==='reserved'); revenue.textContent=money(confirmed.reduce((s,x)=>s+Number(x.total_amount||0),0)); pending.textContent=reservations.filter(x=>x.status==='pre_reserved').length; document.getElementById('confirmed').textContent=confirmed.length; document.getElementById('vehicle-count').textContent=vehicles.filter(x=>x.status!=='inactive').length; reservationsTable.innerHTML=reservations.length?`<table class="table"><thead><tr><th>Référence</th><th>Client</th><th>Véhicule</th><th>Période</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead><tbody>${reservations.map(r=>`<tr><td><strong>${r.reference}</strong></td><td>${r.customer_name}<br>${r.customer_phone}</td><td>${r.vehicles?.name||'—'}</td><td>${new Date(r.start_at).toLocaleDateString('fr-FR')} → ${new Date(r.end_at).toLocaleDateString('fr-FR')}</td><td>${money(r.total_amount)}</td><td><span class="pill ${r.status}">${r.status}</span></td><td><div class="actions">${r.status==='pre_reserved'?`<button class="btn primary" onclick="setStatus('${r.id}','reserved')">Confirmer</button>`:''}<button class="btn outline" onclick="printDocument('${r.id}','invoice')">Facture</button><button class="btn outline" onclick="printDocument('${r.id}','contract')">Contrat</button></div></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucune réservation enregistrée.</div>`; vehiclesTable.innerHTML=`<table class="table"><thead><tr><th>Véhicule</th><th>Tarif</th><th>Caractéristiques</th><th>Statut</th><th>Action</th></tr></thead><tbody>${vehicles.map(v=>`<tr><td><strong>${v.name}</strong><br><small>${v.description||''}</small></td><td>${money(v.price_per_day)}</td><td>${v.transmission||'—'} · ${v.fuel||'—'} · ${v.seats||'—'} places</td><td><span class="pill ${v.status}">${v.status}</span></td><td><button class="btn outline" onclick="toggleMaintenance('${v.id}')">${v.status==='maintenance'?'Remettre disponible':'Mettre en maintenance'}</button></td></tr>`).join('')}</tbody></table>`; customersTable.innerHTML=customers.length?`<table class="table"><thead><tr><th>Client</th><th>Contact</th><th>Permis</th><th>Notes</th></tr></thead><tbody>${customers.map(c=>`<tr><td><strong>${c.full_name}</strong></td><td>${c.phone}<br>${c.email||'—'}</td><td>${c.driving_license||'—'}<br>${c.license_expiry||''}</td><td>${c.notes||'—'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Les clients apparaîtront lorsque les réservations seront enregistrées.</div>`; calendar.innerHTML=vehicles.length?`<table class="table"><thead><tr><th>Véhicule</th><th>Statut actuel</th><th>Tarif</th></tr></thead><tbody>${vehicles.map(v=>`<tr><td><strong>${v.name}</strong></td><td><span class="pill ${v.status}">${v.status}</span></td><td>${money(v.price_per_day)} / jour</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucun véhicule.</div>'; }
+    async function setStatus(id,status){ await db.from('reservations').update({status}).eq('id',id); await refreshAll(); }
+    function toggleVehicleForm(){ document.getElementById('vehicle-form').classList.toggle('hidden'); }
+    document.getElementById('vehicle-form').addEventListener('submit',async e=>{e.preventDefault();const name=document.getElementById('v-name').value.trim();const payload={name,slug:name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),price_per_day:Number(document.getElementById('v-price').value),transmission:document.getElementById('v-transmission').value,fuel:document.getElementById('v-fuel').value,seats:Number(document.getElementById('v-seats').value)||null,status:document.getElementById('v-status').value,description:document.getElementById('v-description').value};const {error}=await db.from('vehicles').insert(payload);if(error) alert(error.message);else{e.target.reset();toggleVehicleForm();refreshAll();}});
+    async function toggleMaintenance(id){const vehicle=vehicles.find(v=>v.id===id);await db.from('vehicles').update({status:vehicle.status==='maintenance'?'available':'maintenance'}).eq('id',id);refreshAll();}
+    function printDocument(id,kind){const r=reservations.find(x=>x.id===id);if(!r)return;const title=kind==='invoice'?'FACTURE':'CONTRAT DE LOCATION';const win=window.open('','_blank');win.document.write(`<html><head><title>${title} ${r.reference}</title><style>body{font:16px Arial;padding:50px;color:#0b1f33}h1{color:#0d5c8f}hr{border:0;border-top:1px solid #ddd;margin:24px 0}.total{font-size:24px;font-weight:bold}.sign{display:flex;justify-content:space-between;margin-top:100px}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><hr><h2>${title}</h2><p><strong>Référence :</strong> ${r.reference}<br><strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR')}</p><p><strong>Client :</strong> ${r.customer_name}<br><strong>Téléphone :</strong> ${r.customer_phone}<br><strong>Véhicule :</strong> ${r.vehicles?.name||'—'}<br><strong>Période :</strong> ${new Date(r.start_at).toLocaleString('fr-FR')} → ${new Date(r.end_at).toLocaleString('fr-FR')}</p><hr><p>Tarif journalier : ${money(r.daily_rate)}<br>Nombre de jours : ${r.days}<br>Acompte : ${money(r.deposit_amount)}</p><p class="total">Total : ${money(r.total_amount)}</p><div class="sign"><span>Signature du client</span><span>Rent Car Services</span></div><script>window.print()<\/script></body></html>`);win.document.close();}
+    db.auth.getSession().then(({data})=>{if(data.session)showApp();});
+  </script>
 </body>
 </html>

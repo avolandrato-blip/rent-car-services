@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -17,6 +18,7 @@
         <nav id="nav-menu">
             <button onclick="openTab('home')">Accueil</button>
             <button onclick="openTab('cars')">Véhicules</button>
+            <button onclick="openTab('booking')">Réserver</button>
             <button onclick="openTab('fun')">Divertissement</button>
             <button onclick="openTab('terms')">Conditions</button>
             <button onclick="openTab('contact')" class="nav-special">Contact</button>
@@ -50,6 +52,40 @@
         <div class="container">
             <h2 class="section-title">Notre Flotte</h2>
             <div id="cars-grid" class="cars-grid"></div>
+        </div>
+    </section>
+
+    <section id="booking" class="tab">
+        <div class="container booking-page">
+            <h2 class="section-title">Réservation en ligne</h2>
+            <div class="booking-layout">
+                <div class="booking-panel">
+                    <h3>Vérifier les disponibilités</h3>
+                    <div class="date-range">
+                        <label>Date de départ<input id="availability-start" type="date"></label>
+                        <label>Date de retour<input id="availability-end" type="date"></label>
+                    </div>
+                    <button class="btn btn-primary" onclick="checkAvailability()"><i class="fas fa-calendar-check"></i> Actualiser le calendrier</button>
+                    <div id="availability-list" class="availability-list"><p class="muted">Choisissez vos dates pour voir la disponibilité.</p></div>
+                </div>
+                <div class="booking-panel">
+                    <h3>Envoyer une demande</h3>
+                    <form id="booking-form" onsubmit="submitReservation(event)">
+                        <label>Voiture<select id="booking-vehicle" required></select></label>
+                        <label>Nom complet<input id="booking-name" required placeholder="Votre nom et prénom"></label>
+                        <label>Téléphone<input id="booking-phone" required placeholder="034 91 207 26"></label>
+                        <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
+                        <div class="date-range">
+                            <label>Départ<input id="booking-start" type="datetime-local" required></label>
+                            <label>Retour<input id="booking-end" type="datetime-local" required></label>
+                        </div>
+                        <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur</label>
+                        <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
+                        <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer la demande</button>
+                    </form>
+                    <p id="booking-result" class="booking-result" role="status"></p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -89,6 +125,7 @@
     <span>Appelez-nous</span>
 </a>
 
-<script src="script.js"></script>
+    <script src="supabase.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

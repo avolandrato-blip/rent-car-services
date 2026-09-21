@@ -111,6 +111,27 @@ body {
 .form-group { margin-bottom: 20px; }
 .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; }
 
+/* --- RESERVATION --- */
+.booking-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+.booking-panel { background: #fff; padding: 28px; border-radius: 20px; box-shadow: var(--card-shadow); }
+.booking-panel h3 { color: var(--primary); margin-bottom: 20px; }
+.booking-panel label { display: block; font-weight: 600; color: #333; margin-bottom: 14px; }
+.booking-panel input, .booking-panel select, .booking-panel textarea { width: 100%; margin-top: 7px; padding: 12px; border: 1px solid #d9dee5; border-radius: 10px; background: #fbfcfd; font: inherit; }
+.date-range { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.checkbox-line { display: flex !important; align-items: center; gap: 8px; }
+.checkbox-line input { width: auto; margin: 0; }
+.availability-list { margin-top: 22px; display: grid; gap: 10px; }
+.availability-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px; border: 1px solid #eef0f3; border-radius: 12px; }
+.availability-row small { display: block; color: #777; margin-top: 3px; }
+.availability-badge { padding: 5px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.availability-badge.available { background: #dcfce7; color: #166534; }
+.availability-badge.pre_reserved { background: #fef3c7; color: #92400e; }
+.availability-badge.reserved, .availability-badge.maintenance { background: #fee2e2; color: #991b1b; }
+.booking-result { margin-top: 16px; font-weight: 600; }
+.booking-success { color: #15803d; }
+.booking-error { color: #b91c1c; }
+.muted { color: #777; }
+
 /* Utiliser btn-submit tout en restant compatible */
 .btn-submit { width: 100%; background: var(--accent); color: white; padding: 16px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
 
@@ -128,6 +149,7 @@ footer { background: rgba(255, 255, 255, 0.95) !important; padding: 40px 0; text
     #nav-menu { display: none; position: absolute; top: 70px; left: 0; width: 100%; background: white; flex-direction: column; padding: 20px; }
     #nav-menu.active { display: flex; }
     .features-grid, .conditions-grid, .cars-grid, .radios-grid { grid-template-columns: 1fr; }
+    .booking-layout, .date-range { grid-template-columns: 1fr; }
     .hero-btns { flex-direction: column; }
 }
 
