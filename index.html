@@ -78,6 +78,7 @@
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                         <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"></label>
                         <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"></label>
+                        <label>Formule de location<select id="booking-rental-type" required><option value="day">Jour — 07h00 à 18h00</option><option value="night">Nuit — 19h00 à 06h00</option><option value="24h">24 heures — 07h00 à 06h00 ou 19h00 à 18h00</option></select></label>
                         <div class="date-range">
                             <label>Date de départ<input id="booking-start-date" type="date" required></label>
                             <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
@@ -87,15 +88,31 @@
                         <div class="date-range">
                             <label>Trajet : départ de<input id="booking-trip-from" required placeholder="Ville / lieu de départ"></label>
                             <label>Trajet : destination<input id="booking-trip-to" required placeholder="Ville / lieu d’arrivée"></label>
-                            <label>Frais de livraison (Ar)<input id="booking-delivery-fee" type="number" min="0" value="0"></label>
-                            <label>Frais de récupération (Ar)<input id="booking-recovery-fee" type="number" min="0" value="0"></label>
+                            <label>Livraison forfaitaire<input id="booking-delivery-fee" type="number" min="0" value="20000" readonly></label>
+                            <label>Récupération forfaitaire<input id="booking-recovery-fee" type="number" min="0" value="20000" readonly></label>
                         </div>
+                        <div class="date-range">
+                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label>
+                            <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
+                            <label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
+                            <label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
+                        </div>
+                        <p id="booking-quote" class="booking-result" role="status"></p>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur</label>
                         <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
                         <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer la demande</button>
                     </form>
                     <p id="booking-result" class="booking-result" role="status"></p>
                 </div>
+            </div>
+            <div class="booking-panel invoice-access-panel">
+                <h3>Télécharger une facture</h3>
+                <p class="muted">La facture est accessible uniquement après validation de l’acompte par Rent Car Services.</p>
+                <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
+                    <div class="date-range"><label>Référence réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
+                    <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture</button>
+                </form>
+                <p id="invoice-access-result" class="booking-result" role="status"></p>
             </div>
         </div>
     </section>

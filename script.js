@@ -276,6 +276,29 @@ function availabilityLabel(status) {
     return { available: 'Disponible', pre_reserved: 'Pré-réservée', reserved: 'Réservée', maintenance: 'En maintenance', unknown: 'Dates à choisir' }[status] || status;
 }
 
+function calculateBookingQuote(vehicle, start, end, rentalType) {
+    const hours = (new Date(end) - new Date(start)) / 3600000;
+    const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
+    const rate24 = Number(vehicle.price_24h || rate12 * 2 || 0);
+    let rentalAmount;
+    if (rentalType === '24h') rentalAmount = rate24;
+    else if (hours > 24 && hours <= 48) rentalAmount = rate24 * 2;
+    else if (hours > 48) rentalAmount = rate12 * Math.ceil(hours / 24);
+    else rentalAmount = rate12;
+    const delivery = 20000, recovery = 20000;
+    return { hours, days: Math.max(1, Math.ceil(hours / 24)), rate12, rate24, rentalAmount, delivery, recovery, total: rentalAmount + delivery + recovery };
+}
+
+function updateBookingQuote() {
+    const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
+    const startDate = document.getElementById('booking-start-date')?.value, endDate = document.getElementById('booking-end-date')?.value;
+    const startTime = document.getElementById('booking-start-time')?.value, endTime = document.getElementById('booking-end-time')?.value;
+    const quote = document.getElementById('booking-quote');
+    if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
+    const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
+    if (quote) quote.textContent = `Estimation : location ${formatMGA(q.rentalAmount)} + livraison ${formatMGA(q.delivery)} + récupération ${formatMGA(q.recovery)} = ${formatMGA(q.total)}. Acompte : ${formatMGA(deposit)}. Reste : ${formatMGA(Math.max(0, q.total - deposit))}.`;
+}
+
 function checkAvailability() {
     const start = document.getElementById('availability-start').value;
     const end = document.getElementById('availability-end').value;
@@ -311,7 +334,13 @@ async function submitReservation(event) {
         result.textContent = `Cette voiture est ${availabilityLabel(availability).toLowerCase()} sur cette période.`;
         return;
     }
-    const days = Math.max(1, Math.ceil((new Date(end) - new Date(start)) / 86400000));
+    const rentalType = document.getElementById('booking-rental-type').value;
+    const quote = calculateBookingQuote(vehicle, start, end, rentalType);
+    const deposit = Math.max(0, Number(document.getElementById('booking-deposit').value || 0));
+    if (deposit > quote.total) { result.className = 'booking-result booking-error'; result.textContent = 'L’acompte ne peut pas dépasser le montant total.'; return; }
+    const paymentMethod = document.getElementById('booking-payment-method').value || null;
+    if (deposit > 0 && !paymentMethod) { result.className = 'booking-result booking-error'; result.textContent = 'Sélectionnez le mode de paiement de l’acompte.'; return; }
+    const days = quote.days;
     const payload = {
         vehicle_id: vehicle.id,
         customer_name: document.getElementById('booking-name').value.trim(),
@@ -323,16 +352,23 @@ async function submitReservation(event) {
         start_at: new Date(start).toISOString(),
         end_at: new Date(end).toISOString(),
         with_driver: document.getElementById('booking-driver').checked,
-        daily_rate: vehicle.price_per_day,
+        rental_type: rentalType,
+        rate_12h: quote.rate12,
+        rate_24h: quote.rate24,
+        daily_rate: quote.rate12,
         days,
         trip_from: document.getElementById('booking-trip-from').value.trim(),
         trip_to: document.getElementById('booking-trip-to').value.trim(),
-        delivery_fee: Number(document.getElementById('booking-delivery-fee').value || 0),
-        recovery_fee: Number(document.getElementById('booking-recovery-fee').value || 0),
-        extra_fees: Number(document.getElementById('booking-delivery-fee').value || 0) + Number(document.getElementById('booking-recovery-fee').value || 0),
-        total_amount: vehicle.price_per_day * days + Number(document.getElementById('booking-delivery-fee').value || 0) + Number(document.getElementById('booking-recovery-fee').value || 0),
+        delivery_fee: quote.delivery,
+        recovery_fee: quote.recovery,
+        extra_fees: quote.delivery + quote.recovery,
+        total_amount: quote.total,
+        deposit_amount: deposit,
+        payment_method: paymentMethod,
+        mobile_reference: document.getElementById('booking-mobile-reference').value.trim() || null,
+        mobile_number: document.getElementById('booking-mobile-number').value.trim() || null,
         notes: document.getElementById('booking-notes').value.trim() || null,
-        status: 'pre_reserved'
+        status: deposit > 0 ? 'reserved' : 'pre_reserved'
     };
     const { data, error } = await window.rentCarSupabase.from('reservations').insert(payload).select('reference').single();
     if (error) {
@@ -342,7 +378,36 @@ async function submitReservation(event) {
         return;
     }
     result.className = 'booking-result booking-success';
-    result.textContent = `Demande ${data.reference} envoyée. Nous vous contacterons pour confirmer la réservation.`;
+    result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée.` : `Demande ${data.reference} enregistrée. La date reste disponible jusqu’au paiement de l’acompte.`;
     document.getElementById('booking-form').reset();
     await loadBookingData();
 }
+
+
+async function verifyInvoiceOtp(event) {
+    event.preventDefault();
+    const result = document.getElementById('invoice-access-result');
+    const reference = document.getElementById('invoice-reference').value.trim();
+    const phone = document.getElementById('invoice-phone').value.trim();
+    const otp = document.getElementById('invoice-otp').value.trim();
+    const { data, error } = await window.rentCarSupabase.from('reservations').select('*,vehicles(name,make,model,registration_number)').eq('reference', reference).eq('customer_phone', phone).eq('invoice_released', true).eq('otp_code', otp).single();
+    if (error || !data) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture doit d’abord être validée par Rent Car Services.'; return; }
+    await window.rentCarSupabase.from('reservations').update({ otp_verified_at: new Date().toISOString() }).eq('id', data.id);
+    const html = `<html><head><title>Facture ${data.reference}</title><style>body{font:16px Arial;padding:45px;color:#0b1f33;max-width:760px;margin:auto}h1{color:#0d5c8f}.total{font-size:24px;font-weight:bold}</style></head><body><h1>RENT CAR SERVICES</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><hr><h2>FACTURE</h2><p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Véhicule : ${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}</p><p>Location : ${formatMGA(data.total_amount - Number(data.delivery_fee || 0) - Number(data.recovery_fee || 0))}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste : ${formatMGA(Math.max(0, Number(data.total_amount) - Number(data.deposit_amount || 0)))}</p><script>window.print()<\/script></body></html>`;
+    const win = window.open('', '_blank'); win.document.write(html); win.document.close();
+}
+
+['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+
+
+function syncRentalTimes() {
+    const type = document.getElementById('booking-rental-type')?.value;
+    const start = document.getElementById('booking-start-time'), end = document.getElementById('booking-end-time');
+    if (!start || !end) return;
+    if (type === 'day') { start.value = '07:00'; end.value = '18:00'; }
+    if (type === 'night') { start.value = '19:00'; end.value = '06:00'; }
+    if (type === '24h') { if (start.value === '07:00') end.value = '06:00'; else { start.value = '19:00'; end.value = '18:00'; } }
+    updateBookingQuote();
+}
+document.getElementById('booking-rental-type')?.addEventListener('change', syncRentalTimes);
+document.getElementById('booking-start-time')?.addEventListener('change', () => { if (document.getElementById('booking-rental-type')?.value === '24h') { document.getElementById('booking-end-time').value = document.getElementById('booking-start-time').value === '07:00' ? '06:00' : '18:00'; } updateBookingQuote(); });
