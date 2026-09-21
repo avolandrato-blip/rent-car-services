@@ -307,6 +307,29 @@ function getVehicleAvailability(vehicleId, start, end) {
     return reservation ? reservation.status : 'available';
 }
 
+function formatAvailabilityDate(value) {
+    return new Date(value).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function availabilityConflict(vehicleId, start, end) {
+    const blocks = bookingReservations.filter(item => item.vehicle_id === vehicleId && overlaps(start, end, item)).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+    const maintenance = bookingMaintenance.filter(item => item.vehicle_id === vehicleId && overlaps(start, end, item)).map(item => ({ ...item, status: 'maintenance' }));
+    return [...blocks, ...maintenance].sort((a, b) => new Date(a.start_at) - new Date(b.start_at))[0] || null;
+}
+
+function availabilityExplanation(vehicle, start, end) {
+    const conflict = availabilityConflict(vehicle.id, start, end);
+    if (!conflict) return '';
+    const conflictStart = new Date(conflict.start_at), conflictEnd = new Date(conflict.end_at), requestedStart = new Date(start);
+    const kind = conflict.status === 'maintenance' ? 'indisponible pour maintenance' : 'réservée';
+    let firstFree;
+    const requestedEnd = new Date(end);
+    if (conflictStart > requestedStart && conflictEnd < requestedEnd) firstFree = `au milieu de la période, à partir du ${formatAvailabilityDate(conflictEnd)}`;
+    else if (conflictStart > requestedStart) firstFree = `avant cette période, jusqu’au ${formatAvailabilityDate(conflictStart)}`;
+    else firstFree = `après cette période, à partir du ${formatAvailabilityDate(conflictEnd)}`;
+    return `<p class="availability-detail"><strong>${vehicle.name} est ${kind} du ${formatAvailabilityDate(conflict.start_at)} au ${formatAvailabilityDate(conflict.end_at)}.</strong><br>Première date disponible : ${firstFree}.</p>`;
+}
+
 function availabilityLabel(status) {
     return { available: 'Disponible', pre_reserved: 'Pré-réservée', reserved: 'Réservée', maintenance: 'En maintenance', unknown: 'Dates à choisir' }[status] || status;
 }
@@ -346,11 +369,14 @@ function checkAvailability() {
         return;
     }
     const selectedVehicle = document.getElementById('availability-vehicle')?.value || 'all';
-    list.innerHTML = bookingVehicles.filter(vehicle => selectedVehicle === 'all' || vehicle.id === selectedVehicle).map(vehicle => {
+    const displayedVehicles = bookingVehicles.filter(vehicle => selectedVehicle === 'all' || vehicle.id === selectedVehicle);
+    list.innerHTML = displayedVehicles.map(vehicle => {
         const rawStatus = getVehicleAvailability(vehicle.id, `${start}T00:00:00`, `${end}T23:59:59`);
         const status = rawStatus === 'available' ? 'available' : 'reserved';
-        return `<div class="availability-row"><div><strong>${vehicle.name}</strong><small>${formatMGA(vehicle.price_per_day)} / jour</small></div><span class="availability-badge ${status}">${status === 'available' ? 'Disponible' : 'Réservé'}</span></div>`;
+        return `<div class="availability-row"><div><strong>${vehicle.name}</strong><small>${formatMGA(vehicle.price_per_day)} / jour</small>${status === 'reserved' ? availabilityExplanation(vehicle, `${start}T00:00:00`, `${end}T23:59:59`) : ''}</div><span class="availability-badge ${status}">${status === 'available' ? 'Disponible' : 'Réservé'}</span></div>`;
     }).join('') || '<p class="muted">Aucun véhicule actif pour le moment.</p>';
+    const alternatives = bookingVehicles.filter(vehicle => vehicle.id !== selectedVehicle && getVehicleAvailability(vehicle.id, `${start}T00:00:00`, `${end}T23:59:59`) === 'available');
+    if (selectedVehicle !== 'all' && alternatives.length) list.innerHTML += `<p class="availability-alternatives"><strong>Vous pouvez choisir une autre voiture disponible :</strong> ${alternatives.map(vehicle => vehicle.name).join(', ')}.</p>`;
 }
 
 async function submitReservation(event) {
