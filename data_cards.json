@@ -1,69 +1,76 @@
 {
   "features": [
-    { "titre": "Autonomie", "icon": "fa-key", "description": "Liberté totale de conduite sans chauffeur." },
-    { "titre": "Sécurité", "icon": "fa-shield-alt", "description": "Véhicules révisés avant chaque départ." },
-    { "titre": "Assistance", "icon": "fa-headset", "description": "Support 24h/7 pour tous nos clients." }
+    {
+      "titre": "Location encadrée",
+      "icon": "fa-car",
+      "description": "Les conditions de location sont présentées clairement avant la remise du véhicule."
+    },
+    {
+      "titre": "Vérification du véhicule",
+      "icon": "fa-clipboard-check",
+      "description": "Un état des lieux, le kilométrage, le carburant et les accessoires sont vérifiés avant et après la location."
+    },
+    {
+      "titre": "Assistance et sécurité",
+      "icon": "fa-headset",
+      "description": "En cas d’incident, le locataire doit sécuriser les lieux, prévenir le loueur et suivre ses instructions."
+    }
   ],
   "conditions": [
     {
-      "titre": "Caution",
-      "reponse": "Aucune caution n'est exigée.",
-      "icon": "fa-wallet"
+      "titre": "Article 1 — Objet et conditions financières",
+      "icon": "fa-file-invoice-dollar",
+      "reponse": "Location du véhicule sans chauffeur avec identification du véhicule, dates et heures de départ et de retour, trajet, montant total, acompte, reste à payer, livraison et récupération. Le solde est payable avant remise du véhicule. La réservation est confirmée par un acompte de 50 % du montant total ou d’au moins 30 000 Ariary dans les 24 heures suivant la demande. En cas d’annulation volontaire après confirmation, l’acompte reste acquis au loueur, sauf accord écrit contraire. Pour une location de plus d’une semaine, le paiement s’effectue chaque lundi."
     },
     {
-      "titre": "Kilométrage",
-      "reponse": "Kilométrage limité à 100 km/jour. Les kilomètres supplémentaires sont facturés selon le tarif en vigueur.",
-      "icon": "fa-road"
+      "titre": "Article 2 — Conditions du locataire",
+      "icon": "fa-id-card",
+      "reponse": "Le locataire doit être âgé d’au moins 21 ans et détenir un permis valide depuis au moins 2 ans. Il doit présenter une pièce d’identité et une copie du permis de conduire. Il doit être solvable, assuré et conducteur déclaré par écrit dans le présent contrat."
     },
     {
-      "titre": "Carburant",
-      "reponse": "Politique plein/plein : le véhicule est livré plein et doit être rendu plein. Les manques de carburant sont facturés au tarif de remplissage plus une majoration.",
-      "icon": "fa-gas-pump"
+      "titre": "Article 3 — Zone et conditions d’utilisation",
+      "icon": "fa-map-marked-alt",
+      "reponse": "Le véhicule est autorisé à circuler dans la commune d’Antananarivo et jusqu’à un rayon maximal de 30 kilomètres, sauf accord écrit préalable du loueur. Tout déplacement hors zone sans autorisation peut être facturé 1 000 Ariary par kilomètre supplémentaire, selon le compteur ou le GPS. Le locataire doit respecter le code de la route et utiliser le véhicule avec soin. Sont interdits l’activité commerciale ou professionnelle rémunérée, notamment taxi ou transport via InDrive sans autorisation écrite, le transport illégal, les courses, les marchandises dangereuses, la surcharge et les routes incompatibles avec le véhicule."
     },
     {
-      "titre": "Assurance",
-      "reponse": "Une assurance responsabilité civile est incluse. Les options de couverture (CDW, TP) sont disponibles en supplément — franchise applicable en cas de sinistre.",
-      "icon": "fa-shield-alt"
+      "titre": "Article 4 — Prêt, sous-location, vente et fraude",
+      "icon": "fa-ban",
+      "reponse": "Le véhicule reste la propriété exclusive du loueur. Il est interdit de le prêter, céder, louer, re-louer, sous-louer, vendre, tenter de vendre, mettre en gage, publier une annonce à son sujet ou percevoir un paiement pour sa remise à un tiers. Le locataire garantit l’exactitude et l’authenticité de son identité, de son permis et des documents remis. Toute fausse identité, faux document, document falsifié, dissimulation du conducteur, fausse signature, fausse déclaration ou manœuvre frauduleuse peut entraîner la reprise immédiate du véhicule, la résiliation du contrat et le dépôt d’une plainte auprès des autorités compétentes. Les préjudices et frais directement causés peuvent être réclamés sur justificatifs."
     },
     {
-      "titre": "Restitution",
-      "reponse": "Le véhicule doit être restitué à la date et à l’heure prévues. Tout retard non signalé sera facturé au tarif horaire/quotidien correspondant.",
-      "icon": "fa-clock"
+      "titre": "Article 5 — État, carburant et restitution",
+      "icon": "fa-gas-pump",
+      "reponse": "Un état des lieux indiquant le kilométrage, le carburant, l’état du véhicule, les équipements, accessoires et clés est réalisé avant la remise et après la restitution ou la reprise. Des photographies ou vidéos datées peuvent être réalisées et transmises par WhatsApp. Le véhicule doit être rendu à la date et à l’heure convenues, avec le même niveau de carburant et les mêmes équipements. Le carburant manquant est facturé selon la quantité consommée, avec 20 000 Ariary de frais de service. En cas de retard : jusqu’à 1 heure, 10 000 Ariary ; de plus d’1 heure à 3 heures, 25 000 Ariary par heure entamée ; au-delà de 3 heures, une journée supplémentaire."
     },
     {
-      "titre": "Conducteur supplémentaire",
-      "reponse": "Conducteurs additionnels possibles s’ils remplissent les mêmes conditions (âge, permis). Un supplément peut être appliqué par conducteur.",
-      "icon": "fa-user-plus"
+      "titre": "Article 6 — Accident, panne, casse et frais",
+      "icon": "fa-car-crash",
+      "reponse": "En cas d’accident, panne, casse, incendie, incident ou immobilisation, le locataire doit assurer la sécurité, informer immédiatement le loueur, communiquer le lieu, prendre des photos si possible, suivre ses instructions et faire les démarches nécessaires. Aucune réparation, modification ou remorquage ne peut être engagé sans l’accord du loueur, sauf urgence de sécurité. Lorsque le dommage résulte d’une faute, négligence, mauvaise utilisation, sortie non autorisée de la zone ou autre manquement du locataire, les frais directement liés sont à sa charge : pièces, main-d’œuvre, diagnostic, déplacement, remorquage, récupération, transport, gardiennage, immobilisation et démarches. Ces frais sont justifiés par devis, factures, reçus ou autres pièces disponibles. Les frais de fourrière, amendes, retrait de documents ou immobilisation liés au locataire sont également à sa charge. Cette clause ne s’applique pas automatiquement à une panne mécanique indépendante du comportement du locataire."
     },
     {
-      "titre": "Interdiction de fumer",
-      "reponse": "Il est strictement interdit de fumer dans le véhicule. En cas de non-respect, des frais de nettoyage et désodorisation seront facturés.",
-      "icon": "fa-smoking-ban"
+      "titre": "Article 7 — Vol, clés et non-restitution",
+      "icon": "fa-key",
+      "reponse": "En cas de vol, disparition ou non-restitution, le locataire doit informer immédiatement le loueur, contacter les autorités, déposer plainte, transmettre le récépissé et remettre les clés, documents et accessoires encore en sa possession. La perte, le vol ou la détérioration des clés, ainsi que les frais de remplacement ou de réparation, peuvent être facturés sur justificatifs. La dissimulation, la remise à un tiers, la vente ou la mise en gage du véhicule peuvent entraîner une plainte et une demande de réparation."
     },
     {
-      "titre": "Animaux",
-      "reponse": "Les animaux sont autorisés uniquement avec l’accord préalable. Des frais supplémentaires peuvent être appliqués en cas de salissures ou odeurs.",
-      "icon": "fa-paw"
+      "titre": "Article 8 — Vérification et reprise du véhicule",
+      "icon": "fa-search",
+      "reponse": "Pendant toute la location, le loueur peut vérifier à tout moment, sans préavis, l’état, la localisation, le kilométrage et les conditions d’utilisation du véhicule. Sauf urgence, la vérification est effectuée dans un lieu accessible et à des horaires raisonnables ; elle ne permet pas d’entrer au domicile du locataire. Le loueur peut reprendre le véhicule à tout moment et sans préavis en cas de vente, re-location, sous-location, remise à un tiers, fraude, usage de faux, non-paiement, refus de vérification ou de restitution, utilisation interdite, sortie non autorisée de la zone, accident, immobilisation, disparition ou risque sérieux de perte. Un état des lieux de reprise est établi dans la mesure du possible."
     },
     {
-      "titre": "État du véhicule / Dommages",
-      "reponse": "Tout dommage doit être signalé immédiatement. Les frais de réparation hors assurance sont à la charge du locataire si la responsabilité est établie.",
-      "icon": "fa-car-crash"
+      "titre": "Article 9 — Remboursement en cas de retrait anticipé",
+      "icon": "fa-money-bill-wave",
+      "reponse": "Si le retrait n’est pas imputable au locataire, le prix payé pour la période restant à courir est remboursé au prorata des jours ou heures non utilisés. Les périodes commencées et les frais de livraison, récupération ou prestations déjà exécutées ne sont pas remboursés. Le remboursement est effectué entre le 20 et le 30 du mois suivant le retrait. Aucun remboursement des jours restants n’est dû lorsque le retrait est causé par un manquement du locataire, sans préjudice des sommes, dommages et frais réclamables."
     },
     {
-      "titre": "Accidents",
-      "reponse": "En cas d'accident, alertez immédiatement les autorités compétentes et contactez-nous. Remplissez le constat amiable et transmettez-le. Les frais de remorquage et les réparations peuvent être à la charge du locataire selon l'assurance et la responsabilité.",
-      "icon": "fa-ambulance"
+      "titre": "Article 10 — Responsabilité financière et règlement",
+      "icon": "fa-scale-balanced",
+      "reponse": "Aucune caution n’est demandée, mais le locataire reste responsable des dommages, pertes, retards, amendes, fourrière, carburant, clés, accessoires et autres frais qui lui sont directement imputables. Le loueur communique le détail et les justificatifs disponibles. Le locataire peut présenter ses observations dans le jour suivant le décompte. Les sommes certaines, exigibles et non contestées sont payables dans les 10 jours."
     },
     {
-      "titre": "Contraventions & infractions",
-      "reponse": "Toutes les contraventions, amendes de stationnement et autres infractions commises pendant la location sont à la charge du locataire. Des frais administratifs peuvent être ajoutés pour la gestion et le transfert des amendes si nous devons intervenir.",
-      "icon": "fa-ticket-alt"
-    },
-    {
-      "titre": "Annulation & modifications",
-      "reponse": "Annulation gratuite jusqu'à 48 heures avant le départ. Après ce délai, des frais d'annulation s'appliquent selon la politique indiquée au moment de la réservation.",
-      "icon": "fa-calendar-times"
+      "titre": "Article 11 — Acceptation",
+      "icon": "fa-file-signature",
+      "reponse": "Le locataire reconnaît avoir lu, compris et accepté les conditions du présent contrat, notamment celles relatives à la zone, aux usages interdits, à la vente, à la sous-location, à la fraude, à la vérification, à la reprise et au remboursement."
     }
   ]
 }
