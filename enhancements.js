@@ -88,7 +88,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    autoTheme(); setInterval(autoTheme, 60000); addBookingFields(); enhanceReturnPanel();
+    autoTheme(); setInterval(autoTheme, 60000); addBookingFields();
     window.submitReservation = submitReservationEnhanced;
   });
 })();
