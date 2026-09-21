@@ -161,3 +161,29 @@ footer { background: rgba(255, 255, 255, 0.95) !important; padding: 40px 0; text
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .theme-switcher{position:fixed;right:16px;top:78px;z-index:1500;display:flex;gap:5px;align-items:center;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 4px 15px #0002;font-size:11px}.theme-switcher button{border:1px solid #ccd6df;background:#fff;border-radius:999px;padding:5px 8px;cursor:pointer;font-size:11px}.field-note{display:block;color:#8a5a00;font-size:11px;margin-top:4px}.theme-switcher+*{}body[data-theme="royal-night"]{--primary:#7c5cff;--accent:#e6b85c;background:#080b18;color:#f5f7ff}body[data-theme="royal-night"] .tab{background:rgba(11,15,35,.9)}body[data-theme="royal-night"] .booking-panel,body[data-theme="royal-night"] .flip-front,body[data-theme="royal-night"] .car-card,body[data-theme="royal-night"] .contact-wrapper,body[data-theme="royal-night"] footer{background:#12182d;color:#f5f7ff}body[data-theme="royal-night"] .booking-panel input,body[data-theme="royal-night"] .booking-panel select,body[data-theme="royal-night"] .booking-panel textarea{background:#0b1021;color:#fff;border-color:#354060}body[data-theme="premium-white"]{--primary:#163d5c;--accent:#b8872b;background:#fff;color:#13202b}body[data-theme="premium-white"] .tab{background:rgba(255,255,255,.95)}
+
+/* Thème automatique premium : 06h00–18h59 blanc, 19h00–05h59 noir */
+.auto-theme-indicator { gap: 8px; }
+.auto-theme-indicator i:first-of-type { color: #b8872b; }
+.auto-theme-indicator i:last-of-type { color: #163d5c; }
+body[data-theme="royal-night"] .header,
+body[data-theme="royal-night"] #nav-menu { background: rgba(8, 11, 24, .96); }
+body[data-theme="royal-night"] #nav-menu button,
+body[data-theme="royal-night"] #brand-name { color: #f5f7ff; }
+body[data-theme="royal-night"] .theme-switcher { background: #12182d; color: #f5f7ff; }
+body[data-theme="royal-night"] .booking-panel label,
+body[data-theme="royal-night"] .field-note,
+body[data-theme="royal-night"] .muted { color: #c7d0e4; }
+body[data-theme="royal-night"] .booking-panel input,
+body[data-theme="royal-night"] .booking-panel select,
+body[data-theme="royal-night"] .booking-panel textarea { background: #0b1021; color: #fff; border-color: #354060; }
+body[data-theme="royal-night"] .return-panel { border: 1px solid #354060; }
+body[data-theme="premium-white"] { background: #fff; }
+body[data-theme="premium-white"] .header { border-bottom: 1px solid #eadfca; }
+body[data-theme="premium-white"] .tab { background: rgba(255,255,255,.97); }
+.identity-meta { margin-bottom: 12px; }
+.terms-consent { margin-top: 12px; padding: 12px; border: 1px solid #d9c28b; border-radius: 12px; }
+.booking-policy-note { border-left: 3px solid var(--accent); padding-left: 10px; }
+.return-panel { margin-top: 30px; }
+.return-panel h3 { color: var(--primary); }
+@media (max-width: 768px) { .theme-switcher { top: 74px; right: 8px; } }

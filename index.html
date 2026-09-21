@@ -10,8 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="theme-switcher" aria-label="Choisir le thème"><span>Thème :</span><button type="button" onclick="setClientTheme('royal-night')">Nuit royal</button><button type="button" onclick="setClientTheme('premium-white')">Blanc premium</button></div>
-    <div class="theme-switcher" aria-label="Choisir le thème"><span>Thème :</span><button type="button" onclick="setClientTheme('royal-night')">Nuit royal</button><button type="button" onclick="setClientTheme('premium-white')">Blanc premium</button></div>
+    <div class="theme-switcher auto-theme-indicator" aria-label="Thème automatique"><span>Thème automatique</span><i class="fas fa-sun" aria-hidden="true"></i><i class="fas fa-moon" aria-hidden="true"></i></div>
 
 <header class="header">
     <div class="nav-container">
@@ -95,13 +94,13 @@
                             <label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération — 20 000 Ar</label>
                         </div>
                         <div class="date-range">
-                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Code promo<input id="booking-promo" placeholder="Code promo (facultatif)"></label><label>Code promo<input id="booking-promo" placeholder="Code promo (facultatif)"></label>
+                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Code promo<input id="booking-promo" placeholder="Un seul code promo par réservation"></label>
                         <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
                             <label id="mobile-reference-field">Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
                             <label id="mobile-number-field">Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
                         </div>
                         <p id="booking-quote" class="booking-result" role="status"></p>
-                        <p id="booking-balance-note" class="booking-result"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>
+                        <p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur — 30 000 Ar / jour</label>
                         <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
                         <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer la demande</button>
@@ -114,7 +113,7 @@
                 <p class="muted">La facture et le contrat sont accessibles uniquement après validation de l’acompte par Rent Car Services. Le reste à payer doit être réglé au moment de récupérer la voiture.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
                     <div class="date-range"><label>Référence réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
-                    <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture et le contrat et le contrat</button>
+                    <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture et le contrat</button>
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
             </div>
@@ -159,5 +158,6 @@
 
     <script src="supabase.js"></script>
     <script src="script.js"></script>
+    <script src="enhancements.js"></script>
 </body>
 </html>
