@@ -1,0 +1,134 @@
+:root {
+    --primary: #0d47a1;
+    --accent: #25d366;
+    --dark: #1a1a1a;
+    --light: #f4f7f9;
+    --card-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+    font-family: 'Poppins', sans-serif; 
+    color: var(--dark);
+    overflow-x: hidden;
+    padding-bottom: 80px;
+    background-color: transparent; /* Pour laisser voir le fond du html */
+}
+
+/* Boutons réutilisables */
+.btn {
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.25s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.btn-icon {
+  padding: 8px 10px;
+  border-radius: 50px;
+  justify-content: center;
+  font-size: 0.95rem;
+  width: auto;
+  height: auto;
+}
+
+/* Couleurs */
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-whatsapp { background: var(--accent); color: #fff; }
+
+/* --- HEADER --- */
+.header { position: fixed; top: 0; width: 100%; height: 70px; background: rgba(255,255,255,0.98); z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; }
+.nav-container { width: 90%; max-width: 1200px; margin: auto; display: flex; justify-content: space-between; align-items: center; }
+#brand-name { font-size: 1.2rem; color: var(--primary); font-weight: 700; display: flex; align-items: center; }
+#brand-name span { color: var(--accent); margin-left: 5px; }
+#nav-menu button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: var(--dark); font-size: 0.95rem; }
+.menu-burger { display: none; font-size: 1.5rem; cursor: pointer; color: var(--primary); }
+
+/* --- TABS & SECTIONS --- */
+.tab { 
+    display: none; 
+    padding-top: 80px; 
+    min-height: 80vh; 
+    animation: fadeIn 0.5s; 
+    /* CORRECTION BACKGROUND : Fond semi-transparent pour voir Soarano.png */
+    background: rgba(244, 247, 249, 0.9); 
+}
+.tab.active { display: block; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.section-title { text-align: center; margin-bottom: 40px; color: var(--primary); font-size: 2rem; position: relative; }
+.section-title::after { content: ''; display: block; width: 60px; height: 3px; background: var(--accent); margin: 10px auto; }
+
+/* --- HERO --- */
+.hero { height: 85vh; display: flex; align-items: center; justify-content: center; text-align: center; color: white; background-size: cover; background-position: center; position: relative; margin: 0; }
+.hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)); }
+.hero-content { position: relative; z-index: 1; max-width: 800px; padding: 20px; }
+#hero-title { font-size: 3rem; margin-bottom: 15px; }
+.hero-btns { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+
+/* Compatibilité avec anciens sélecteurs existants */
+.btn-primary, .btn-whatsapp { /* garde l'ancienne compatibilité si référencés ailleurs */ }
+.btn-primary { background: var(--primary); color: white; }
+.btn-whatsapp { background: var(--accent); color: white; }
+
+/* --- FLIP CARDS (Pourquoi nous choisir & Conditions) --- */
+.features-grid, .conditions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-bottom: 50px; }
+.flip-card { height: 250px; perspective: 1000px; cursor: pointer; }
+.flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; }
+.flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+.flip-front, .flip-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-shadow: var(--card-shadow); }
+.flip-front { background-color: white; color: var(--primary); }
+.flip-front i { font-size: 3rem; margin-bottom: 15px; color: var(--accent); }
+.flip-back { background-color: var(--primary); color: white; transform: rotateY(180deg); }
+
+/* --- VOITURES --- */
+.cars-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.car-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; }
+.car-gallery { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 200px; background: #000; }
+.car-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
+.car-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+.car-price { color: var(--accent); font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; }
+.car-tags { display: flex; gap: 10px; margin-bottom: 15px; font-size: 0.85rem; color: #666; flex-wrap: wrap; }
+.car-tags span { background: #f0f2f5; padding: 5px 10px; border-radius: 5px; }
+
+/* Actions dans les cartes (espace & alignement) */
+.car-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+
+/* --- DIVERTISSEMENT --- */
+.radios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.radio-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: var(--card-shadow); height: 280px; display: flex; flex-direction: column; justify-content: space-between; }
+.radio-logo-container img { max-width: 100px; max-height: 100px; object-fit: contain; }
+
+/* --- CONTACT --- */
+.contact-wrapper { background: white; padding: 40px; border-radius: 20px; box-shadow: var(--card-shadow); max-width: 700px; margin: 0 auto; }
+.form-group { margin-bottom: 20px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; }
+
+/* Utiliser btn-submit tout en restant compatible */
+.btn-submit { width: 100%; background: var(--accent); color: white; padding: 16px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+
+/* --- FOOTER & FAB --- */
+footer { background: rgba(255, 255, 255, 0.95) !important; padding: 40px 0; text-align: center; border-top: 1px solid #eee; margin-top: 60px; }
+.social-footer a { margin: 0 10px; font-size: 1.5rem; color: var(--primary); }
+.fab-call { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; padding: 12px 20px; border-radius: 50px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; z-index: 2000; }
+
+/* Make fab visually consistent with btn classes when applied */
+.fab-call.btn { padding: 12px 18px; border-radius: 40px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .menu-burger { display: block; }
+    #nav-menu { display: none; position: absolute; top: 70px; left: 0; width: 100%; background: white; flex-direction: column; padding: 20px; }
+    #nav-menu.active { display: flex; }
+    .features-grid, .conditions-grid, .cars-grid, .radios-grid { grid-template-columns: 1fr; }
+    .hero-btns { flex-direction: column; }
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

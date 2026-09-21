@@ -1,0 +1,30 @@
+{
+  "theme": {
+    "site_bg": "images/soarano.png",
+    "primary": "#1d3c6b",
+    "accent": "#1d2e23",
+    "text_main": "#1a1a1a",
+    "border_color": "#dddddd",
+    "card_bg": "rgba(255, 255, 255, 0.9)"
+  },
+  "header": {
+    "nom": "RENT CAR",
+    "suffixe": "SERVICES",
+    "logo_url": "images/logo.png"
+  },
+  "social_links": {
+    "facebook": "https://www.facebook.com/share/1HckYysdQm/",
+    "tiktok": "",
+    "instagram": "",
+    "maps": ""
+  },
+  "footer": {
+    "adresse": "67 Ha Nord Ouest, Parking FJKM SALEMA",
+    "telephone": "034 91 207 26",
+    "whatsapp": "261349120726",
+    "nif": "",
+    "stat": ""
+  }
+
+}
+

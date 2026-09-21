@@ -1,0 +1,33 @@
+{
+  "appearance": {
+    "label_color": "#0d47a1",
+    "input_border": "#dddddd",
+    "btn_bg": "#25d366"
+  },
+  "formulaire": [
+    {
+      "type": "text",
+      "id": "nom",
+      "label": "Nom",
+      "placeholder": "Votre nom"
+    },
+    {
+      "type": "email",
+      "id": "email",
+      "label": "Email",
+      "placeholder": "votre@mail.com"
+    },
+    {
+      "type": "select",
+      "id": "subject",
+      "label": "Motif",
+      "options": ["Réservation", "Demande de devis", "Information"]
+    },
+    {
+      "type": "textarea",
+      "id": "message",
+      "label": "Message (Dates, véhicule souhaité...)",
+      "placeholder": "Bonjour..."
+    }
+  ]
+}

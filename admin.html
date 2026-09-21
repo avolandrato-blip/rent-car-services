@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>ADMIN - Panneau de Contrôle</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 900px; margin: 20px auto; border-left: 5px solid #0d47a1; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+        pre { background: #222; color: #0f0; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>1. Apparence & Liens (config.json)</h2>
+        <label>Couleur Primaire</label><input type="color" id="c-primary">
+        <label>Image Hero (URL)</label><input type="text" id="c-hero">
+        <label>Lien Facebook</label><input type="text" id="s-fb">
+        <label>Lien YouTube Playlist</label><input type="text" id="p-yt">
+        <label>Lien Spotify Playlist</label><input type="text" id="p-sp">
+        <button class="btn" style="background:#0d47a1" onclick="genConfig()">Générer CONFIG.JSON</button>
+    </div>
+
+    <div class="box">
+        <h2>2. Web Radios (data.json)</h2>
+        <div id="radio-list"></div>
+        <button class="btn" style="background:#25d366" onclick="addRadioForm()">+ Ajouter une Radio</button>
+        <button class="btn" style="background:#333" onclick="genData()">Générer DATA.JSON</button>
+    </div>
+
+    <div class="box" id="result-box" style="display:none">
+        <h2>Résultat à copier</h2>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        async function load() {
+            const r1 = await fetch('config.json');
+            const c = await r1.json();
+            document.getElementById('c-primary').value = c.theme.primary;
+            document.getElementById('c-hero').value = c.theme.hero_bg;
+            document.getElementById('s-fb').value = c.social.facebook;
+            document.getElementById('p-yt').value = c.playlists.youtube;
+            document.getElementById('p-sp').value = c.playlists.spotify;
+
+            const r2 = await fetch('data.json');
+            const d = await r2.json();
+            d.radios.forEach(r => addRadioForm(r));
+        }
+
+        function addRadioForm(r = {}) {
+            const div = document.createElement('div');
+            div.className = 'radio-item';
+            div.innerHTML = `
+                <hr><label>Nom Radio</label><input type="text" class="r-nom" value="${r.nom || ''}">
+                <label>URL Stream</label><input type="text" class="r-url" value="${r.url || ''}">
+                <label>Logo URL</label><input type="text" class="r-logo" value="${r.logo || ''}">
+            `;
+            document.getElementById('radio-list').appendChild(div);
+        }
+
+        async function genConfig() {
+            const r = await fetch('config.json');
+            let c = await r.json();
+            c.theme.primary = document.getElementById('c-primary').value;
+            c.theme.hero_bg = document.getElementById('c-hero').value;
+            c.social.facebook = document.getElementById('s-fb').value;
+            c.playlists.youtube = document.getElementById('p-yt').value;
+            c.playlists.spotify = document.getElementById('p-sp').value;
+            show(c);
+        }
+
+        async function genData() {
+            const r = await fetch('data.json');
+            let d = await r.json();
+            d.radios = Array.from(document.querySelectorAll('.radio-item')).map(el => ({
+                nom: el.querySelector('.r-nom').value,
+                url: el.querySelector('.r-url').value,
+                logo: el.querySelector('.r-logo').value
+            }));
+            show(d);
+        }
+
+        function show(obj) {
+            document.getElementById('result-box').style.display = 'block';
+            document.getElementById('output').innerText = JSON.stringify(obj, null, 2);
+        }
+        load();
+    </script>
+</body>
+</html>

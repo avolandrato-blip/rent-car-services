@@ -1,0 +1,59 @@
+{
+  "features": [
+    { "titre": "Autonomie", "icon": "fa-key", "description": "Liberté totale de conduite sans chauffeur." },
+    { "titre": "Sécurité", "icon": "fa-shield-alt", "description": "Véhicules révisés avant chaque départ." }
+  ],
+  "voitures": [
+    {
+      "nom": "Chevrolet Cruze",
+      "prix": "160 000 Ar/jour",
+      "places": 5,
+      "transmission": "Automatique",
+      "carburant": "Essence",
+      "description": "Berline de luxe, idéale pour vos déplacements en ville et événements.",
+      "photos": ["images/cruze1.jpg", "images/cruze2.jpg"]
+    },
+    {
+      "nom": "Dacia Duster 4x4",
+      "prix": "180 000 Ar/jour",
+      "places": 5,
+      "transmission": "Manuelle",
+      "carburant": "Diesel",
+      "description": "Berline de luxe, idéale pour vos déplacements en ville et événements.",
+      "photos": ["images/cruze1.jpg", "images/cruze2.jpg"]
+    },
+    {
+      "nom": "Hyundai Grand i10",
+      "prix": "130 000 Ar/jour",
+      "places": 5,
+      "transmission": "Manuelle",
+      "carburant": "Essence",
+      "description": "Berline de luxe, idéale pour vos déplacements en ville et événements.",
+      "photos": ["images/cruze1.jpg", "images/cruze2.jpg"]
+    },
+        {
+      "nom": "Hyundai Getz",
+      "prix": "100 000 Ar/jour",
+      "places": 5,
+      "transmission": "Manuelle",
+      "carburant": "Essence",
+      "description": "Berline de luxe, idéale pour vos déplacements en ville et événements.",
+      "photos": ["images/getz.jpg"]
+    }
+  ],
+  "radios": [
+    { "nom": "RDB Madagascar", "url": "https://stream.radio.mg/rdb", "logo": "images/rdb.png" },
+    { "nom": "RNA Radio", "url": "https://stream.radio.mg/rna", "logo": "images/rna.png" }
+  ],
+  "conditions": [
+    { "titre": "Âge Requis", "reponse": "Le conducteur doit avoir au moins 23 ans.", "icon": "fa-user-check" },
+    { "titre": "Permis B", "reponse": "Valide depuis plus de 2 ans minimum.", "icon": "fa-id-card" },
+    { "titre": "Caution", "reponse": "Dépôt de 1 000 000 Ar (restituable).", "icon": "fa-wallet" },
+    { "titre": "Documents", "reponse": "Original CIN/Passeport et justificatif de domicile.", "icon": "fa-file-signature" },
+    { "titre": "Carburant", "reponse": "Politique Plein à Plein (rendu avec le plein).", "icon": "fa-gas-pump" },
+    { "titre": "Zone", "reponse": "Autorisé sur toutes les routes goudronnées de Mada.", "icon": "fa-map-marked-alt" }
+  ]
+}
+
+
+

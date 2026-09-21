@@ -1,0 +1,69 @@
+{
+  "features": [
+    { "titre": "Autonomie", "icon": "fa-key", "description": "Liberté totale de conduite sans chauffeur." },
+    { "titre": "Sécurité", "icon": "fa-shield-alt", "description": "Véhicules révisés avant chaque départ." },
+    { "titre": "Assistance", "icon": "fa-headset", "description": "Support 24h/7 pour tous nos clients." }
+  ],
+  "conditions": [
+    {
+      "titre": "Caution",
+      "reponse": "Aucune caution n'est exigée.",
+      "icon": "fa-wallet"
+    },
+    {
+      "titre": "Kilométrage",
+      "reponse": "Kilométrage limité à 100 km/jour. Les kilomètres supplémentaires sont facturés selon le tarif en vigueur.",
+      "icon": "fa-road"
+    },
+    {
+      "titre": "Carburant",
+      "reponse": "Politique plein/plein : le véhicule est livré plein et doit être rendu plein. Les manques de carburant sont facturés au tarif de remplissage plus une majoration.",
+      "icon": "fa-gas-pump"
+    },
+    {
+      "titre": "Assurance",
+      "reponse": "Une assurance responsabilité civile est incluse. Les options de couverture (CDW, TP) sont disponibles en supplément — franchise applicable en cas de sinistre.",
+      "icon": "fa-shield-alt"
+    },
+    {
+      "titre": "Restitution",
+      "reponse": "Le véhicule doit être restitué à la date et à l’heure prévues. Tout retard non signalé sera facturé au tarif horaire/quotidien correspondant.",
+      "icon": "fa-clock"
+    },
+    {
+      "titre": "Conducteur supplémentaire",
+      "reponse": "Conducteurs additionnels possibles s’ils remplissent les mêmes conditions (âge, permis). Un supplément peut être appliqué par conducteur.",
+      "icon": "fa-user-plus"
+    },
+    {
+      "titre": "Interdiction de fumer",
+      "reponse": "Il est strictement interdit de fumer dans le véhicule. En cas de non-respect, des frais de nettoyage et désodorisation seront facturés.",
+      "icon": "fa-smoking-ban"
+    },
+    {
+      "titre": "Animaux",
+      "reponse": "Les animaux sont autorisés uniquement avec l’accord préalable. Des frais supplémentaires peuvent être appliqués en cas de salissures ou odeurs.",
+      "icon": "fa-paw"
+    },
+    {
+      "titre": "État du véhicule / Dommages",
+      "reponse": "Tout dommage doit être signalé immédiatement. Les frais de réparation hors assurance sont à la charge du locataire si la responsabilité est établie.",
+      "icon": "fa-car-crash"
+    },
+    {
+      "titre": "Accidents",
+      "reponse": "En cas d'accident, alertez immédiatement les autorités compétentes et contactez-nous. Remplissez le constat amiable et transmettez-le. Les frais de remorquage et les réparations peuvent être à la charge du locataire selon l'assurance et la responsabilité.",
+      "icon": "fa-ambulance"
+    },
+    {
+      "titre": "Contraventions & infractions",
+      "reponse": "Toutes les contraventions, amendes de stationnement et autres infractions commises pendant la location sont à la charge du locataire. Des frais administratifs peuvent être ajoutés pour la gestion et le transfert des amendes si nous devons intervenir.",
+      "icon": "fa-ticket-alt"
+    },
+    {
+      "titre": "Annulation & modifications",
+      "reponse": "Annulation gratuite jusqu'à 48 heures avant le départ. Après ce délai, des frais d'annulation s'appliquent selon la politique indiquée au moment de la réservation.",
+      "icon": "fa-calendar-times"
+    }
+  ]
+}

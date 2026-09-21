@@ -1,0 +1,12 @@
+{
+  "hero": {
+    "titre": "Location de voiture premium",
+    "slogan": "Votre liberté au meilleur prix à Antananarivo",
+    "description": "Découvrez notre flotte de véhicules récents, entretenus avec soin pour vos déplacements en ville ou vos aventures sur les routes de Madagascar. Location sans chauffeur pour une autonomie totale.",
+    "image": "images/chevrolet_cruze.jpg"
+  },
+  "colors": {
+    "text_hero": "#ffffff",
+    "text_description": "#f4f4f4"
+  }
+}

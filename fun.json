@@ -1,0 +1,40 @@
+{
+  "style": {
+    "title_color": "#0d47a1",
+    "card_bg": "#ffffff"
+  },
+  "radios": [
+    {
+      "nom": "Rire & Chansons",
+      "url": "https://streaming.nrjaudio.fm/ou8o8xgk7oiu?origine=ubuntu-fr.org",
+      "logo": "https://static.rireetchansons.fr/var/oeillet_site/storage/images/rireetchansons/logo-rire-chansons/25108-1-fre-FR/Logo-Rire-Chansons_reference.png"
+    },
+    {
+      "nom": "Skyrock",
+      "url": "http://icecast.skyrock.net/s/natio_mp3_128k",
+      "logo": "https://www.skyrock.fm/static/images/global/skyrock-fb.png"
+    },
+    {
+      "nom": "NRJ",
+      "url": "https://streaming.nrjaudio.fm/oumvmk8fnozc?origine=ubuntu-fr.org",
+      "logo": "https://www.nrj.fr/assets/NRJ_logos_PNG/logo-nrj-carre.png"
+    }
+  ],
+  "playlists": [
+    {
+      "nom": "Top Hits Madagascar",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/2048px-Spotify_logo_without_text.svg.png",
+      "link": "https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF"
+    },
+    {
+      "nom": "Ambiance Tropicale",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/1024px-YouTube_full-color_icon_%282017%29.svg.png",
+      "link": "https://www.youtube.com/playlist?list=PLw0Ld7Wj9W"
+    },
+    {
+      "nom": "Deezer Flow",
+      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Deezer_logo_circle.svg/1200px-Deezer_logo_circle.svg.png",
+      "link": "https://www.deezer.com/fr/playlist/123456"
+    }
+  ]
+}
