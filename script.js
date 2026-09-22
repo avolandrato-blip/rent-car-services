@@ -1,7 +1,7 @@
 let siteConfig = {};
 let activePromo = null;
 function setClientTheme(theme) { document.body.dataset.theme = theme; localStorage.setItem("rentcar-theme", theme); }
-function initClientTheme() { const hour=Number(new Intl.DateTimeFormat("fr-FR",{timeZone:"Indian/Antananarivo",hour:"2-digit",hour12:false}).format(new Date())); setClientTheme(hour>=6 && hour<19 ? "premium-white" : "premium-black"); }
+function initClientTheme() { setClientTheme(localStorage.getItem("rentcar-theme") || "royal-night"); }
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initSite();
@@ -427,15 +427,10 @@ async function submitReservation(event) {
         vehicle_id: vehicle.id,
         customer_name: document.getElementById('booking-name').value.trim(),
         customer_phone: document.getElementById('booking-phone').value.trim(),
-        whatsapp_phone: document.getElementById('booking-whatsapp').value.trim(),
         customer_email: document.getElementById('booking-email').value.trim() || null,
         customer_address: document.getElementById('booking-address').value.trim(),
         customer_license: document.getElementById('booking-license').value.trim(),
         customer_cin: document.getElementById('booking-cin').value.trim(),
-        cin_acquired_at: document.getElementById('booking-cin-date').value || null,
-        cin_acquired_place: document.getElementById('booking-cin-place').value.trim(),
-        license_acquired_at: document.getElementById('booking-license-date').value || null,
-        license_acquired_place: document.getElementById('booking-license-place').value.trim(),
         start_at: new Date(start).toISOString(),
         end_at: new Date(end).toISOString(),
         with_driver: document.getElementById('booking-driver').checked,
@@ -460,7 +455,6 @@ async function submitReservation(event) {
         mobile_reference: document.getElementById('booking-mobile-reference').value.trim() || null,
         mobile_number: document.getElementById('booking-mobile-number').value.trim() || null,
         notes: document.getElementById('booking-notes').value.trim() || null,
-        terms_accepted_at: new Date().toISOString(),
         status: deposit > 0 ? 'reserved' : 'pre_reserved'
     };
     const { data, error } = await window.rentCarSupabase.from('reservations').insert(payload).select('reference').single();
@@ -471,8 +465,8 @@ async function submitReservation(event) {
         return;
     }
     result.className = 'booking-result booking-success';
-    result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée. La facture et le contrat seront envoyés sur WhatsApp après validation.` : `Demande ${data.reference} enregistrée. La date reste disponible. La facture et le contrat vous seront envoyés sur WhatsApp dès le paiement d’un acompte.`;
-    document.getElementById('booking-form').reset(); activePromo = null;
+    result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée.` : `Demande ${data.reference} enregistrée. La date reste disponible jusqu’au paiement de l’acompte.`;
+    document.getElementById('booking-form').reset(); activePromo = null; activePromo = null;
     await loadBookingData();
 }
 
@@ -483,7 +477,7 @@ async function verifyInvoiceOtp(event) {
     const reference = document.getElementById('invoice-reference').value.trim();
     const phone = document.getElementById('invoice-phone').value.trim();
     const otp = document.getElementById('invoice-otp').value.trim();
-    const { data, error } = await window.rentCarSupabase.from('reservations').select('*,vehicles(name,make,model,registration_number)').eq('reference', reference).eq('whatsapp_phone', phone).eq('invoice_released', true).eq('otp_code', otp).single();
+    const { data, error } = await window.rentCarSupabase.from('reservations').select('*,vehicles(name,make,model,registration_number)').eq('reference', reference).eq('customer_phone', phone).eq('invoice_released', true).eq('otp_code', otp).single();
     if (error || !data) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
     const typeLabel = data.rental_type === 'night' ? 'Nuit — 12 h (19h00 à 06h00)' : data.rental_type === '24h' ? '24 heures' : 'Jour — 12 h (07h00 à 18h00)';
     const rentalOnly = Number(data.total_amount||0) - Number(data.delivery_fee||0) - Number(data.recovery_fee||0) - Number(data.chauffeur_fee||0);
@@ -511,6 +505,10 @@ function syncRentalTimes() {
 document.getElementById('booking-rental-type')?.addEventListener('change', syncRentalTimes);
 document.getElementById('booking-start-time')?.addEventListener('change', () => { if (document.getElementById('booking-rental-type')?.value === '24h') { document.getElementById('booking-end-time').value = document.getElementById('booking-start-time').value === '07:00' ? '06:00' : '18:00'; } updateBookingQuote(); });
 
+
+async function validatePromoCode() { const input=document.getElementById('booking-promo'); const code=input?.value.trim().toUpperCase(); activePromo=null; if(code && window.rentCarSupabase){ const {data}=await window.rentCarSupabase.from('promo_codes').select('code,discount_type,discount_value').eq('code',code).eq('active',true).maybeSingle(); activePromo=data||null; input.setCustomValidity(data?'':'Code promo invalide ou inactif.'); } else if(input) input.setCustomValidity(''); updateBookingQuote(); }
+document.getElementById('booking-promo')?.addEventListener('change', validatePromoCode);
+document.getElementById('booking-promo')?.addEventListener('blur', validatePromoCode);
 
 async function validatePromoCode() { const input=document.getElementById('booking-promo'); const code=input?.value.trim().toUpperCase(); activePromo=null; if(code && window.rentCarSupabase){ const {data}=await window.rentCarSupabase.from('promo_codes').select('code,discount_type,discount_value').eq('code',code).eq('active',true).maybeSingle(); activePromo=data||null; input.setCustomValidity(data?'':'Code promo invalide ou inactif.'); } else if(input) input.setCustomValidity(''); updateBookingQuote(); }
 document.getElementById('booking-promo')?.addEventListener('change', validatePromoCode);
