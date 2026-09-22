@@ -70,7 +70,73 @@
     $('finance-content').innerHTML = `<p><strong>CA général confirmé :</strong> ${money(revenue)} &nbsp; <strong>Dépenses maintenance :</strong> ${money(maint)}</p><div class="table-wrap"><table class="table"><thead><tr><th>Voiture</th><th>CA généré</th></tr></thead><tbody>${Object.entries(byCar).map(([name, total]) => `<tr><td>${esc(name)}</td><td>${money(total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune réservation confirmée.</td></tr>'}</tbody></table></div>`;
   }
 
+  function confirmedReservationsForAnalysis() {
+    return (typeof reservations !== 'undefined' ? reservations : []).filter(r => ['reserved', 'completed'].includes(r.status));
+  }
+
+  function renderFinanceAnalysis() {
+    const grid = document.querySelector('#overview .grid');
+    if (!grid) return;
+    let box = $('finance-analysis');
+    if (!box) {
+      grid.insertAdjacentHTML('afterend', `<div id="finance-analysis" class="section card"><div class="section-head"><div><h2>Mini-analyse financière</h2><p class="legend">Les montants par date et par voiture concernent les réservations confirmées ou terminées.</p></div><button class="btn outline" id="finance-reset">Réinitialiser</button></div><div class="filters"><label class="field"><span>Date de début</span><input id="finance-from" type="date"></label><label class="field"><span>Date de fin</span><input id="finance-to" type="date"></label><label class="field"><span>Voiture</span><select id="finance-vehicle"><option value="all">Toutes les voitures</option></select></label></div><div id="finance-metrics" class="grid"></div><div id="finance-breakdown" class="table-wrap"></div></div>`);
+      box = $('finance-analysis');
+      ['finance-from','finance-to','finance-vehicle'].forEach(id => $(id)?.addEventListener('change', renderFinanceAnalysis));
+      $('finance-reset')?.addEventListener('click', () => { $('finance-from').value=''; $('finance-to').value=''; $('finance-vehicle').value='all'; renderFinanceAnalysis(); });
+    }
+    const allVehicles = typeof vehicles !== 'undefined' ? vehicles : [];
+    const vehicleSelect = $('finance-vehicle');
+    const currentValue = vehicleSelect?.value || 'all';
+    if (vehicleSelect) vehicleSelect.innerHTML = '<option value="all">Toutes les voitures</option>' + allVehicles.map(v => `<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');
+    if (vehicleSelect && allVehicles.some(v => v.id === currentValue)) vehicleSelect.value = currentValue;
+    const from = $('finance-from')?.value ? new Date(`${$('finance-from').value}T00:00:00`) : null;
+    const to = $('finance-to')?.value ? new Date(`${$('finance-to').value}T23:59:59`) : null;
+    const selectedVehicle = $('finance-vehicle')?.value || 'all';
+    const rows = confirmedReservationsForAnalysis().filter(r => {
+      const d = new Date(r.start_at);
+      return (!from || d >= from) && (!to || d <= to) && (selectedVehicle === 'all' || r.vehicle_id === selectedVehicle);
+    });
+    const total = rows.reduce((a,r) => a + Number(r.total_amount || 0), 0);
+    const collected = rows.reduce((a,r) => a + (typeof paidFor === 'function' ? paidFor(r) : Number(r.deposit_amount || 0)), 0);
+    const maintenance = (typeof maintenances !== 'undefined' ? maintenances : []).filter(m => {
+      const d = new Date(m.maintenance_date || m.start_at);
+      return (!from || d >= from) && (!to || d <= to) && (selectedVehicle === 'all' || m.vehicle_id === selectedVehicle);
+    }).reduce((a,m) => a + Number(m.amount || 0), 0);
+    const historical = (typeof customers !== 'undefined' ? customers : []).reduce((a,c) => a + Number(c.historical_paid_total || 0), 0);
+    $('finance-metrics').innerHTML = `<div class="card"><div class="metric-label">Réservations analysées</div><div class="metric">${rows.length}</div></div><div class="card"><div class="metric-label">CA facturé</div><div class="metric gold">${money(total)}</div></div><div class="card"><div class="metric-label">Encaissement actuel</div><div class="metric gold">${money(collected)}</div></div><div class="card"><div class="metric-label">Résultat après maintenance</div><div class="metric">${money(collected - maintenance)}</div></div>`;
+    const grouped = {};
+    rows.forEach(r => { const name = r.vehicles?.name || allVehicles.find(v => v.id === r.vehicle_id)?.name || 'Voiture inconnue'; const g = grouped[name] ||= {count:0,total:0,paid:0}; g.count++; g.total += Number(r.total_amount||0); g.paid += typeof paidFor === 'function' ? paidFor(r) : Number(r.deposit_amount||0); });
+    $('finance-breakdown').innerHTML = `<p class="notice"><strong>CA historique global importé :</strong> ${money(historical)}. Il n’est pas ventilé par date ou voiture dans le fichier source.</p><table class="table"><thead><tr><th>Voiture</th><th>Locations</th><th>CA facturé</th><th>Payé</th><th>Reste</th></tr></thead><tbody>${Object.entries(grouped).sort((a,b)=>b[1].paid-a[1].paid).map(([name,g]) => `<tr><td><strong>${esc(name)}</strong></td><td>${g.count}</td><td>${money(g.total)}</td><td>${money(g.paid)}</td><td>${money(Math.max(0,g.total-g.paid))}</td></tr>`).join('') || '<tr><td colspan="5">Aucune donnée pour ces filtres.</td></tr>'}</tbody></table>`;
+  }
+
+  function renderVehicleFilters() {
+    const table = $('vehicles-table');
+    if (!table) return;
+    let filters = $('vehicle-filters');
+    if (!filters) {
+      table.insertAdjacentHTML('beforebegin', `<div id="vehicle-filters" class="filters"><input id="vehicle-search" placeholder="Rechercher une voiture"><select id="vehicle-transmission"><option value="all">Toutes les transmissions</option></select><select id="vehicle-seats"><option value="all">Toutes les places</option></select><input id="vehicle-price-min" type="number" min="0" placeholder="Prix min / jour"><input id="vehicle-price-max" type="number" min="0" placeholder="Prix max / jour"><select id="vehicle-sort"><option value="name">Trier : nom</option><option value="popular">Trier : plus prise</option><option value="price-asc">Trier : prix croissant</option><option value="price-desc">Trier : prix décroissant</option></select><span id="vehicle-popular" class="notice" style="margin:0"></span></div>`);
+      filters = $('vehicle-filters');
+      ['vehicle-search','vehicle-transmission','vehicle-seats','vehicle-price-min','vehicle-price-max','vehicle-sort'].forEach(id => $(id)?.addEventListener('input', renderVehicleFilters));
+    }
+    const list = typeof vehicles !== 'undefined' ? vehicles : [];
+    const counts = {};
+    (typeof reservations !== 'undefined' ? reservations : []).filter(r => r.status !== 'cancelled').forEach(r => { counts[r.vehicle_id] = (counts[r.vehicle_id] || 0) + 1; });
+    const transmissions = [...new Set(list.map(v => v.transmission).filter(Boolean))].sort();
+    const seats = [...new Set(list.map(v => v.seats).filter(v => v !== null && v !== undefined))].sort((a,b)=>a-b);
+    const trans = $('vehicle-transmission'), seat = $('vehicle-seats');
+    const tv = trans?.value || 'all', sv = seat?.value || 'all';
+    if (trans) trans.innerHTML = '<option value="all">Toutes les transmissions</option>' + transmissions.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    if (seat) seat.innerHTML = '<option value="all">Toutes les places</option>' + seats.map(v=>`<option value="${esc(v)}">${esc(v)} places</option>`).join('');
+    if (trans) trans.value = transmissions.includes(tv) ? tv : 'all'; if (seat) seat.value = seats.map(String).includes(String(sv)) ? sv : 'all';
+    const search = ($('vehicle-search')?.value || '').toLowerCase().trim(); const min = Number($('vehicle-price-min')?.value || 0); const max = Number($('vehicle-price-max')?.value || Infinity);
+    let filtered = list.filter(v => (!search || `${v.name} ${v.make||''} ${v.model||''}`.toLowerCase().includes(search)) && (trans.value==='all'||v.transmission===trans.value) && (seat.value==='all'||String(v.seats)===String(seat.value)) && Number(v.price_per_day||0)>=min && Number(v.price_per_day||0)<=max);
+    const sort = $('vehicle-sort')?.value || 'name'; filtered.sort((a,b) => sort==='popular' ? (counts[b.id]||0)-(counts[a.id]||0) : sort==='price-asc' ? Number(a.price_per_day||0)-Number(b.price_per_day||0) : sort==='price-desc' ? Number(b.price_per_day||0)-Number(a.price_per_day||0) : String(a.name).localeCompare(String(b.name),'fr'));
+    const popular = [...list].sort((a,b)=>(counts[b.id]||0)-(counts[a.id]||0))[0];
+    $('vehicle-popular').textContent = popular ? `Voiture la plus prise : ${popular.name} (${counts[popular.id]||0} réservation(s))` : 'Aucune réservation';
+    const body = table.querySelector('tbody'); if (body) body.innerHTML = filtered.map(v=>`<tr><td><strong>${esc(v.name)}</strong><br><small>${esc(v.description||'')}</small></td><td>${esc(v.registration_number||'—')}<br>${esc(v.make||'')} ${esc(v.model||'')}<br><small>Propriétaire : ${esc(v.owner_name||'—')} · ${esc(v.owner_phone||'—')}</small></td><td>${money(v.price_per_day)}<br><small>${v.driver_mode==='with_driver' ? 'Avec chauffeur' : 'Sans chauffeur'}</small></td><td>${esc(v.transmission||'—')} · ${esc(v.fuel||'—')} · ${v.seats||'—'} places<br><small>${counts[v.id]||0} réservation(s)</small>${v.driver_mode==='with_driver' && (v.trip_rates||[]).length ? `<br><small>${(v.trip_rates||[]).map(t=>`${esc(t.from)} → ${esc(t.to)} : ${money(t.price_per_day)}/j`).join('<br>')}</small>` : ''}</td><td><span class="pill ${v.status}">${v.status}</span></td><td><div class="actions"><button class="btn outline" onclick="editVehicle('${v.id}')">Modifier</button><button class="btn outline" onclick="toggleVehicleStatus('${v.id}')">${v.status==='maintenance'?'Rendre disponible':'Mettre en maintenance'}</button></div></td></tr>`).join('') || '<tr><td colspan="6">Aucune voiture pour ces filtres.</td></tr>';
+  }
+
   window.printReturnForm = openReturnModal;
   window.printDocument = printDocumentEnhanced;
-  document.addEventListener('DOMContentLoaded', () => { addMaintenanceFields(); addStyles(); setTimeout(renderFinance, 1200); });
+  document.addEventListener('DOMContentLoaded', () => { addMaintenanceFields(); addStyles(); setTimeout(() => { renderFinanceAnalysis(); renderVehicleFilters(); }, 1200); });
 })();
