@@ -125,55 +125,62 @@ async function loadCards() {
 }
 
 // Galerie des véhicules
-async function loadCars() {
-    const localResponse = await fetch('cars.json', { cache: 'no-store' });
-    const localData = await localResponse.json();
-    const localCars = localData.liste || [];
-    let cars = localCars;
-    if (window.rentCarSupabase) {
-        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates').neq('status', 'inactive').order('name');
-        if (!error && remoteCars?.length) {
-            cars = remoteCars.map(car => {
-                const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {};
-                return {
-                    ...car,
-                    nom: car.name,
-                    prix: `${formatMGA(car.price_per_day)} / jour`,
-                    transmission: car.transmission || local.transmission || '—',
-                    carburant: car.fuel || local.carburant || '—',
-                    places: car.seats || local.places || '—',
-                    description: car.description || local.description || '',
-                    photos: (car.image_urls && car.image_urls.length) ? car.image_urls : (local.photos || [])
-                };
-            });
-        }
-    }
+let publicCars = [];
+let publicRentalCounts = {};
+
+function renderPublicCars() {
+    const search = (document.getElementById('fleet-search')?.value || '').trim().toLowerCase();
+    const transmission = document.getElementById('fleet-transmission')?.value || 'all';
+    const seats = document.getElementById('fleet-seats')?.value || 'all';
+    const maxPrice = Number(document.getElementById('fleet-max-price')?.value || Infinity);
+    const sort = document.getElementById('fleet-sort')?.value || 'name';
+    let cars = publicCars.filter(car => {
+        const haystack = `${car.nom} ${car.make || ''} ${car.model || ''}`.toLowerCase();
+        return (!search || haystack.includes(search)) &&
+            (transmission === 'all' || car.transmission === transmission) &&
+            (seats === 'all' || String(car.places) === seats) &&
+            Number(car.price_per_day || 0) <= maxPrice;
+    });
+    cars.sort((a,b) => sort === 'popular' ? (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0) : sort === 'price-asc' ? Number(a.price_per_day||0)-Number(b.price_per_day||0) : sort === 'price-desc' ? Number(b.price_per_day||0)-Number(a.price_per_day||0) : String(a.nom).localeCompare(String(b.nom), 'fr'));
+    const popular = [...publicCars].sort((a,b) => (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0))[0];
+    const popularEl = document.getElementById('fleet-popular');
+    if (popularEl) popularEl.textContent = popular && publicRentalCounts[popular.id] ? `Voiture la plus prise : ${popular.nom} (${publicRentalCounts[popular.id]} réservation(s))` : 'Popularité disponible après enregistrement des réservations.';
     document.getElementById('cars-grid').innerHTML = cars.map(car => `
         <div class="car-card">
-            <div class="car-gallery">
-                ${(car.photos || []).map(photo => `<img src="${photo}" loading="lazy" alt="${car.nom}">`).join('')}
-            </div>
+            <div class="car-gallery">${(car.photos || []).map(photo => `<img src="${photo}" loading="lazy" alt="${car.nom}">`).join('')}</div>
             <div class="car-info">
                 <h3>${car.nom}</h3>
                 <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location en sans chauffeur'}</p>
                 <p class="car-price">${car.prix}</p>
-                <div class="car-tags">
-                    <span><i class="fas fa-cog"></i> ${car.transmission}</span>
-                    <span><i class="fas fa-gas-pump"></i> ${car.carburant}</span>
-                    <span><i class="fas fa-users"></i> ${car.places}</span>
-                </div>
+                <div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant}</span><span><i class="fas fa-users"></i> ${car.places}</span></div>
                 <p class="car-desc">${car.description}</p>
-                <div class="car-actions">
-                    <button class="btn btn-primary btn-reserve" onclick="openBookingForVehicle('${car.id || ''}','${car.nom}')">Réserver</button>
-                    <button class="btn btn-outline" onclick="openLongTermQuote('${car.nom}')">Contactez-nous</button>
-                    <a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a>
-                    <a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a>
-                </div>
+                <div class="car-actions"><button class="btn btn-primary btn-reserve" onclick="openBookingForVehicle('${car.id || ''}','${car.nom}')">Réserver</button><button class="btn btn-outline" onclick="openLongTermQuote('${car.nom}')">Contactez-nous</button><a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a><a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a></div>
             </div>
-        </div>
-    `).join('');
+        </div>`).join('') || '<p class="fleet-empty">Aucune voiture ne correspond à vos critères.</p>';
 }
 
+function bindPublicCarFilters() {
+    ['fleet-search','fleet-transmission','fleet-seats','fleet-max-price','fleet-sort'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars));
+}
+
+async function loadCars() {
+    const localResponse = await fetch('cars.json', { cache: 'no-store' });
+    const localData = await localResponse.json();
+    const localCars = localData.liste || [];
+    publicCars = localCars;
+    if (window.rentCarSupabase) {
+        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates').neq('status', 'inactive').order('name');
+        if (!error && remoteCars?.length) publicCars = remoteCars.map(car => { const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {}; return {...car, nom:car.name, prix:`${formatMGA(car.price_per_day)} / jour`, transmission:car.transmission || local.transmission || '—', carburant:car.fuel || local.carburant || '—', places:car.seats || local.places || '—', description:car.description || local.description || '', photos:(car.image_urls && car.image_urls.length) ? car.image_urls : (local.photos || [])}; });
+        const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
+        publicRentalCounts = (booked || []).reduce((acc, row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
+    }
+    const transmissions = [...new Set(publicCars.map(c => c.transmission).filter(v => v && v !== '—'))].sort();
+    const seats = [...new Set(publicCars.map(c => c.places).filter(v => v && v !== '—'))].sort((a,b) => Number(a)-Number(b));
+    document.getElementById('fleet-transmission').innerHTML = '<option value="all">Toutes</option>' + transmissions.map(v => `<option value="${v}">${v}</option>`).join('');
+    document.getElementById('fleet-seats').innerHTML = '<option value="all">Toutes</option>' + seats.map(v => `<option value="${v}">${v} places</option>`).join('');
+    bindPublicCarFilters();
+    renderPublicCars();
+}
 // Musique et Divertissement
 async function loadFun() {
     const res = await fetch('fun.json');
