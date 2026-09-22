@@ -16,11 +16,68 @@
     phone?.insertAdjacentHTML('afterend', '<label>WhatsApp actif<input id="booking-whatsapp" required placeholder="034 xx xxx xx"><small class="field-note">Ce numéro recevra la facture et le contrat.</small></label>');
     if (!$('booking-license-place')) $('booking-license')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>Permis délivré à<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Permis délivré le<input id="booking-license-date" type="date" required></label></div>');
     if (!$('booking-cin-place')) $('booking-cin')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>CIN délivrée à<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>CIN délivrée le<input id="booking-cin-date" type="date" required></label></div>');
-    $('booking-notes')?.closest('label')?.insertAdjacentHTML('beforebegin', '<label class="checkbox-line terms-consent"><input id="booking-terms-consent" type="checkbox" required> Je reconnais avoir lu et approuvé les conditions de réservation et le contrat.</label>');
-    const note = document.createElement('p');
-    note.className = 'muted booking-policy-note';
-    note.textContent = 'Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception d’un acompte.';
-    $('booking-terms-consent')?.closest('label')?.after(note);
+  }
+
+  let currentBookingStep = 1;
+
+  function setBookingStep(step) {
+    currentBookingStep = step;
+    document.querySelectorAll('[data-booking-step]').forEach(section => section.classList.toggle('active', Number(section.dataset.bookingStep) === step));
+    document.querySelectorAll('[data-progress-step]').forEach(item => { const n = Number(item.dataset.progressStep); item.classList.toggle('active', n === step); item.classList.toggle('completed', n < step); });
+    const form = $('booking-form'); if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (step === 4) buildBookingSummary();
+  }
+
+  function validateBookingStep(step) {
+    const section = document.querySelector(`[data-booking-step="${step}"]`);
+    if (!section) return true;
+    const fields = [...section.querySelectorAll('input, select, textarea')].filter(field => !field.disabled && field.type !== 'hidden');
+    for (const field of fields) { if (!field.checkValidity()) { field.reportValidity(); return false; } }
+    if (step === 1) {
+      const start = $('booking-start-date')?.value && $('booking-start-time')?.value ? new Date(`${$('booking-start-date').value}T${$('booking-start-time').value}`) : null;
+      const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
+      if (!start || !end || end <= start) { showBookingError('Veuillez sélectionner une période de location valide.'); return false; }
+    }
+    if (step === 3) {
+      const deposit = Number($('booking-deposit')?.value || 0);
+      const method = $('booking-payment-method')?.value || '';
+      if (deposit > 0 && !method) { showBookingError('Veuillez sélectionner le mode de paiement de l’acompte.'); return false; }
+      if (deposit > 0 && method === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) { showBookingError('Veuillez joindre la preuve de paiement Mobile Money.'); return false; }
+    }
+    return true;
+  }
+
+  function updatePaymentProofVisibility() {
+    const deposit = Number($('booking-deposit')?.value || 0);
+    const method = $('booking-payment-method')?.value || '';
+    const mobile = method === 'mobile_money';
+    $('mobile-money-fields')?.classList.toggle('hidden', !mobile);
+    $('payment-proof-field')?.classList.toggle('hidden', !(mobile && deposit > 0));
+    if ($('booking-payment-proof')) $('booking-payment-proof').required = mobile && deposit > 0;
+  }
+
+  function buildBookingSummary() {
+    const vehicle = $('booking-vehicle')?.selectedOptions?.[0]?.textContent || '—';
+    const start = `${$('booking-start-date')?.value || '—'} ${$('booking-start-time')?.value || ''}`;
+    const end = `${$('booking-end-date')?.value || '—'} ${$('booking-end-time')?.value || ''}`;
+    const deposit = Number($('booking-deposit')?.value || 0);
+    const method = $('booking-payment-method')?.selectedOptions?.[0]?.textContent || '—';
+    const proof = $('booking-payment-proof')?.files?.[0]?.name || 'Aucun fichier';
+    const quote = $('booking-quote')?.textContent || '—';
+    const balance = $('booking-balance-note')?.textContent || '—';
+    const services = [$('booking-delivery')?.checked ? 'Livraison' : '', $('booking-recovery')?.checked ? 'Récupération' : '', $('booking-driver')?.checked ? 'Chauffeur' : ''].filter(Boolean).join(' · ') || 'Aucun';
+    const rows = [['Véhicule', vehicle], ['Départ', start], ['Retour', end], ['Client', $('booking-name')?.value || '—'], ['Téléphone', $('booking-phone')?.value || '—'], ['WhatsApp', $('booking-whatsapp')?.value || '—'], ['CIN', $('booking-cin')?.value || '—'], ['Permis', $('booking-license')?.value || '—'], ['Itinéraire', `${$('booking-trip-from')?.value || '—'} → ${$('booking-trip-to')?.value || '—'}`], ['Services', services], ['Tarification', quote], ['Acompte', `${deposit.toLocaleString('fr-FR')} Ar`], ['Solde', balance], ['Mode de paiement', method], ['Preuve Mobile Money', proof]];
+    $('booking-summary').innerHTML = `<dl>${rows.map(([label,value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`;
+  }
+
+  function setupBookingSteps() {
+    const form = $('booking-form'); if (!form || form.dataset.stepsReady) return;
+    form.dataset.stepsReady = 'true';
+    form.querySelectorAll('[data-next-step]').forEach(button => button.addEventListener('click', () => { const step = Number(button.closest('[data-booking-step]').dataset.bookingStep); if (validateBookingStep(step)) setBookingStep(Number(button.dataset.nextStep)); }));
+    form.querySelectorAll('[data-prev-step]').forEach(button => button.addEventListener('click', () => setBookingStep(Number(button.dataset.prevStep))));
+    ['booking-deposit','booking-payment-method'].forEach(id => $(id)?.addEventListener('input', updatePaymentProofVisibility));
+    $('booking-payment-method')?.addEventListener('change', updatePaymentProofVisibility);
+    updatePaymentProofVisibility(); setBookingStep(1);
   }
 
   async function submitReservationEnhanced(event) {
@@ -40,6 +97,7 @@
     if (deposit > quote.total) return showBookingError('L’acompte ne peut pas dépasser le montant total.');
     const paymentMethod = $('booking-payment-method').value || null;
     if (deposit > 0 && !paymentMethod) return showBookingError('Sélectionnez le mode de paiement de l’acompte.');
+    if (deposit > 0 && paymentMethod === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) return showBookingError('Veuillez joindre la preuve de paiement Mobile Money.');
     const customer = {
       full_name: $('booking-name').value.trim(), phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
       email: $('booking-email').value.trim() || null, address: $('booking-address').value.trim(), driving_license: $('booking-license').value.trim(), cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
@@ -58,7 +116,7 @@
       rate_12h: quote.rate12, rate_24h: quote.rate24, daily_rate: quote.rate12, days: quote.days, extra_fees: quote.delivery + quote.recovery, total_amount: quote.total,
       deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
       trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), trip_rate_label: quote.tripRate ? `${quote.tripRate.from} → ${quote.tripRate.to}` : null, trip_rate_per_day: quote.tripRate ? Number(quote.tripRate.price_per_day || 0) : null, delivery_fee: $('booking-delivery').checked ? 20000 : 0,
-      recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: $('booking-promo').value.trim().toUpperCase() || null,
+      recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: null,
       promo_discount: quote.discount || 0, notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: deposit > 0 ? 'reserved' : 'pre_reserved'
     };
     const reservationResult = await db.from('reservations').insert(payload).select('id,reference').single();
@@ -66,7 +124,7 @@
     if (deposit > 0) await db.from('payments').insert({ reservation_id: reservationResult.data.id, amount: deposit, method: paymentMethod, note: 'Acompte à la réservation' });
     const r = reservationResult.data;
     const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
-    [['cinRecto','booking-cin-recto'],['cinVerso','booking-cin-verso'],['permisRecto','booking-license-recto']].forEach(([name, id]) => { const file = $(id)?.files?.[0]; if (file) docs.append(name, file, file.name); });
+    [['cinRecto','booking-cin-recto'],['cinVerso','booking-cin-verso'],['permisRecto','booking-license-recto'],['paymentProof','booking-payment-proof']].forEach(([name, id]) => { const file = $(id)?.files?.[0]; if (file) docs.append(name, file, file.name); });
     if ([...docs.keys()].length > 2) {
       const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
       if (upload.error || upload.data?.error) console.error('identity document upload failed', upload.error || upload.data?.error);
@@ -76,6 +134,8 @@
     result.className = 'booking-result booking-success';
     result.textContent = deposit > 0 ? `Votre demande ${r.reference} a bien été enregistrée avec l’acompte indiqué.` : `Votre demande ${r.reference} a bien été enregistrée. La facture et le contrat seront transmis après réception d’un acompte.`;
     $('booking-form').reset();
+    $('invoice-access-panel')?.classList.toggle('hidden', deposit <= 0);
+    setBookingStep(1); updatePaymentProofVisibility();
     if (typeof loadBookingData === 'function') await loadBookingData();
   }
 
@@ -97,7 +157,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    autoTheme(); setInterval(autoTheme, 60000); addBookingFields();
+    autoTheme(); setInterval(autoTheme, 60000); addBookingFields(); setupBookingSteps();
     window.submitReservation = submitReservationEnhanced;
   });
 })();

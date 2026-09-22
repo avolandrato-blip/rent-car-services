@@ -79,58 +79,67 @@
                 <div class="booking-panel">
                     <h3>Demander une réservation</h3>
                     <form id="booking-form" onsubmit="submitReservation(event)">
-                        <label>Voiture<select id="booking-vehicle" required></select></label>
-                        <label>Nom et prénom<input id="booking-name" required placeholder="Saisissez votre nom et prénom"></label>
-                        <label>Adresse<input id="booking-address" required placeholder="Saisissez votre adresse complète"></label>
-                        <label>Téléphone<input id="booking-phone" required placeholder="Ex. 034 91 207 26"></label>
-                        <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
-                        <label>Numéro du permis de conduire<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
-                        <div class="date-range">
-                            <label>Lieu de délivrance du permis<input id="booking-license-place" required placeholder="Lieu de délivrance"></label>
-                            <label>Date de délivrance du permis<input id="booking-license-date" type="date" required></label>
+                        <div class="booking-progress" aria-label="Étapes de réservation">
+                            <div class="booking-progress-step active" data-progress-step="1"><span>1</span><strong>Véhicule et dates</strong></div>
+                            <div class="booking-progress-step" data-progress-step="2"><span>2</span><strong>Informations client</strong></div>
+                            <div class="booking-progress-step" data-progress-step="3"><span>3</span><strong>Options et paiement</strong></div>
+                            <div class="booking-progress-step" data-progress-step="4"><span>4</span><strong>Résumé et confirmation</strong></div>
                         </div>
-                        <label class="document-photo-field">Photographie du permis — recto<input id="booking-license-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small class="field-note">Joignez une photographie nette et lisible du recto du permis.</small></label>
-                        <label>Numéro de la CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
-                        <label>Type de document<select id="booking-cin-type" required><option value="false">Original</option><option value="true">Duplicata</option></select></label>
-                        <div class="date-range">
-                            <label>Lieu de délivrance de la CIN<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label>
-                            <label>Date de délivrance de la CIN<input id="booking-cin-date" type="date" required></label>
-                        </div>
-                        <fieldset class="identity-upload">
-                            <legend>Photographies de la CIN</legend>
-                            <p class="field-note">Joignez des photographies nettes et lisibles. Elles sont stockées dans un espace privé et associées à votre contrat.</p>
-                            <label>Photographie de la CIN — recto<input id="booking-cin-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
-                            <label>Photographie de la CIN — verso<input id="booking-cin-verso" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
-                        </fieldset>
-                        <input id="booking-rental-type" type="hidden" value="automatic">
-                        <div class="date-range">
-                            <label>Date de départ<input id="booking-start-date" type="date" required></label>
-                            <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
-                            <label>Date de retour<input id="booking-end-date" type="date" required></label>
-                            <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
-                        </div>
-                        <div class="date-range">
-                            <label>Itinéraire — lieu de départ<input id="booking-trip-from" required placeholder="Ville / lieu de départ"></label>
-                            <label>Itinéraire — destination<input id="booking-trip-to" required placeholder="Ville / lieu d’arrivée"></label>
-                            <label class="checkbox-line"><input id="booking-delivery" type="checkbox"> Livraison du véhicule — 20 000 Ar</label>
-                            <label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération du véhicule — 20 000 Ar</label>
-                        </div>
-                        <div class="date-range">
-                            <label>Acompte versé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Code promo<input id="booking-promo" placeholder="Un seul code promotionnel par réservation"></label>
-                        <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte versé</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
-                            <label id="mobile-reference-field">Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
-                            <label id="mobile-number-field">Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
-                        </div>
-                        <p id="booking-quote" class="booking-result" role="status"></p>
-                        <p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Le prix total exclut le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à la charge du client.</p>
-                        <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Service avec chauffeur — 30 000 Ar / jour</label>
-                        <label>Informations complémentaires<textarea id="booking-notes" rows="3" placeholder="Précisez, si nécessaire, le lieu de prise en charge ou toute information utile."></textarea></label>
-                        <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Soumettre la demande</button>
+                        <section class="booking-step active" data-booking-step="1">
+                            <h4>1. Véhicule et période</h4>
+                            <p class="muted">Sélectionnez le véhicule et la période souhaitée pour consulter le tarif estimatif.</p>
+                            <label>Véhicule<select id="booking-vehicle" required></select></label>
+                            <div class="date-range">
+                                <label>Date de départ<input id="booking-start-date" type="date" required></label>
+                                <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
+                                <label>Date de retour<input id="booking-end-date" type="date" required></label>
+                                <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
+                            </div>
+                            <div class="booking-step-actions"><span></span><button type="button" class="btn btn-primary" data-next-step="2">Continuer</button></div>
+                        </section>
+                        <section class="booking-step" data-booking-step="2">
+                            <h4>2. Informations client</h4>
+                            <p class="muted">Renseignez vos informations exactement comme elles figurent sur vos documents officiels.</p>
+                            <label>Nom et prénom<input id="booking-name" required placeholder="Saisissez votre nom et prénom"></label>
+                            <label>Adresse<input id="booking-address" required placeholder="Saisissez votre adresse complète"></label>
+                            <label>Téléphone<input id="booking-phone" required placeholder="Ex. 034 91 207 26"></label>
+                            <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
+                            <label>Numéro du permis de conduire<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
+                            <div class="date-range"><label>Lieu de délivrance du permis<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance du permis<input id="booking-license-date" type="date" required></label></div>
+                            <label>Photographie du permis — recto<input id="booking-license-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small class="field-note">Joignez une photographie nette et lisible du recto du permis.</small></label>
+                            <label>Numéro de la CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
+                            <label>Type de document<select id="booking-cin-type" required><option value="false">Original</option><option value="true">Duplicata</option></select></label>
+                            <div class="date-range"><label>Lieu de délivrance de la CIN<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance de la CIN<input id="booking-cin-date" type="date" required></label></div>
+                            <fieldset class="identity-upload"><legend>Photographies de la CIN</legend><p class="field-note">Joignez des photographies nettes et lisibles. Elles sont stockées dans un espace privé et associées à votre contrat.</p><label>Photographie de la CIN — recto<input id="booking-cin-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label><label>Photographie de la CIN — verso<input id="booking-cin-verso" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label></fieldset>
+                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="1">Retour</button><button type="button" class="btn btn-primary" data-next-step="3">Continuer</button></div>
+                        </section>
+                        <section class="booking-step" data-booking-step="3">
+                            <h4>3. Options et paiement</h4>
+                            <p class="muted">Choisissez les services complémentaires et indiquez les modalités de paiement de l’acompte.</p>
+                            <input id="booking-rental-type" type="hidden" value="automatic">
+                            <div class="date-range"><label>Itinéraire — lieu de départ<input id="booking-trip-from" required placeholder="Ville ou lieu de départ"></label><label>Itinéraire — destination<input id="booking-trip-to" required placeholder="Ville ou lieu d’arrivée"></label></div>
+                            <div class="date-range"><label class="checkbox-line"><input id="booking-delivery" type="checkbox"> Livraison du véhicule — 20 000 Ar</label><label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération du véhicule — 20 000 Ar</label></div>
+                            <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Service avec chauffeur — 30 000 Ar / jour</label>
+                            <div class="date-range"><label>Acompte versé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte versé</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label></div>
+                            <div id="mobile-money-fields" class="date-range hidden"><label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label><label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="Ex. 034 91 207 26"></label></div>
+                            <fieldset id="payment-proof-field" class="identity-upload hidden"><legend>Justificatif de paiement Mobile Money</legend><p class="field-note">Ajoutez une capture d’écran ou une photographie lisible de la preuve de paiement. Ce justificatif est obligatoire pour un acompte Mobile Money.</p><label>Preuve de paiement<input id="booking-payment-proof" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label></fieldset>
+                            <p id="booking-quote" class="booking-result" role="status"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Le prix total exclut le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à la charge du client.</p>
+                            <label>Informations complémentaires<textarea id="booking-notes" rows="3" placeholder="Précisez, si nécessaire, le lieu de prise en charge ou toute information utile."></textarea></label>
+                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="2">Retour</button><button type="button" class="btn btn-primary" data-next-step="4">Vérifier la demande</button></div>
+                        </section>
+                        <section class="booking-step" data-booking-step="4">
+                            <h4>4. Résumé et confirmation</h4>
+                            <p class="muted">Vérifiez attentivement les informations ci-dessous avant l’envoi définitif.</p>
+                            <div id="booking-summary" class="booking-summary"></div>
+                            <label class="checkbox-line booking-confirmation"><input id="booking-terms-consent" type="checkbox" required> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label>
+                            <p class="muted booking-policy-note">Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception et validation d’un acompte.</p>
+                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
+                        </section>
                     </form>
                     <p id="booking-result" class="booking-result" role="status"></p>
                 </div>
             </div>
-            <div class="booking-panel invoice-access-panel">
+            <div id="invoice-access-panel" class="booking-panel invoice-access-panel hidden">
                 <h3>Accéder à la facture et au contrat</h3>
                 <p class="muted">La facture et le contrat sont accessibles après validation de l’acompte par Rent Car Service. Le solde restant est payable lors de la remise du véhicule.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
