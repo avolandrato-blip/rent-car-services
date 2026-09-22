@@ -193,3 +193,5 @@ body[data-theme="royal-night"] footer,
 body[data-theme="royal-night"] footer .footer-text,
 body[data-theme="royal-night"] footer p { background: #12182d !important; color: #f5f7ff !important; }
 body[data-theme="royal-night"] footer .social-footer a { color: #e6b85c !important; }
+
+.required-star{color:#c62828;font-weight:800;margin-left:2px}.photo-thumb{display:inline-flex;position:relative;margin:4px}.photo-thumb button{position:absolute;right:-5px;top:-5px;border:0;border-radius:50%;background:#b42318;color:#fff;width:20px;height:20px;cursor:pointer}.booking-mode-label{display:block;font-weight:700;color:var(--accent);margin:8px 0}

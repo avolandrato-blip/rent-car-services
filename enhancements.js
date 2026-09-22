@@ -52,10 +52,10 @@
       vehicle_id: vehicle.id, customer_id: customerResult.data.id, customer_name: customer.full_name, customer_phone: customer.phone, whatsapp_phone: customer.whatsapp_phone,
       customer_email: customer.email, customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin,
       start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), with_driver: $('booking-driver').checked, rental_type: $('booking-rental-type').value,
-      rate_12h: quote.rate12, rate_24h: quote.rate24, daily_rate: quote.rate12, days: quote.days, extra_fees: quote.extraFees, total_amount: quote.total,
+      rate_12h: quote.rate12, rate_24h: quote.rate24, daily_rate: quote.rate12, days: quote.days, extra_fees: quote.delivery + quote.recovery, total_amount: quote.total,
       deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
       trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), delivery_fee: $('booking-delivery').checked ? 20000 : 0,
-      recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.driverFee, promo_code: $('booking-promo').value.trim().toUpperCase() || null,
+      recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: $('booking-promo').value.trim().toUpperCase() || null,
       promo_discount: quote.discount || 0, notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: deposit > 0 ? 'reserved' : 'pre_reserved'
     };
     const reservationResult = await db.from('reservations').insert(payload).select('id,reference').single();

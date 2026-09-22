@@ -131,7 +131,7 @@ async function loadCars() {
     const localCars = localData.liste || [];
     let cars = localCars;
     if (window.rentCarSupabase) {
-        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h').neq('status', 'inactive').order('name');
+        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee').neq('status', 'inactive').order('name');
         if (!error && remoteCars?.length) {
             cars = remoteCars.map(car => {
                 const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {};
@@ -155,6 +155,7 @@ async function loadCars() {
             </div>
             <div class="car-info">
                 <h3>${car.nom}</h3>
+                <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location en sans chauffeur'}</p>
                 <p class="car-price">${car.prix}</p>
                 <div class="car-tags">
                     <span><i class="fas fa-cog"></i> ${car.transmission}</span>
@@ -284,7 +285,7 @@ async function loadBookingData() {
     if (!window.rentCarSupabase) return;
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
-        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h').eq('status', 'available').order('name'),
+        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee').eq('status', 'available').order('name'),
         db.from('reservations').select('vehicle_id,start_at,end_at,status').eq('status', 'reserved'),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
@@ -296,7 +297,7 @@ async function loadBookingData() {
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
     const select = document.getElementById('booking-vehicle');
-    if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${formatMGA(v.price_per_day)}/jour</option>`).join('');
+    if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location en sans chauffeur'}</option>`).join('');
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}`;
 }
@@ -343,16 +344,21 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
     const rate24 = Number(vehicle.price_24h || rate12 * 2 || 0);
+    const billedHours = Math.max(1, Math.ceil(hours));
+    const days = Math.max(1, Math.ceil(hours / 24));
     let rentalAmount;
-    if (rentalType === '24h') rentalAmount = rate24;
-    else if (hours > 24 && hours <= 48) rentalAmount = rate24 * 2;
-    else if (hours > 48) rentalAmount = rate12 * Math.ceil(hours / 24);
-    else rentalAmount = rate12;
+    if (billedHours <= 12) rentalAmount = rate12;
+    else if (billedHours <= 24) rentalAmount = rate24;
+    else if (billedHours <= 36) rentalAmount = rate24 + rate12;
+    else if (billedHours <= 48) rentalAmount = rate24 * 2;
+    else rentalAmount = rate12 * days;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
-    const days = Math.max(1, Math.ceil(hours / 24));
-    const chauffeur = document.getElementById('booking-driver')?.checked ? 30000 * days : 0;
-    return { hours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur, total: rentalAmount + delivery + recovery + chauffeur };
+    const wantsDriver = document.getElementById('booking-driver')?.checked;
+    const isWithDriver = vehicle.driver_mode === 'with_driver';
+    const driverRate = Number(isWithDriver ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000));
+    const chauffeur = wantsDriver ? driverRate * days : 0;
+    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur, total: rentalAmount + delivery + recovery + chauffeur };
 }
 
 function updateBookingQuote() {

@@ -79,7 +79,7 @@
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                         <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
                         <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
-                        <label>Formule de location<select id="booking-rental-type" required><option value="day">Jour — 07h00 à 18h00</option><option value="night">Nuit — 19h00 à 06h00</option><option value="24h">24 heures — 07h00 à 06h00 ou 19h00 à 18h00</option></select></label>
+                        <input id="booking-rental-type" type="hidden" value="automatic">
                         <div class="date-range">
                             <label>Date de départ<input id="booking-start-date" type="date" required></label>
                             <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
