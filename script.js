@@ -457,15 +457,34 @@ async function submitReservation(event) {
         notes: document.getElementById('booking-notes').value.trim() || null,
         status: deposit > 0 ? 'reserved' : 'pre_reserved'
     };
-    const { data, error } = await window.rentCarSupabase.from('reservations').insert(payload).select('reference').single();
+    const { data, error } = await window.rentCarSupabase.from('reservations').insert(payload).select('id,reference').single();
     if (error) {
         result.className = 'booking-result booking-error';
         result.textContent = 'Impossible d’enregistrer la demande pour le moment. Contactez-nous par WhatsApp.';
         console.error(error);
         return;
     }
+    const docs = new FormData();
+    docs.append('reservation_id', data.id);
+    docs.append('customer_phone', payload.customer_phone);
+    const files = [
+        ['cinRecto', document.getElementById('booking-cin-recto')?.files?.[0]],
+        ['cinVerso', document.getElementById('booking-cin-verso')?.files?.[0]],
+        ['permisRecto', document.getElementById('booking-license-recto')?.files?.[0]]
+    ];
+    files.forEach(([name, file]) => { if (file) docs.append(name, file, file.name); });
+    let documentMessage = '';
+    if (files.some(([, file]) => file)) {
+        const upload = await window.rentCarSupabase.functions.invoke('upload-identity-documents', { body: docs });
+        if (upload.error || upload.data?.error) {
+            console.error('identity document upload failed', upload.error || upload.data?.error);
+            documentMessage = ' Les photos pourront être renvoyées lors de la signature du contrat.';
+        } else if (upload.data?.uploaded?.length) {
+            documentMessage = ` ${upload.data.uploaded.length} photo(s) sécurisée(s) rattachée(s) à la réservation.`;
+        }
+    }
     result.className = 'booking-result booking-success';
-    result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée.` : `Demande ${data.reference} enregistrée. La date reste disponible jusqu’au paiement de l’acompte.`;
+    result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée.${documentMessage}` : `Demande ${data.reference} enregistrée. La date reste disponible jusqu’au paiement de l’acompte.${documentMessage}`;
     document.getElementById('booking-form').reset(); activePromo = null; activePromo = null;
     await loadBookingData();
 }

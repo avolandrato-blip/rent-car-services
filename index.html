@@ -79,6 +79,13 @@
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                         <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
                         <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
+                        <fieldset class="identity-upload">
+                            <legend>Photos des documents</legend>
+                            <p class="field-note">Photos lisibles uniquement. Elles seront stockées dans un espace Supabase privé et rattachées à votre contrat.</p>
+                            <label>Photo CIN — recto<input id="booking-cin-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
+                            <label>Photo CIN — verso<input id="booking-cin-verso" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
+                            <label>Photo permis — recto<input id="booking-license-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label>
+                        </fieldset>
                         <input id="booking-rental-type" type="hidden" value="automatic">
                         <div class="date-range">
                             <label>Date de départ<input id="booking-start-date" type="date" required></label>
