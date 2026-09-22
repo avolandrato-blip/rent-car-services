@@ -131,7 +131,7 @@ async function loadCars() {
     const localCars = localData.liste || [];
     let cars = localCars;
     if (window.rentCarSupabase) {
-        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee').neq('status', 'inactive').order('name');
+        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates').neq('status', 'inactive').order('name');
         if (!error && remoteCars?.length) {
             cars = remoteCars.map(car => {
                 const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {};
@@ -285,7 +285,7 @@ async function loadBookingData() {
     if (!window.rentCarSupabase) return;
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
-        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee').eq('status', 'available').order('name'),
+        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates').eq('status', 'available').order('name'),
         db.from('reservations').select('vehicle_id,start_at,end_at,status').eq('status', 'reserved'),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
@@ -354,13 +354,16 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else if (billedHours <= 36) rentalAmount = rate24 + rate12;
     else if (billedHours <= 48) rentalAmount = rate24 * 2;
     else rentalAmount = rate12 * days;
+    const selectedTrip = document.getElementById('booking-trip-rate')?.value;
+    const tripRate = vehicle.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).find(item => item.id === selectedTrip) : null;
+    if (tripRate) rentalAmount = Number(tripRate.price_per_day || 0) * days;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
     const wantsDriver = document.getElementById('booking-driver')?.checked;
     const isWithDriver = vehicle.driver_mode === 'with_driver';
     const driverRate = Number(isWithDriver ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000));
     const chauffeur = wantsDriver ? driverRate * days : 0;
-    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur, total: rentalAmount + delivery + recovery + chauffeur };
+    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur: tripRate ? 0 : chauffeur, tripRate, total: rentalAmount + delivery + recovery + (tripRate ? 0 : chauffeur) };
 }
 
 function updateBookingQuote() {
@@ -370,7 +373,7 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `Location ${formatMGA(q.rentalAmount)} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${q.tripRate.from} → ${q.tripRate.to} : ${formatMGA(q.rentalAmount)} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
 }
 
 function checkAvailability() {
@@ -438,6 +441,8 @@ async function submitReservation(event) {
         days,
         trip_from: document.getElementById('booking-trip-from').value.trim(),
         trip_to: document.getElementById('booking-trip-to').value.trim(),
+        trip_rate_label: quote.tripRate ? `${quote.tripRate.from} → ${quote.tripRate.to}` : null,
+        trip_rate_per_day: quote.tripRate ? Number(quote.tripRate.price_per_day || 0) : null,
         delivery_fee: quote.delivery,
         recovery_fee: quote.recovery,
         chauffeur_fee: quote.chauffeur,

@@ -32,6 +32,7 @@
     const endDate = $('booking-end-date')?.value, endTime = $('booking-end-time')?.value;
     const start = startDate && startTime ? `${startDate}T${startTime}` : '', end = endDate && endTime ? `${endDate}T${endTime}` : '';
     if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
+    if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner le trajet avec chauffeur.');
     if (typeof getVehicleAvailability === 'function' && getVehicleAvailability(vehicle.id, start, end) !== 'available') return showBookingError('Cette voiture n’est pas disponible sur cette période.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
@@ -54,7 +55,7 @@
       start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), with_driver: $('booking-driver').checked, rental_type: $('booking-rental-type').value,
       rate_12h: quote.rate12, rate_24h: quote.rate24, daily_rate: quote.rate12, days: quote.days, extra_fees: quote.delivery + quote.recovery, total_amount: quote.total,
       deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
-      trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), delivery_fee: $('booking-delivery').checked ? 20000 : 0,
+      trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), trip_rate_label: quote.tripRate ? `${quote.tripRate.from} → ${quote.tripRate.to}` : null, trip_rate_per_day: quote.tripRate ? Number(quote.tripRate.price_per_day || 0) : null, delivery_fee: $('booking-delivery').checked ? 20000 : 0,
       recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: $('booking-promo').value.trim().toUpperCase() || null,
       promo_discount: quote.discount || 0, notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: deposit > 0 ? 'reserved' : 'pre_reserved'
     };
