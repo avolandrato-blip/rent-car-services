@@ -19,7 +19,7 @@
     $('booking-notes')?.closest('label')?.insertAdjacentHTML('beforebegin', '<label class="checkbox-line terms-consent"><input id="booking-terms-consent" type="checkbox" required> Je reconnais avoir lu et approuvé les conditions de réservation et le contrat.</label>');
     const note = document.createElement('p');
     note.className = 'muted booking-policy-note';
-    note.textContent = 'Si 0 Ar d’acompte est payé, la facture et le contrat seront envoyés dès le paiement d’un acompte.';
+    note.textContent = 'Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception d’un acompte.';
     $('booking-terms-consent')?.closest('label')?.after(note);
   }
 
@@ -32,7 +32,7 @@
     const endDate = $('booking-end-date')?.value, endTime = $('booking-end-time')?.value;
     const start = startDate && startTime ? `${startDate}T${startTime}` : '', end = endDate && endTime ? `${endDate}T${endTime}` : '';
     if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner le trajet avec chauffeur.');
+    if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner l’itinéraire avec chauffeur.');
     if (typeof getVehicleAvailability === 'function' && getVehicleAvailability(vehicle.id, start, end) !== 'available') return showBookingError('Cette voiture n’est pas disponible sur cette période.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
@@ -48,7 +48,7 @@
     };
     const db = window.rentCarSupabase;
     const customerResult = await db.from('customers').insert(customer).select('id').single();
-    if (customerResult.error) return showBookingError('Impossible d’enregistrer la fiche client. Contactez-nous par WhatsApp.');
+    if (customerResult.error) return showBookingError('Impossible d’enregistrer vos informations. Veuillez nous contacter par WhatsApp.');
     const payload = {
       vehicle_id: vehicle.id, customer_id: customerResult.data.id, customer_name: customer.full_name, customer_phone: customer.phone, whatsapp_phone: customer.whatsapp_phone,
       customer_email: customer.email, customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin, cin_is_duplicate: customer.cin_is_duplicate,
@@ -74,7 +74,7 @@
     const message = `Bonjour, je vous transmets ma demande de réservation ${r.reference}.%0AClient : ${encodeURIComponent(customer.full_name)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(vehicle.name || vehicle.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal : ${encodeURIComponent(formatMGA(quote.total))}%0AAcompte : ${encodeURIComponent(formatMGA(deposit))}%0A${deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.'}`;
     window.open(`https://wa.me/${siteConfig.footer.whatsapp}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';
-    result.textContent = deposit > 0 ? `Réservation ${r.reference} enregistrée avec acompte.` : `Demande ${r.reference} enregistrée. Facture et contrat après paiement d’un acompte.`;
+    result.textContent = deposit > 0 ? `Votre demande ${r.reference} a bien été enregistrée avec l’acompte indiqué.` : `Votre demande ${r.reference} a bien été enregistrée. La facture et le contrat seront transmis après réception d’un acompte.`;
     $('booking-form').reset();
     if (typeof loadBookingData === 'function') await loadBookingData();
   }
@@ -84,14 +84,14 @@
   function enhanceReturnPanel() {
     const section = $('booking');
     if (!section || $('return-public-panel')) return;
-    section.querySelector('.invoice-access-panel')?.insertAdjacentHTML('afterend', `<div id="return-public-panel" class="booking-panel return-panel"><h3>Restitution et dégradation</h3><p class="muted">Le loueur remplit ce constat au moment du clic : la date et l’heure sont enregistrées automatiquement.</p><form id="return-public-form"><div class="date-range"><label>Référence réservation<input id="return-reference" required placeholder="RCS-..."></label><label>Type<select id="return-kind"><option value="restitution">Restitution</option><option value="degradation">Dégradation constatée</option></select></label><label>Kilométrage retour<input id="return-km" type="number" min="0" required></label><label>Nombre de clés restituées<input id="return-keys" type="number" min="0" required></label><label>Niveau carburant retour<input id="return-fuel" required placeholder="Ex. 3/4"></label><label>Montant à payer (Ar)<input id="return-due" type="number" min="0" value="0" required></label></div><label>Dégradation constatée<textarea id="return-details" rows="3" placeholder="Détails, photos, observations..."></textarea></label><button class="btn btn-primary" type="submit">Enregistrer et générer la facture</button></form><p id="return-result" class="booking-result"></p></div>`);
+    section.querySelector('.invoice-access-panel')?.insertAdjacentHTML('afterend', `<div id="return-public-panel" class="booking-panel return-panel"><h3>Restitution et signalement</h3><p class="muted">Le loueur remplit ce constat au moment du clic : la date et l’heure sont enregistrées automatiquement.</p><form id="return-public-form"><div class="date-range"><label>Référence réservation<input id="return-reference" required placeholder="RCS-..."></label><label>Type<select id="return-kind"><option value="restitution">Restitution</option><option value="degradation">Signalement d’une dégradation</option></select></label><label>Kilométrage retour<input id="return-km" type="number" min="0" required></label><label>Nombre de clés restituées<input id="return-keys" type="number" min="0" required></label><label>Niveau carburant retour<input id="return-fuel" required placeholder="Ex. 3/4"></label><label>Montant à payer (Ar)<input id="return-due" type="number" min="0" value="0" required></label></div><label>Signalement d’une dégradation<textarea id="return-details" rows="3" placeholder="Détails, photos, observations..."></textarea></label><button class="btn btn-primary" type="submit">Enregistrer le constat</button></form><p id="return-result" class="booking-result"></p></div>`);
     $('return-public-form')?.addEventListener('submit', async (e) => {
       e.preventDefault(); const result = $('return-result'); const ref = $('return-reference').value.trim();
       const {data: reservation, error} = await window.rentCarSupabase.from('reservations').select('id,reference,customer_name,total_amount,deposit_amount,whatsapp_phone,customer_phone').eq('reference', ref).maybeSingle();
-      if (error || !reservation) { result.className = 'booking-result booking-error'; result.textContent = 'Référence introuvable.'; return; }
+      if (error || !reservation) { result.className = 'booking-result booking-error'; result.textContent = 'Référence de réservation introuvable.'; return; }
       const payload = { recorded_at: nowLocal(), km_return: Number($('return-km').value), keys_returned: Number($('return-keys').value), fuel_return: $('return-fuel').value, degradation: $('return-details').value, amount_due: Number($('return-due').value || 0), customer_name: reservation.customer_name };
       const saved = await window.rentCarSupabase.from('return_forms').insert({reservation_id: reservation.id, kind: $('return-kind').value, payload});
-      if (saved.error) { result.className = 'booking-result booking-error'; result.textContent = 'Impossible d’enregistrer le constat.'; return; }
+      if (saved.error) { result.className = 'booking-result booking-error'; result.textContent = 'Impossible d’enregistrer le constat. Veuillez réessayer ou nous contacter.'; return; }
       result.className = 'booking-result booking-success'; result.textContent = `Constat enregistré le ${new Date().toLocaleString('fr-FR')}. La facture est prête à être générée dans l’administration.`;
     });
   }
