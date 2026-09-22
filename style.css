@@ -105,9 +105,31 @@ body {
 .car-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
 
 /* --- DIVERTISSEMENT --- */
-.radios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.radios-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
 .radio-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: var(--card-shadow); height: 280px; display: flex; flex-direction: column; justify-content: space-between; }
 .radio-logo-container img { max-width: 100px; max-height: 100px; object-fit: contain; }
+.entertainment-panel { background: white; border-radius: 20px; padding: 26px; box-shadow: var(--card-shadow); min-width: 0; }
+.entertainment-panel-heading { display: flex; align-items: flex-start; gap: 14px; color: var(--primary); margin-bottom: 22px; }
+.entertainment-panel-heading i { font-size: 1.8rem; color: var(--accent); margin-top: 3px; }
+.entertainment-panel-heading h3 { margin: 0 0 4px; font-size: 1.2rem; }
+.entertainment-panel-heading p { color: #66788a; font-size: .88rem; line-height: 1.45; }
+.entertainment-label { display: block; color: var(--primary); font-size: .82rem; font-weight: 700; margin-bottom: 7px; }
+.entertainment-select { width: 100%; padding: 13px 14px; border: 1px solid #d9dee5; border-radius: 10px; background: #fbfcfd; color: inherit; font: inherit; margin-bottom: 18px; }
+.radio-now-playing { display: flex; align-items: center; gap: 13px; min-height: 58px; margin: 5px 0 16px; }
+.radio-current-logo { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #f1f4f7; }
+.radio-now-playing strong, .radio-now-playing span { display: block; }
+.radio-now-playing span { margin-top: 4px; color: #66788a; font-size: .78rem; }
+.audio-player { width: 100%; }
+.youtube-playlist-title { min-height: 24px; color: var(--primary); margin: 3px 0 12px; }
+.youtube-playlist-empty { display: grid; place-items: center; min-height: 190px; border-radius: 14px; background: #f4f7f9; color: #66788a; text-align: center; padding: 20px; }
+.youtube-playlist-frame { width: 100%; min-height: 260px; border: 0; border-radius: 14px; background: #0b1021; }
+.multitask-note { margin: 16px 0; color: #66788a; font-size: .8rem; line-height: 1.5; }
+.multitask-note i { color: var(--accent); margin-right: 5px; }
+.youtube-panel .btn { width: 100%; justify-content: center; }
+body[data-theme="royal-night"] .entertainment-panel { background: #12182d; color: #f5f7ff; }
+body[data-theme="royal-night"] .entertainment-panel-heading p, body[data-theme="royal-night"] .radio-now-playing span, body[data-theme="royal-night"] .multitask-note { color: #c7d0e4; }
+body[data-theme="royal-night"] .entertainment-select { background: #0b1021; color: #fff; border-color: #354060; }
+body[data-theme="royal-night"] .youtube-playlist-empty { background: #0b1021; color: #c7d0e4; }
 
 /* --- CONTACT --- */
 .contact-wrapper { background: white; padding: 40px; border-radius: 20px; box-shadow: var(--card-shadow); max-width: 700px; margin: 0 auto; }

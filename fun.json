@@ -4,37 +4,25 @@
     "card_bg": "#ffffff"
   },
   "radios": [
-    {
-      "nom": "Rire & Chansons",
-      "url": "https://streaming.nrjaudio.fm/ou8o8xgk7oiu?origine=ubuntu-fr.org",
-      "logo": "https://static.rireetchansons.fr/var/oeillet_site/storage/images/rireetchansons/logo-rire-chansons/25108-1-fre-FR/Logo-Rire-Chansons_reference.png"
-    },
-    {
-      "nom": "Skyrock",
-      "url": "http://icecast.skyrock.net/s/natio_mp3_128k",
-      "logo": "https://www.skyrock.fm/static/images/global/skyrock-fb.png"
-    },
-    {
-      "nom": "NRJ",
-      "url": "https://streaming.nrjaudio.fm/oumvmk8fnozc?origine=ubuntu-fr.org",
-      "logo": "https://www.nrj.fr/assets/NRJ_logos_PNG/logo-nrj-carre.png"
-    }
+    { "nom": "France — NRJ Hits", "url": "https://streaming.nrjaudio.fm/ou7xugf3s5gi?origine=playernrj&aw_0_req.userConsentV2=&aw_0_1st.station=NRJ-Hits", "logo": "https://www.nrj.fr/assets/NRJ_logos_PNG/logo-nrj-carre.png" },
+    { "nom": "France — Skyrock", "url": "http://icecast.skyrock.net/s/natio_mp3_128k", "logo": "https://www.skyrock.fm/static/images/global/skyrock-fb.png" },
+    { "nom": "France — FUN Radio", "url": "http://icecast.funradio.fr/fun-1-44-128", "logo": "https://upload.wikimedia.org/wikipedia/fr/0/08/Fun_radio_logo_2015.png" },
+    { "nom": "France — RTL2", "url": "http://icecast.rtl2.fr/rtl2-1-44-128", "logo": "https://upload.wikimedia.org/wikipedia/fr/thumb/9/9e/RTL2_logo.svg/512px-RTL2_logo.svg.png" },
+    { "nom": "France — FIP", "url": "https://icecast.radiofrance.fr/fip-hifi.aac", "logo": "https://upload.wikimedia.org/wikipedia/fr/thumb/7/7b/Logo_FIP.svg/512px-Logo_FIP.svg.png" },
+    { "nom": "UK — BBC Radio 1", "url": "http://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/hls/nonuk/pc_hd_abr_v2/ak/bbc_radio_one.m3u8", "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/BBC_Radio_1_logo.svg/512px-BBC_Radio_1_logo.svg.png" },
+    { "nom": "UK — Capital FM", "url": "http://media-ice.musicradio.com/CapitalMP3", "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Capital_FM_logo.svg/512px-Capital_FM_logo.svg.png" },
+    { "nom": "UK — Capital XTRA", "url": "http://media-the.musicradio.com/CapitalXTRALondonMP3", "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Capital_XTRA_logo.svg/512px-Capital_XTRA_logo.svg.png" },
+    { "nom": "UK — Heart London", "url": "http://ice-sov.musicradio.com/HeartLondonMP3", "logo": "https://upload.wikimedia.org/wikipedia/en/thumb/3/3c/Heart_Logo.svg/512px-Heart_Logo.svg.png" },
+    { "nom": "UK — KISS UK", "url": "https://live-kiss.sharp-stream.com/kiss100.mp3", "logo": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8a/Kiss_100_logo.svg/512px-Kiss_100_logo.svg.png" },
+    { "nom": "Madagascar — RDJ 96.6 FM", "url": "http://rdj966.net:8000/rdj966.mp3", "logo": "https://rdj.mg/wp-content/uploads/2022/11/cropped-logo-rdj-1-192x192.png" },
+    { "nom": "Madagascar — Radio Don Bosco", "url": "http://onair15.xdevel.com:9248/;", "logo": "https://rdb.mg/wp-content/uploads/2020/04/logo-rdb.png" },
+    { "nom": "Madagascar — RNA Madagascar", "url": "http://drs-live-rna.gasy-internet.info:9001/;", "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_logo.svg/512px-Radio_logo.svg.png" },
+    { "nom": "Madagascar — Top Radio 102.8", "url": "https://listen.radioking.com/radio/309053/stream/356036", "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_logo.svg/512px-Radio_logo.svg.png" },
+    { "nom": "Madagascar — Radio Vazo Gasy", "url": "https://stream.radiovazogasy.com/stream?1.mp3", "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Radio_logo.svg/512px-Radio_logo.svg.png" }
   ],
   "playlists": [
-    {
-      "nom": "Top Hits Madagascar",
-      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/2048px-Spotify_logo_without_text.svg.png",
-      "link": "https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF"
-    },
-    {
-      "nom": "Ambiance Tropicale",
-      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/1024px-YouTube_full-color_icon_%282017%29.svg.png",
-      "link": "https://www.youtube.com/playlist?list=PLw0Ld7Wj9W"
-    },
-    {
-      "nom": "Deezer Flow",
-      "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Deezer_logo_circle.svg/1200px-Deezer_logo_circle.svg.png",
-      "link": "https://www.deezer.com/fr/playlist/123456"
-    }
+    { "nom": "Top 100 mondial", "logo": "https://www.youtube.com/s/desktop/12e7d7a5/img/favicon_144x144.png", "link": "https://www.youtube.com/playlist?list=PLDIoUOhQQPlXr63I_vwF9GD8sAKh77dWU" },
+    { "nom": "Top 100 Madagascar", "logo": "https://www.youtube.com/s/desktop/12e7d7a5/img/favicon_144x144.png", "link": "https://www.youtube.com/playlist?list=PLMmVJHHEJ42_LhtubfC2ENSGMz6MlljfC" },
+    { "nom": "Top 100 France", "logo": "https://www.youtube.com/s/desktop/12e7d7a5/img/favicon_144x144.png", "link": "https://www.youtube.com/playlist?list=PL4fGSI1pDJn7bK3y1Hx-qpHBqfr6cesNs" }
   ]
 }

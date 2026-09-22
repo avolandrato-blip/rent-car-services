@@ -179,36 +179,111 @@ async function loadCars() {
     renderPublicCars();
 }
 // Musique et Divertissement
-async function loadFun() {
-    const res = await fetch('fun.json');
-    let data = await res.json();
-    if (window.rentCarSupabase) { const {data: custom} = await window.rentCarSupabase.from('entertainment_items').select('*').eq('active', true).order('sort_order'); if (custom?.length) data = { radios: custom.filter(x=>x.kind==='radio').map(x=>({nom:x.name,logo:x.logo_url,url:x.stream_url})), playlists: custom.filter(x=>x.kind==='playlist').map(x=>({nom:x.name,logo:x.logo_url,link:x.link_url})) }; }
-    
-    let contentHtml = '';
-    contentHtml += data.radios.map(r => `
-        <div class="radio-card">
-            <h4>${r.nom}</h4>
-            <div class="radio-logo-container">
-                <img src="${r.logo}" alt="${r.nom}">
-            </div>
-            <audio class="audio-player" controls src="${r.url}"></audio>
-        </div>
-    `).join('');
+function escapeFunHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
 
-    if(data.playlists) {
-        contentHtml += data.playlists.map(p => `
-             <div class="radio-card">
-                <h4>${p.nom}</h4>
-                <div class="radio-logo-container">
-                    <img src="${p.logo}" alt="${p.nom}">
-                </div>
-                <a href="${p.link}" target="_blank" class="btn btn-primary" style="width:100%; justify-content:center; text-decoration:none;">
-                    <i class="fas fa-play"></i> Écouter
-                </a>
-            </div>
-        `).join('');
+function getYouTubePlaylistId(link) {
+    try {
+        const url = new URL(link);
+        return url.searchParams.get('list') || '';
+    } catch (_) {
+        return '';
     }
-    document.getElementById('radios-grid').innerHTML = contentHtml;
+}
+
+function renderYouTubePlaylist(playlist) {
+    const frame = document.getElementById('youtube-playlist-frame');
+    const empty = document.getElementById('youtube-playlist-empty');
+    const external = document.getElementById('youtube-playlist-external');
+    const title = document.getElementById('youtube-playlist-title');
+    if (!frame || !empty || !external || !title) return;
+
+    const playlistId = getYouTubePlaylistId(playlist?.link || '');
+    if (!playlist || !playlistId) {
+        frame.classList.add('hidden');
+        external.classList.add('hidden');
+        empty.classList.remove('hidden');
+        title.textContent = 'Aucune playlist sélectionnée';
+        return;
+    }
+
+    title.textContent = playlist.nom;
+    frame.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&rel=0&modestbranding=1`;
+    frame.classList.remove('hidden');
+    empty.classList.add('hidden');
+    external.href = playlist.link;
+    external.classList.remove('hidden');
+}
+
+function bindEntertainmentPlayers(data) {
+    const radioSelect = document.getElementById('radio-select');
+    const radioPlayer = document.getElementById('radio-player');
+    const radioTitle = document.getElementById('radio-current-title');
+    const radioLogo = document.getElementById('radio-current-logo');
+    const playlistSelect = document.getElementById('youtube-playlist-select');
+    if (!radioSelect || !radioPlayer || !playlistSelect) return;
+
+    radioSelect.innerHTML = '<option value="">Choisir une radio</option>' + data.radios.map((radio, index) => `<option value="${index}">${escapeFunHtml(radio.nom)}</option>`).join('');
+    radioSelect.addEventListener('change', () => {
+        const radio = radioSelect.value === '' ? null : data.radios[Number(radioSelect.value)];
+        if (!radio) {
+            radioPlayer.pause();
+            radioPlayer.removeAttribute('src');
+            radioPlayer.load();
+            radioTitle.textContent = 'Aucune radio sélectionnée';
+            radioLogo.removeAttribute('src');
+            return;
+        }
+        radioPlayer.src = radio.url;
+        radioPlayer.load();
+        radioTitle.textContent = radio.nom;
+        if (radio.logo) {
+            radioLogo.src = radio.logo;
+            radioLogo.alt = radio.nom;
+        }
+    });
+
+    playlistSelect.innerHTML = '<option value="">Choisir une playlist YouTube</option>' + data.playlists.map((playlist, index) => `<option value="${index}">${escapeFunHtml(playlist.nom)}</option>`).join('');
+    playlistSelect.addEventListener('change', () => renderYouTubePlaylist(playlistSelect.value === '' ? null : data.playlists[Number(playlistSelect.value)]));
+    renderYouTubePlaylist(null);
+}
+
+async function loadFun() {
+    const res = await fetch('fun.json', { cache: 'no-store' });
+    const localData = await res.json();
+    let data = { radios: localData.radios || [], playlists: localData.playlists || [] };
+    if (window.rentCarSupabase) {
+        const { data: custom } = await window.rentCarSupabase.from('entertainment_items').select('*').eq('active', true).order('sort_order');
+        if (custom?.length) {
+            const customRadios = custom.filter(item => item.kind === 'radio').map(item => ({ nom: item.name, logo: item.logo_url, url: item.stream_url }));
+            const customPlaylists = custom.filter(item => item.kind === 'playlist').map(item => ({ nom: item.name, logo: item.logo_url, link: item.link_url }));
+            data = { radios: [...data.radios, ...customRadios], playlists: [...data.playlists, ...customPlaylists] };
+        }
+    }
+
+    data.radios = [...new Map(data.radios.filter(radio => radio?.url).map(radio => [radio.url, radio])).values()];
+    data.playlists = [...new Map(data.playlists.filter(playlist => /(^|\.)youtube\.com|youtu\.be/i.test(playlist?.link || '')).map(playlist => [playlist.link, playlist])).values()];
+
+    document.getElementById('radios-grid').innerHTML = `
+        <div class="entertainment-panel">
+            <div class="entertainment-panel-heading"><i class="fas fa-radio"></i><div><h3>Radios en direct</h3><p>Choisissez une station puis utilisez le lecteur audio.</p></div></div>
+            <label class="entertainment-label" for="radio-select">Station radio</label>
+            <select id="radio-select" class="entertainment-select"></select>
+            <div class="radio-now-playing"><img id="radio-current-logo" class="radio-current-logo" alt=""><div><strong id="radio-current-title">Aucune radio sélectionnée</strong><span>La lecture démarre après votre action.</span></div></div>
+            <audio id="radio-player" class="audio-player" controls preload="none"></audio>
+        </div>
+        <div class="entertainment-panel youtube-panel">
+            <div class="entertainment-panel-heading"><i class="fab fa-youtube"></i><div><h3>Playlists YouTube</h3><p>Top 100 mondial, Madagascar et France.</p></div></div>
+            <label class="entertainment-label" for="youtube-playlist-select">Playlist</label>
+            <select id="youtube-playlist-select" class="entertainment-select"></select>
+            <h4 id="youtube-playlist-title" class="youtube-playlist-title">Aucune playlist sélectionnée</h4>
+            <div id="youtube-playlist-empty" class="youtube-playlist-empty">Sélectionnez une playlist pour afficher le lecteur.</div>
+            <iframe id="youtube-playlist-frame" class="youtube-playlist-frame hidden" title="Lecteur de playlist YouTube" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+            <p class="multitask-note"><i class="fas fa-window-restore"></i> Pour écouter en multitâche, ouvrez la playlist dans un nouvel onglet. Brave est recommandé avec le mode image dans l’image lorsque disponible.</p>
+            <a id="youtube-playlist-external" class="btn btn-primary hidden" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet</a>
+        </div>`;
+    bindEntertainmentPlayers(data);
 }
 
 // Formulaire de contact dynamique
