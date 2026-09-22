@@ -14,8 +14,8 @@
     if (!form || $('booking-whatsapp')) return;
     const phone = $('booking-phone')?.closest('label');
     phone?.insertAdjacentHTML('afterend', '<label>WhatsApp actif<input id="booking-whatsapp" required placeholder="034 xx xxx xx"><small class="field-note">Ce numéro recevra la facture et le contrat.</small></label>');
-    $('booking-license')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>Date d’acquisition du permis<input id="booking-license-acquired-at" type="date" required></label><label>Lieu d’acquisition du permis<input id="booking-license-acquired-place" required placeholder="Ville / pays"></label></div>');
-    $('booking-cin')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>Date d’acquisition du CIN<input id="booking-cin-acquired-at" type="date" required></label><label>Lieu d’acquisition du CIN<input id="booking-cin-acquired-place" required placeholder="Ville / district"></label></div>');
+    if (!$('booking-license-place')) $('booking-license')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>Permis délivré à<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Permis délivré le<input id="booking-license-date" type="date" required></label></div>');
+    if (!$('booking-cin-place')) $('booking-cin')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>CIN délivrée à<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>CIN délivrée le<input id="booking-cin-date" type="date" required></label></div>');
     $('booking-notes')?.closest('label')?.insertAdjacentHTML('beforebegin', '<label class="checkbox-line terms-consent"><input id="booking-terms-consent" type="checkbox" required> Je reconnais avoir lu et approuvé les conditions de réservation et le contrat.</label>');
     const note = document.createElement('p');
     note.className = 'muted booking-policy-note';
@@ -43,8 +43,8 @@
     const customer = {
       full_name: $('booking-name').value.trim(), phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
       email: $('booking-email').value.trim() || null, address: $('booking-address').value.trim(), driving_license: $('booking-license').value.trim(), cin: $('booking-cin').value.trim(),
-      license_acquired_at: $('booking-license-acquired-at').value || null, license_acquired_place: $('booking-license-acquired-place').value.trim(),
-      cin_acquired_at: $('booking-cin-acquired-at').value || null, cin_acquired_place: $('booking-cin-acquired-place').value.trim()
+      license_acquired_at: $('booking-license-date').value || null, license_acquired_place: $('booking-license-place').value.trim(),
+      cin_acquired_at: $('booking-cin-date').value || null, cin_acquired_place: $('booking-cin-place').value.trim()
     };
     const db = window.rentCarSupabase;
     const customerResult = await db.from('customers').insert(customer).select('id').single();
@@ -52,6 +52,8 @@
     const payload = {
       vehicle_id: vehicle.id, customer_id: customerResult.data.id, customer_name: customer.full_name, customer_phone: customer.phone, whatsapp_phone: customer.whatsapp_phone,
       customer_email: customer.email, customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin,
+      license_acquired_at: customer.license_acquired_at, license_acquired_place: customer.license_acquired_place,
+      cin_acquired_at: customer.cin_acquired_at, cin_acquired_place: customer.cin_acquired_place,
       start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), with_driver: $('booking-driver').checked, rental_type: $('booking-rental-type').value,
       rate_12h: quote.rate12, rate_24h: quote.rate24, daily_rate: quote.rate12, days: quote.days, extra_fees: quote.delivery + quote.recovery, total_amount: quote.total,
       deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
@@ -63,6 +65,12 @@
     if (reservationResult.error) { console.error(reservationResult.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
     if (deposit > 0) await db.from('payments').insert({ reservation_id: reservationResult.data.id, amount: deposit, method: paymentMethod, note: 'Acompte à la réservation' });
     const r = reservationResult.data;
+    const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
+    [['cinRecto','booking-cin-recto'],['cinVerso','booking-cin-verso'],['permisRecto','booking-license-recto']].forEach(([name, id]) => { const file = $(id)?.files?.[0]; if (file) docs.append(name, file, file.name); });
+    if ([...docs.keys()].length > 2) {
+      const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
+      if (upload.error || upload.data?.error) console.error('identity document upload failed', upload.error || upload.data?.error);
+    }
     const message = `Bonjour, je vous transmets ma demande de réservation ${r.reference}.%0AClient : ${encodeURIComponent(customer.full_name)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(vehicle.name || vehicle.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal : ${encodeURIComponent(formatMGA(quote.total))}%0AAcompte : ${encodeURIComponent(formatMGA(deposit))}%0A${deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.'}`;
     window.open(`https://wa.me/${siteConfig.footer.whatsapp}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';

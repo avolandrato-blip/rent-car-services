@@ -78,7 +78,15 @@
                         <label>Téléphone<input id="booking-phone" required placeholder="034 91 207 26"></label>
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                         <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
-                        <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
+                        <div class="date-range">
+                            <label>Permis délivré à<input id="booking-license-place" required placeholder="Lieu de délivrance"></label>
+                            <label>Permis délivré le<input id="booking-license-date" type="date" required></label>
+                        </div>
+                        <label>Numéro CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
+                        <div class="date-range">
+                            <label>CIN délivrée à<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label>
+                            <label>CIN délivrée le<input id="booking-cin-date" type="date" required></label>
+                        </div>
                         <fieldset class="identity-upload">
                             <legend>Photos des documents</legend>
                             <p class="field-note">Photos lisibles uniquement. Elles seront stockées dans un espace Supabase privé et rattachées à votre contrat.</p>
