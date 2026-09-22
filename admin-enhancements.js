@@ -62,12 +62,50 @@
   function renderFinance() {
     const grid = document.querySelector('#overview .grid');
     if (!grid || $('finance-summary')) return;
-    grid.insertAdjacentHTML('afterend', '<div id="finance-summary" class="section card"><div class="section-head"><h2>Analyse du chiffre d’affaires</h2><span class="eyebrow">CA général · CA par voiture · maintenance</span></div><div id="finance-content"></div></div>');
+    grid.insertAdjacentHTML('afterend', '<div id="finance-summary" class="section card"><div class="section-head"><h2>Synthèse du chiffre d’affaires</h2><span class="eyebrow">Vue globale · par véhicule · maintenance</span></div><div id="finance-content"></div></div>');
     const confirmed = (typeof reservations !== 'undefined' ? reservations : []).filter(r => ['reserved','completed'].includes(r.status));
     const revenue = confirmed.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
     const maint = (typeof maintenances !== 'undefined' ? maintenances : []).reduce((sum, m) => sum + Number(m.amount || 0), 0);
     const byCar = {}; confirmed.forEach(r => { const name = r.vehicles?.name || 'Voiture'; byCar[name] = (byCar[name] || 0) + Number(r.total_amount || 0); });
     $('finance-content').innerHTML = `<p><strong>CA général confirmé :</strong> ${money(revenue)} &nbsp; <strong>Dépenses maintenance :</strong> ${money(maint)}</p><div class="table-wrap"><table class="table"><thead><tr><th>Voiture</th><th>CA généré</th></tr></thead><tbody>${Object.entries(byCar).map(([name, total]) => `<tr><td>${esc(name)}</td><td>${money(total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune réservation confirmée.</td></tr>'}</tbody></table></div>`;
+  }
+
+  function csvCell(value) {
+    return `"${String(value ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
+  }
+
+  function downloadCsv(filename, headers, rows) {
+    const content = '\ufeff' + [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\r\n');
+    const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename; link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function exportClientData() {
+    const rows = (typeof reservations !== 'undefined' ? reservations : []).map(r => [
+      r.customer_name, r.customer_phone, r.start_at ? new Date(r.start_at).toLocaleDateString('fr-FR') : '', r.vehicles?.name || '', r.customer_cin, r.cin_is_duplicate ? 'Duplicata' : 'Original', r.cin_acquired_place, r.cin_acquired_at, r.customer_license, r.license_acquired_place, r.license_acquired_at, r.status
+    ]);
+    downloadCsv(`clients-reservations-${new Date().toISOString().slice(0,10)}.csv`, ['Nom du client','Téléphone','Date de réservation','Véhicule','Numéro CIN','Statut CIN','CIN délivrée à','CIN délivrée le','Numéro de permis','Permis délivré à','Permis délivré le','Statut réservation'], rows);
+  }
+
+  function getFinancialRows() {
+    return confirmedReservationsForAnalysis();
+  }
+
+  function exportGlobalRevenue() {
+    const rows = getFinancialRows();
+    const billed = rows.reduce((a,r) => a + Number(r.total_amount||0), 0);
+    const collected = rows.reduce((a,r) => a + (typeof paidFor === 'function' ? paidFor(r) : Number(r.deposit_amount||0)), 0);
+    const maintenance = (typeof maintenances !== 'undefined' ? maintenances : []).reduce((a,m) => a + Number(m.amount||0), 0);
+    const historical = (typeof customers !== 'undefined' ? customers : []).reduce((a,c) => a + Number(c.historical_paid_total||0), 0);
+    downloadCsv(`synthese-financiere-globale-${new Date().toISOString().slice(0,10)}.csv`, ['Indicateur','Montant (Ar)','Nombre'], [['CA facturé actuel',billed,rows.length],['Encaissements actuels',collected,rows.length],['Dépenses de maintenance',maintenance,''],['Résultat actuel après maintenance',collected-maintenance,''],['CA historique encaissé',historical,'']]);
+  }
+
+  function exportRevenueByVehicle() {
+    const grouped = {};
+    getFinancialRows().forEach(r => { const name = r.vehicles?.name || 'Véhicule non renseigné'; const g = grouped[name] ||= {count:0,billed:0,collected:0}; g.count++; g.billed += Number(r.total_amount||0); g.collected += typeof paidFor === 'function' ? paidFor(r) : Number(r.deposit_amount||0); });
+    const rows = Object.entries(grouped).sort((a,b) => b[1].collected-a[1].collected).map(([name,g]) => [name,g.count,g.billed,g.collected,Math.max(0,g.billed-g.collected)]);
+    downloadCsv(`chiffre-affaires-par-vehicule-${new Date().toISOString().slice(0,10)}.csv`, ['Véhicule','Nombre de locations','CA facturé (Ar)','Montant encaissé (Ar)','Reste à encaisser (Ar)'], rows);
   }
 
   function confirmedReservationsForAnalysis() {
@@ -79,10 +117,10 @@
     if (!grid) return;
     let box = $('finance-analysis');
     if (!box) {
-      grid.insertAdjacentHTML('afterend', `<div id="finance-analysis" class="section card"><div class="section-head"><div><h2>Mini-analyse financière</h2><p class="legend">Les montants par date et par voiture concernent les réservations confirmées ou terminées.</p></div><button class="btn outline" id="finance-reset">Réinitialiser</button></div><div class="filters"><label class="field"><span>Date de début</span><input id="finance-from" type="date"></label><label class="field"><span>Date de fin</span><input id="finance-to" type="date"></label><label class="field"><span>Voiture</span><select id="finance-vehicle"><option value="all">Toutes les voitures</option></select></label></div><div id="finance-metrics" class="grid"></div><div id="finance-breakdown" class="table-wrap"></div></div>`);
+      grid.insertAdjacentHTML('afterend', `<div id="finance-analysis" class="section card"><div class="section-head"><div><h2>Synthèse financière</h2><p class="legend">Les montants par date et par voiture concernent les réservations confirmées ou terminées.</p></div><div class="actions"><button class="btn outline" id="export-clients">Exporter les données clients</button><button class="btn outline" id="export-global">Exporter le CA global</button><button class="btn outline" id="export-vehicles">Exporter le CA par véhicule</button><button class="btn outline" id="finance-reset">Réinitialiser les filtres</button></div></div><div class="filters"><label class="field"><span>Date de début</span><input id="finance-from" type="date"></label><label class="field"><span>Date de fin</span><input id="finance-to" type="date"></label><label class="field"><span>Voiture</span><select id="finance-vehicle"><option value="all">Toutes les voitures</option></select></label></div><div id="finance-metrics" class="grid"></div><div id="finance-breakdown" class="table-wrap"></div></div>`);
       box = $('finance-analysis');
       ['finance-from','finance-to','finance-vehicle'].forEach(id => $(id)?.addEventListener('change', renderFinanceAnalysis));
-      $('finance-reset')?.addEventListener('click', () => { $('finance-from').value=''; $('finance-to').value=''; $('finance-vehicle').value='all'; renderFinanceAnalysis(); });
+      $('finance-reset')?.addEventListener('click', () => { $('finance-from').value=''; $('finance-to').value=''; $('finance-vehicle').value='all'; renderFinanceAnalysis(); }); $('export-clients')?.addEventListener('click', exportClientData); $('export-global')?.addEventListener('click', exportGlobalRevenue); $('export-vehicles')?.addEventListener('click', exportRevenueByVehicle);
     }
     const allVehicles = typeof vehicles !== 'undefined' ? vehicles : [];
     const vehicleSelect = $('finance-vehicle');

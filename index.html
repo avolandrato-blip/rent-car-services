@@ -50,15 +50,14 @@
 
     <section id="cars" class="tab">
         <div class="container">
-            <h2 class="section-title">Notre Flotte</h2>
+            <h2 class="section-title">Notre flotte de véhicules</h2>
             <div class="fleet-controls" aria-label="Filtrer et trier les voitures">
                 <label>Recherche<input id="fleet-search" type="search" placeholder="Nom, marque ou modèle"></label>
                 <label>Transmission<select id="fleet-transmission"><option value="all">Toutes</option></select></label>
                 <label>Nombre de places<select id="fleet-seats"><option value="all">Toutes</option></select></label>
                 <label>Prix maximum / jour<input id="fleet-max-price" type="number" min="0" placeholder="Ex. 150000"></label>
-                <label>Trier par<select id="fleet-sort"><option value="name">Nom</option><option value="price-asc">Prix croissant</option><option value="price-desc">Prix décroissant</option><option value="popular">Voiture la plus prise</option></select></label>
+                <label>Trier par<select id="fleet-sort"><option value="name">Nom</option><option value="price-asc">Prix croissant</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
             </div>
-            <p id="fleet-popular" class="fleet-popular" role="status"></p>
             <div id="cars-grid" class="cars-grid"></div>
         </div>
     </section>

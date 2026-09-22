@@ -142,15 +142,12 @@ function renderPublicCars() {
             Number(car.price_per_day || 0) <= maxPrice;
     });
     cars.sort((a,b) => sort === 'popular' ? (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0) : sort === 'price-asc' ? Number(a.price_per_day||0)-Number(b.price_per_day||0) : sort === 'price-desc' ? Number(b.price_per_day||0)-Number(a.price_per_day||0) : String(a.nom).localeCompare(String(b.nom), 'fr'));
-    const popular = [...publicCars].sort((a,b) => (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0))[0];
-    const popularEl = document.getElementById('fleet-popular');
-    if (popularEl) popularEl.textContent = popular && publicRentalCounts[popular.id] ? `Voiture la plus prise : ${popular.nom} (${publicRentalCounts[popular.id]} réservation(s))` : 'Popularité disponible après enregistrement des réservations.';
     document.getElementById('cars-grid').innerHTML = cars.map(car => `
         <div class="car-card">
             <div class="car-gallery">${(car.photos || []).map(photo => `<img src="${photo}" loading="lazy" alt="${car.nom}">`).join('')}</div>
             <div class="car-info">
                 <h3>${car.nom}</h3>
-                <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location en sans chauffeur'}</p>
+                <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p>
                 <p class="car-price">${car.prix}</p>
                 <div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant}</span><span><i class="fas fa-users"></i> ${car.places}</span></div>
                 <p class="car-desc">${car.description}</p>
@@ -305,7 +302,7 @@ async function loadBookingData() {
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
     const select = document.getElementById('booking-vehicle');
-    if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location en sans chauffeur'}</option>`).join('');
+    if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
     window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}`;
