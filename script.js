@@ -433,6 +433,7 @@ async function submitReservation(event) {
         license_acquired_place: document.getElementById('booking-license-place').value.trim(),
         license_acquired_at: document.getElementById('booking-license-date').value || null,
         customer_cin: document.getElementById('booking-cin').value.trim(),
+        cin_is_duplicate: document.getElementById('booking-cin-type').value === 'true',
         cin_acquired_place: document.getElementById('booking-cin-place').value.trim(),
         cin_acquired_at: document.getElementById('booking-cin-date').value || null,
         start_at: new Date(start).toISOString(),

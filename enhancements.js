@@ -42,7 +42,7 @@
     if (deposit > 0 && !paymentMethod) return showBookingError('Sélectionnez le mode de paiement de l’acompte.');
     const customer = {
       full_name: $('booking-name').value.trim(), phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
-      email: $('booking-email').value.trim() || null, address: $('booking-address').value.trim(), driving_license: $('booking-license').value.trim(), cin: $('booking-cin').value.trim(),
+      email: $('booking-email').value.trim() || null, address: $('booking-address').value.trim(), driving_license: $('booking-license').value.trim(), cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
       license_acquired_at: $('booking-license-date').value || null, license_acquired_place: $('booking-license-place').value.trim(),
       cin_acquired_at: $('booking-cin-date').value || null, cin_acquired_place: $('booking-cin-place').value.trim()
     };
@@ -51,7 +51,7 @@
     if (customerResult.error) return showBookingError('Impossible d’enregistrer la fiche client. Contactez-nous par WhatsApp.');
     const payload = {
       vehicle_id: vehicle.id, customer_id: customerResult.data.id, customer_name: customer.full_name, customer_phone: customer.phone, whatsapp_phone: customer.whatsapp_phone,
-      customer_email: customer.email, customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin,
+      customer_email: customer.email, customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin, cin_is_duplicate: customer.cin_is_duplicate,
       license_acquired_at: customer.license_acquired_at, license_acquired_place: customer.license_acquired_place,
       cin_acquired_at: customer.cin_acquired_at, cin_acquired_place: customer.cin_acquired_place,
       start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), with_driver: $('booking-driver').checked, rental_type: $('booking-rental-type').value,
