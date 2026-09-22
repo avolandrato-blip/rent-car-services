@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Car Service | Location de voiture à Antananarivo</title>
+    <title>Rent Car Services | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <div class="theme-switcher" aria-label="Choisir le thème"><span>Thème :</span><button type="button" onclick="setClientTheme('royal-night')">Nuit royal</button><button type="button" onclick="setClientTheme('premium-white')">Blanc premium</button></div>
 
 <header class="header">
     <div class="nav-container">
-        <h1 id="brand-name">Rent Car Service</h1>
+        <h1 id="brand-name">RENT CAR <span>SERVICES</span></h1>
         <div class="menu-burger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
         <nav id="nav-menu">
             <button onclick="openTab('home')">Accueil</button>
@@ -75,11 +76,11 @@
                         <label>Voiture<select id="booking-vehicle" required></select></label>
                         <label>Nom complet<input id="booking-name" required placeholder="Votre nom et prénom"></label>
                         <label>Adresse<input id="booking-address" required placeholder="Adresse complète"></label>
-                        <label>Téléphone<input id="booking-phone" required placeholder="034 91 207 26"></label>
+                        <label>Téléphone principal<input id="booking-phone" required placeholder="034 91 207 26"></label><label>WhatsApp actif<input id="booking-whatsapp" required placeholder="Numéro qui reçoit la facture et le contrat"></label>
                         <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                         <label>Numéro de permis<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
-                        <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label>
-                        <input id="booking-rental-type" type="hidden" value="automatic">
+                        <label>CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Présentation obligatoire lors de la récupération du véhicule.</small></label><div class="date-range"><label>Date d’acquisition CIN<input id="booking-cin-date" type="date" required></label><label>Lieu d’acquisition CIN<input id="booking-cin-place" required placeholder="Lieu d’acquisition"></label></div><div class="date-range"><label>Date d’acquisition permis<input id="booking-license-date" type="date" required></label><label>Lieu d’acquisition permis<input id="booking-license-place" required placeholder="Lieu d’acquisition"></label></div>
+                        <label>Formule de location<select id="booking-rental-type" required><option value="day">Jour — 07h00 à 18h00</option><option value="night">Nuit — 19h00 à 06h00</option><option value="24h">24 heures — 07h00 à 06h00 ou 19h00 à 18h00</option></select></label>
                         <div class="date-range">
                             <label>Date de départ<input id="booking-start-date" type="date" required></label>
                             <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
@@ -93,7 +94,7 @@
                             <label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération — 20 000 Ar</label>
                         </div>
                         <div class="date-range">
-                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Code promo<input id="booking-promo" placeholder="Un seul code promo par réservation"></label>
+                            <label>Acompte payé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Code promo<input id="booking-promo" placeholder="Code promo (facultatif)"></label>
                         <label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label>
                             <label id="mobile-reference-field">Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label>
                             <label id="mobile-number-field">Numéro Mobile Money<input id="booking-mobile-number" placeholder="034 xx xxx xx"></label>
@@ -101,7 +102,7 @@
                         <p id="booking-quote" class="booking-result" role="status"></p>
                         <p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Prix total hors carburant. Si la réservation est avec chauffeur, les repas et l’hébergement du chauffeur sont également exclus.</p>
                         <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Avec chauffeur — 30 000 Ar / jour</label>
-                        <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label>
+                        <label>Message<textarea id="booking-notes" rows="3" placeholder="Précisions, lieu de prise en charge..."></textarea></label><label class="checkbox-line"><input id="booking-terms" type="checkbox" required> J’ai lu et j’approuve les conditions de réservation et de location.</label>
                         <button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer la demande</button>
                     </form>
                     <p id="booking-result" class="booking-result" role="status"></p>
@@ -109,9 +110,9 @@
             </div>
             <div class="booking-panel invoice-access-panel">
                 <h3>Télécharger une facture</h3>
-                <p class="muted">La facture et le contrat sont accessibles uniquement après validation de l’acompte par Rent Car Service. Le reste à payer doit être réglé au moment de récupérer la voiture.</p>
+                <p class="muted">Si aucun acompte n’est payé, la facture et le contrat vous seront envoyés dès le paiement d’un acompte. Sinon, ils sont accessibles après validation par Rent Car Services. Le reste à payer doit être réglé au moment de récupérer la voiture.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
-                    <div class="date-range"><label>Référence réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
+                    <div class="date-range"><label>Référence réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>WhatsApp actif<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
                     <button class="btn btn-primary" type="submit">Vérifier et télécharger la facture et le contrat</button>
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
@@ -157,7 +158,5 @@
 
     <script src="supabase.js"></script>
     <script src="script.js"></script>
-    <script src="enhancements.js"></script>
-    <script src="morning-changes.js"></script>
 </body>
 </html>
