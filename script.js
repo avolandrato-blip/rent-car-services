@@ -294,10 +294,12 @@ async function loadBookingData() {
         return;
     }
     bookingVehicles = vehicles || [];
+    window.bookingVehicles = bookingVehicles;
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
     const select = document.getElementById('booking-vehicle');
     if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location en sans chauffeur'}</option>`).join('');
+    window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}`;
 }
