@@ -161,15 +161,16 @@ function bindPublicCarFilters() {
 }
 
 async function loadCars() {
-    const localResponse = await fetch('cars.json', { cache: 'no-store' });
-    const localData = await localResponse.json();
-    const localCars = localData.liste || [];
-    if (window.rentCarSupabase) {
+    if (!window.rentCarSupabase) {
+        console.error('Supabase est indisponible : impossible de charger le catalogue des véhicules.');
+        publicCars = [];
+    } else {
         const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase
             .from('vehicles')
             .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates')
             .neq('status', 'inactive')
             .order('price_per_day',{ascending:true}).order('name',{ascending:true});
+        if (vehicleError) console.error('Impossible de charger les véhicules depuis Supabase:', vehicleError);
         publicCars = !vehicleError && remoteCars?.length ? remoteCars.map(car => ({
             ...car,
             nom: car.name,
@@ -178,11 +179,9 @@ async function loadCars() {
             places: car.seats,
             carburant: car.fuel || '—',
             photos: car.image_urls || [],
-        })) : localCars;
+        })) : [];
         const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
         publicRentalCounts = (booked || []).reduce((acc, row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
-    } else {
-        publicCars = localCars;
     }
     const transmissions = [...new Set(publicCars.map(c => c.transmission).filter(v => v && v !== '—'))].sort();
     const seats = [...new Set(publicCars.map(c => c.places).filter(v => v && v !== '—'))].sort((a,b) => Number(a)-Number(b));
