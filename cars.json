@@ -1,49 +1,16 @@
 {
   "liste": [
-    {
-      "nom": "Chevrolet Cruze",
-      "prix": "160 000 Ar / jour",
-      "places": 5,
-      "transmission": "Automatique",
-      "carburant": "Essence",
-      "description": "La Chevrolet Cruze allie élégance et confort pour vos trajets en ville et sur route. Siège ergonomique, consommation maîtrisée et finition soignée : idéale pour déplacements professionnels ou week-ends en famille, avec un comportement routier rassurant et stable.",
-      "photos": ["images/cruzen1.jpeg", "images/cruzen2.jpeg","images/cruzem1.jpeg","images/cruzem2.jpeg"]
-    },
-    {
-      "nom": "Chevrolet Captiva",
-      "prix": "180 000 Ar / jour",
-      "places": 7,
-      "transmission": "Automatique",
-      "carburant": "Diesel",
-      "description": "Le Chevrolet Captiva est un SUV spacieux et robuste, parfait pour familles et longs voyages. Grand volume de chargement, modularité des sièges et motorisation adaptée aux terrains variés. Confort et sécurité au rendez‑vous pour partir l'esprit tranquille.",
-      "photos": ["images/captiva1.jpeg","images/captiva2.jpeg"]
-    },
-    {
-      "nom": "Hyundai iX35",
-      "prix": "180 000 Ar / jour",
-      "places": 5,
-      "transmission": "Automatique",
-      "carburant": "Essence",
-      "description": "Le Hyundai iX35 combine agilité et habitabilité avec un design moderne, une bonne tenue de route et une consommation maîtrisée. Idéal pour trajets quotidiens et escapades, il offre position de conduite élevée, équipements pratiques et espace confortable pour passagers et bagages.",
-      "photos": ["images/ix1.jpeg", "images/ix2.jpeg", "images/ix3.jpeg"]
-    },
-    {
-      "nom": "Kia Pride",
-      "prix": "120 000 Ar / jour",
-      "places": 5,
-      "transmission": "Automatique",
-      "carburant": "Essence",
-      "description": "La Kia Pride Rio est une citadine moderne, économique et maniable. Parfaite pour la ville grâce à son faible encombrement, elle propose un habitacle confortable, commandes intuitives et faible consommation — une solution pratique pour vos déplacements quotidiens.",
-      "photos": ["images/pride1.jpg","images/pride2.jpg"]
-    },
-    {
-      "nom": "Hyundai Getz",
-      "prix": "80 000 Ar / jour",
-      "places": 5,
-      "transmission": "Manuel",
-      "carburant": "Essence",
-      "description": "La Hyundai Getz est compacte et économique, idéale pour circuler en centre‑ville. Facile à garer, elle offre une conduite simple, coût d'utilisation réduit et fiabilité quotidienne. Parfaite pour petits trajets et conducteurs recherchant praticité sans compromis.",
-      "photos": ["images/getz1.jpeg","images/getz2.jpeg","images/getz3.jpeg"]
-    }
+    {"id":"hyundai-i30","nom":"Hyundai i30","prix":"Sur devis","pricing":{"half_day":"Sur devis","full_day":"Sur devis"},"places":5,"transmission":"Manuelle","carburant":"Essence","driver_mode":"without_driver","description":"Compacte, fiable et pratique pour les déplacements urbains, les trajets quotidiens et les locations de courte ou longue durée.","photos":["images/cars/i30-main.webp"]},
+    {"id":"daewoo-matiz-3","nom":"Daewoo Matiz 3","prix":"85 000 Ar / 12 h","pricing":{"half_day":"85 000 Ar","full_day":"115 000 Ar"},"places":5,"transmission":"Manuelle","carburant":"Essence","driver_mode":"without_driver","description":"Une citadine économique et facile à garer, idéale pour les déplacements en ville et les petits trajets.","photos":["images/cars/matiz-main.webp"]},
+    {"id":"hyundai-accent","nom":"Hyundai Accent","prix":"160 000 Ar / 12 h","pricing":{"half_day":"160 000 Ar","full_day":"190 000 Ar"},"places":5,"transmission":"Automatique","carburant":"Diesel","driver_mode":"without_driver","description":"Une compacte confortable et stable, adaptée aux déplacements professionnels et aux trajets quotidiens.","photos":["images/cars/accent-main.webp"]},
+    {"id":"kia-sorento","nom":"Kia Sorento","prix":"230 000 Ar / 12 h","pricing":{"half_day":"230 000 Ar","full_day":"260 000 Ar"},"places":7,"transmission":"Automatique","carburant":"Essence","driver_mode":"without_driver","description":"Un SUV spacieux et confortable pour les familles, les groupes et les longs trajets.","photos":["images/cars/sorento-main.webp"]},
+    {"id":"hyundai-tucson","nom":"Hyundai Tucson","prix":"180 000 Ar / 12 h","pricing":{"half_day":"180 000 Ar","full_day":"210 000 Ar"},"places":5,"transmission":"Manuelle","carburant":"Diesel","driver_mode":"without_driver","description":"Un SUV polyvalent et robuste, adapté aux déplacements urbains comme aux routes de Madagascar.","photos":["images/cars/tucson-main.webp"]},
+    {"id":"kia-pride-manual","nom":"Kia Pride Manuel","prix":"155 000 Ar / 12 h","pricing":{"half_day":"155 000 Ar","full_day":"185 000 Ar"},"places":5,"transmission":"Manuelle","carburant":"Diesel","driver_mode":"without_driver","description":"Une berline compacte, simple à conduire et adaptée aux trajets quotidiens avec un bon rapport praticité-prix.","photos":["images/cars/pride-manual-main.webp"]},
+    {"id":"chevrolet-cruze","nom":"Chevrolet Cruze","prix":"160 000 Ar / 12 h","pricing":{"half_day":"160 000 Ar","full_day":"190 000 Ar"},"places":5,"transmission":"Automatique","carburant":"Essence","driver_mode":"without_driver","description":"Une berline confortable et élégante pour les déplacements professionnels, les sorties et les trajets sur route.","photos":["images/cars/cruze-main.webp"]},
+    {"id":"hyundai-getz-manual","nom":"Hyundai Getz Manuel","prix":"110 000 Ar / 12 h","pricing":{"half_day":"110 000 Ar","full_day":"140 000 Ar"},"places":5,"transmission":"Manuelle","carburant":"Essence","driver_mode":"without_driver","description":"Une citadine compacte et économique, facile à manœuvrer et parfaitement adaptée à la ville.","photos":["images/cars/getz-manual-main.webp"]},
+    {"id":"chevrolet-captiva","nom":"Chevrolet Captiva","prix":"190 000 Ar / 12 h","pricing":{"half_day":"190 000 Ar","full_day":"220 000 Ar"},"places":7,"transmission":"Automatique","carburant":"Diesel","driver_mode":"without_driver","description":"Un grand SUV de 7 places offrant espace, confort et capacité de chargement pour les familles et les groupes.","photos":["images/cars/captiva-main.webp"]},
+    {"id":"hyundai-getz-automatic","nom":"Hyundai Getz Automatique","prix":"120 000 Ar / 12 h","pricing":{"half_day":"120 000 Ar","full_day":"150 000 Ar"},"places":5,"transmission":"Automatique","carburant":"Essence","driver_mode":"without_driver","description":"Une citadine automatique, pratique et économique pour circuler sereinement en ville.","photos":["images/cars/getz-automatic-main.webp"]},
+    {"id":"kia-pride-automatic","nom":"Kia Pride Automatique","prix":"140 000 Ar / 12 h","pricing":{"half_day":"140 000 Ar","full_day":"170 000 Ar"},"places":5,"transmission":"Automatique","carburant":"Diesel","driver_mode":"without_driver","description":"Une compacte automatique facile à prendre en main, adaptée aux déplacements urbains et aux événements familiaux.","photos":["images/cars/pride-automatic-main.webp"]},
+    {"id":"hyundai-starex","nom":"Hyundai Starex avec chauffeur","prix":"À partir de 100 000 Ar","pricing":{"half_day":"À partir de 100 000 Ar","full_day":"Sur devis"},"places":11,"transmission":"Manuelle","carburant":"Diesel","driver_mode":"with_driver","description":"Un minibus de 11 places avec chauffeur, climatisation et tarifs adaptés aux transferts, groupes et longues distances.","photos":["images/cars/starex-main.webp"]}
   ]
 }

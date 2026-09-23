@@ -148,7 +148,7 @@ function renderPublicCars() {
             <div class="car-info">
                 <h3>${car.nom}</h3>
                 <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p>
-                <p class="car-price">${car.prix}</p>
+                <div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : car.prix}</div>
                 <div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant}</span><span><i class="fas fa-users"></i> ${car.places}</span></div>
                 <p class="car-desc">${car.description}</p>
                 <div class="car-actions"><button class="btn btn-primary btn-reserve" onclick="openBookingForVehicle('${car.id || ''}','${car.nom}')">Réserver</button><button class="btn btn-outline" onclick="openLongTermQuote('${car.nom}')">Contactez-nous</button><a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a><a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a></div>
@@ -166,8 +166,13 @@ async function loadCars() {
     const localCars = localData.liste || [];
     publicCars = localCars;
     if (window.rentCarSupabase) {
-        const { data: remoteCars, error } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates').neq('status', 'inactive').order('name');
-        if (!error && remoteCars?.length) publicCars = remoteCars.map(car => { const local = localCars.find(item => item.nom === car.name || item.slug === car.slug) || {}; return {...car, nom:car.name, prix:`${formatMGA(car.price_per_day)} / jour`, transmission:car.transmission || local.transmission || '—', carburant:car.fuel || local.carburant || '—', places:car.seats || local.places || '—', description:car.description || local.description || '', photos:(car.image_urls && car.image_urls.length) ? car.image_urls : (local.photos || [])}; });
+        const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,status').neq('status', 'inactive').order('name');
+        if (!vehicleError && remoteCars?.length) {
+            publicCars = localCars.map(local => {
+                const remote = remoteCars.find(car => car.name === local.nom || car.slug === local.id);
+                return remote ? { ...local, id: remote.id } : local;
+            });
+        }
         const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
         publicRentalCounts = (booked || []).reduce((acc, row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
     }

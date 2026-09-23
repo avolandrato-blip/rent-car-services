@@ -97,7 +97,8 @@ body {
 .car-gallery { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; height: 200px; background: #000; }
 .car-gallery img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: start; }
 .car-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-.car-price { color: var(--accent); font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; }
+.car-price { color: var(--accent); font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.car-price span { white-space: nowrap; }
 .car-tags { display: flex; gap: 10px; margin-bottom: 15px; font-size: 0.85rem; color: #666; flex-wrap: wrap; }
 .car-tags span { background: #f0f2f5; padding: 5px 10px; border-radius: 5px; }
 
