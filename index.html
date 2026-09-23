@@ -121,6 +121,7 @@
                             <div class="date-range"><label>Itinéraire — lieu de départ<input id="booking-trip-from" required placeholder="Ville ou lieu de départ"></label><label>Itinéraire — destination<input id="booking-trip-to" required placeholder="Ville ou lieu d’arrivée"></label></div>
                             <div class="date-range"><label class="checkbox-line"><input id="booking-delivery" type="checkbox"> Livraison du véhicule — 20 000 Ar</label><label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération du véhicule — 20 000 Ar</label></div>
                             <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Service avec chauffeur — 30 000 Ar / jour</label>
+                            <label id="booking-trip-rate-wrap" class="hidden">Tarif spécial par destination<select id="booking-trip-rate"><option value="">Choisir une destination</option></select></label>
                             <div class="date-range"><label>Acompte versé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte versé</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label></div>
                             <label>Code promotionnel — facultatif<input id="booking-promo" placeholder="Ex. RCS10"><small class="field-note">La remise éventuelle sera appliquée au total après validation du code.</small></label>
                             <div id="mobile-money-fields" class="date-range hidden"><label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label><label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="Ex. 034 91 207 26"></label></div>
@@ -190,8 +191,8 @@
 </a>
 
     <script src="supabase.js"></script>
-    <script src="script.js"></script>
-    <script src="enhancements.js"></script>
-    <script src="morning-changes.js"></script>
+    <script src="script.js?v=20260923-0723"></script>
+    <script src="enhancements.js?v=20260923-0723"></script>
+    <script src="morning-changes.js?v=20260923-0723"></script>
 </body>
 </html>

@@ -164,17 +164,25 @@ async function loadCars() {
     const localResponse = await fetch('cars.json', { cache: 'no-store' });
     const localData = await localResponse.json();
     const localCars = localData.liste || [];
-    publicCars = localCars;
     if (window.rentCarSupabase) {
-        const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,status').neq('status', 'inactive').order('name');
-        if (!vehicleError && remoteCars?.length) {
-            publicCars = localCars.map(local => {
-                const remote = remoteCars.find(car => car.name === local.nom || car.slug === local.id);
-                return remote ? { ...local, id: remote.id } : local;
-            });
-        }
+        const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase
+            .from('vehicles')
+            .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates')
+            .neq('status', 'inactive')
+            .order('name');
+        publicCars = !vehicleError && remoteCars?.length ? remoteCars.map(car => ({
+            ...car,
+            nom: car.name,
+            prix: car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',
+            pricing: { half_day: car.price_12h ? formatMGA(car.price_12h) : 'Sur devis', full_day: car.price_24h ? formatMGA(car.price_24h) : 'Sur devis' },
+            places: car.seats,
+            carburant: car.fuel || '—',
+            photos: car.image_urls || [],
+        })) : localCars;
         const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
         publicRentalCounts = (booked || []).reduce((acc, row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
+    } else {
+        publicCars = localCars;
     }
     const transmissions = [...new Set(publicCars.map(c => c.transmission).filter(v => v && v !== '—'))].sort();
     const seats = [...new Set(publicCars.map(c => c.places).filter(v => v && v !== '—'))].sort((a,b) => Number(a)-Number(b));
@@ -337,6 +345,7 @@ function openBookingForVehicle(vehicleId, vehicleName) {
     openTab('booking');
     const select = document.getElementById('booking-vehicle');
     if (select && vehicleId && [...select.options].some(option => option.value === vehicleId)) select.value = vehicleId;
+    syncBookingTripRates();
     updateBookingQuote();
     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -383,6 +392,7 @@ async function loadBookingData() {
     bookingMaintenance = maintenance || [];
     const select = document.getElementById('booking-vehicle');
     if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
+    syncBookingTripRates();
     window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}`;
@@ -426,6 +436,17 @@ function availabilityLabel(status) {
     return { available: 'Disponible', pre_reserved: 'Pré-réservée', reserved: 'Réservée', maintenance: 'En maintenance', unknown: 'Dates à choisir' }[status] || status;
 }
 
+function tripRateAmount(rate) { return Number(rate?.price_per_day ?? rate?.rate ?? 0); }
+function tripRateLabel(rate) { return rate?.label || [rate?.from, rate?.to].filter(Boolean).join(' → ') || 'Destination spéciale'; }
+function syncBookingTripRates() {
+    const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
+    const wrap = document.getElementById('booking-trip-rate-wrap');
+    const select = document.getElementById('booking-trip-rate');
+    if (!wrap || !select) return;
+    const rates = vehicle?.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).filter(rate => tripRateAmount(rate) > 0) : [];
+    wrap.classList.toggle('hidden', !rates.length);
+    select.innerHTML = '<option value="">Choisir une destination</option>' + rates.map(rate => `<option value="${rate.id}">${tripRateLabel(rate)} — ${formatMGA(tripRateAmount(rate))} / jour</option>`).join('');
+}
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
@@ -440,7 +461,7 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else rentalAmount = rate12 * days;
     const selectedTrip = document.getElementById('booking-trip-rate')?.value;
     const tripRate = vehicle.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).find(item => item.id === selectedTrip) : null;
-    if (tripRate) rentalAmount = Number(tripRate.price_per_day || 0) * days;
+    if (tripRate) rentalAmount = tripRateAmount(tripRate) * days;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
     const wantsDriver = document.getElementById('booking-driver')?.checked;
@@ -457,7 +478,7 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${q.tripRate.from} → ${q.tripRate.to} : ${formatMGA(q.rentalAmount)} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
 }
 
 function checkAvailability() {
@@ -530,8 +551,8 @@ async function submitReservation(event) {
         days,
         trip_from: document.getElementById('booking-trip-from').value.trim(),
         trip_to: document.getElementById('booking-trip-to').value.trim(),
-        trip_rate_label: quote.tripRate ? `${quote.tripRate.from} → ${quote.tripRate.to}` : null,
-        trip_rate_per_day: quote.tripRate ? Number(quote.tripRate.price_per_day || 0) : null,
+        trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null,
+        trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null,
         delivery_fee: quote.delivery,
         recovery_fee: quote.recovery,
         chauffeur_fee: quote.chauffeur,
@@ -598,7 +619,8 @@ async function verifyInvoiceOtp(event) {
     const win = window.open('', '_blank'); win.document.write(html); win.document.close();
 }
 
-['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-trip-rate'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+document.getElementById('booking-vehicle')?.addEventListener('change', () => { syncBookingTripRates(); updateBookingQuote(); });
 
 
 function syncRentalTimes() {
