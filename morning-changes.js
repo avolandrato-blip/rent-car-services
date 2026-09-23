@@ -59,6 +59,12 @@
     }, true);
     const vehicleObserver = new MutationObserver(photoControls); if ($('v-photo-preview')) vehicleObserver.observe($('v-photo-preview'), {childList:true});
   }
-  document.addEventListener('DOMContentLoaded', () => { addRequiredStars(document); updateClientDriverLabel(); $('booking-vehicle')?.addEventListener('change', updateClientDriverLabel); installAdmin(); window.startAddVehicle = startVehicleForm; window.editVehicle = editVehicleForm; });
+  document.addEventListener('DOMContentLoaded', () => {
+    addRequiredStars(document); updateClientDriverLabel(); $('booking-vehicle')?.addEventListener('change', updateClientDriverLabel); installAdmin();
+    window.startAddVehicle = startVehicleForm;
+    window.editVehicle = async id => { try { await editVehicleForm(id); } catch (error) { console.error('Erreur modification véhicule', error); alert(`Impossible d’ouvrir le véhicule : ${error.message}`); } };
+    const coreToggleVehicleStatus = window.toggleVehicleStatus;
+    if (typeof coreToggleVehicleStatus === 'function') window.toggleVehicleStatus = async id => { try { await coreToggleVehicleStatus(id); } catch (error) { console.error('Erreur statut véhicule', error); alert(`Impossible de modifier le statut : ${error.message}`); } };
+  });
   window.updateClientDriverLabel = updateClientDriverLabel;
 })();

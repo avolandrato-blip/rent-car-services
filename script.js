@@ -133,7 +133,7 @@ function renderPublicCars() {
     const transmission = document.getElementById('fleet-transmission')?.value || 'all';
     const seats = document.getElementById('fleet-seats')?.value || 'all';
     const maxPrice = Number(document.getElementById('fleet-max-price')?.value || Infinity);
-    const sort = document.getElementById('fleet-sort')?.value || 'name';
+    const sort = document.getElementById('fleet-sort')?.value || 'price-asc';
     let cars = publicCars.filter(car => {
         const haystack = `${car.nom} ${car.make || ''} ${car.model || ''}`.toLowerCase();
         return (!search || haystack.includes(search)) &&
@@ -169,7 +169,7 @@ async function loadCars() {
             .from('vehicles')
             .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates')
             .neq('status', 'inactive')
-            .order('name');
+            .order('price_per_day',{ascending:true}).order('name',{ascending:true});
         publicCars = !vehicleError && remoteCars?.length ? remoteCars.map(car => ({
             ...car,
             nom: car.name,
