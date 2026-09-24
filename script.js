@@ -475,9 +475,12 @@ function updateBookingQuote() {
     const startDate = document.getElementById('booking-start-date')?.value, endDate = document.getElementById('booking-end-date')?.value;
     const startTime = document.getElementById('booking-start-time')?.value, endTime = document.getElementById('booking-end-time')?.value;
     const quote = document.getElementById('booking-quote');
-    if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
+    const mini = document.getElementById('booking-mini-summary');
+    if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; if (mini) mini.textContent = 'Choisissez une voiture et vos dates pour voir le récapitulatif financier.'; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const dateFormat = value => new Date(value).toLocaleDateString('fr-FR');
+    if (mini) mini.innerHTML = `<strong>${escapeFunHtml(vehicle.name || vehicle.nom || 'Véhicule')}</strong><span>${q.billedHours} h</span><strong>${formatMGA(q.rentalAmount)}</strong><span>Du ${dateFormat(`${startDate}T${startTime}`)} à ${startTime} au ${dateFormat(`${endDate}T${endTime}`)} à ${endTime}</span>`;
 }
 
 function checkAvailability() {
