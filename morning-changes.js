@@ -74,7 +74,7 @@
       form.reset(); $('v-id').value=''; form.classList.add('hidden'); if (typeof refreshAll === 'function') await refreshAll();
     }, true);
     $('maintenance-form')?.addEventListener('submit', async event => { const vehicleId = $('m-vehicle')?.value; if (vehicleId) await window.rentCarSupabase.from('vehicles').update({status:'maintenance'}).eq('id', vehicleId); }, true);
-    const vehicleObserver = new MutationObserver(photoControls); if ($('v-photo-preview')) vehicleObserver.observe($('v-photo-preview'), {childList:true});
+    // Ne pas observer v-photo-preview : photoControls() réécrit innerHTML et provoquerait une boucle infinie.
   }
   document.addEventListener('DOMContentLoaded', () => {
     addRequiredStars(document); ensureVehicleFields(); updateClientDriverLabel(); $('booking-vehicle')?.addEventListener('change', updateClientDriverLabel); installAdmin();
