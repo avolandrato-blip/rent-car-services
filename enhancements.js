@@ -55,6 +55,8 @@
     const mobile = method === 'mobile_money';
     $('mobile-money-fields')?.classList.toggle('hidden', !mobile);
     $('payment-proof-field')?.classList.toggle('hidden', !(mobile && deposit > 0));
+    let note = $('mobile-money-instructions');
+    if (mobile) { if (!note) { note = document.createElement('p'); note.id = 'mobile-money-instructions'; note.className = 'field-note'; $('mobile-money-fields')?.before(note); } const date = $('booking-start-date')?.value?.replace(/-/g, '').slice(6, 8) + ($('booking-start-date')?.value?.replace(/-/g, '').slice(4, 6) || ''); note.innerHTML = `Pour confirmer, envoyez <strong>${deposit.toLocaleString('fr-FR')} Ar</strong> au <strong>034 91 207 26</strong>.<br>Motif : <strong>resa_voiture_${date || 'JJMM'}</strong>.<br>Joignez ensuite la preuve de paiement.`; } else note?.remove();
     if ($('booking-payment-proof')) $('booking-payment-proof').required = mobile && deposit > 0;
   }
 
@@ -94,6 +96,7 @@
     if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner l’itinéraire avec chauffeur.');
     if (typeof getVehicleAvailability === 'function' && getVehicleAvailability(vehicle.id, start, end) !== 'available') return showBookingError('Cette voiture n’est pas disponible sur cette période.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
+    const ownerMode = !!window.bookingOwnerMode;
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
     const promoCode = $('booking-promo')?.value.trim().toUpperCase() || null;
     const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0;
@@ -122,7 +125,7 @@
       deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
       trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null, trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null, delivery_fee: $('booking-delivery').checked ? 20000 : 0,
       recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: promoCode,
-      promo_discount: Math.min(quote.total, promoDiscount), notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: deposit > 0 ? 'reserved' : 'pre_reserved'
+      promo_discount: Math.min(quote.total, promoDiscount), notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: ownerMode ? 'pre_reserved' : (deposit > 0 ? 'reserved' : 'pre_reserved'), owner_confirmation_status: ownerMode ? 'pending' : 'not_required'
     };
     const reservationResult = await db.from('reservations').insert(payload).select('id,reference').single();
     if (reservationResult.error) { console.error(reservationResult.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
@@ -134,8 +137,9 @@
       const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
       if (upload.error || upload.data?.error) console.error('identity document upload failed', upload.error || upload.data?.error);
     }
-    const message = `Bonjour, je vous transmets ma demande de réservation ${r.reference}.%0AClient : ${encodeURIComponent(customer.full_name)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(vehicle.name || vehicle.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal : ${encodeURIComponent(formatMGA(finalTotal))}%0AAcompte : ${encodeURIComponent(formatMGA(deposit))}%0A${deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.'}`;
-    window.open(`https://wa.me/${siteConfig.footer.whatsapp}?text=${message}`, '_blank');
+    const recipient = ownerMode && vehicle.owner_phone ? String(vehicle.owner_phone).replace(/\D/g, '') : String(siteConfig.footer.whatsapp).replace(/\D/g, '');
+    const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.full_name)}%0ATéléphone : ${encodeURIComponent(customer.phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(vehicle.name || vehicle.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal estimé : ${encodeURIComponent(formatMGA(finalTotal))}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
+    window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';
     result.textContent = deposit > 0 ? `Votre demande ${r.reference} a bien été enregistrée avec l’acompte indiqué.` : `Votre demande ${r.reference} a bien été enregistrée. La facture et le contrat seront transmis après réception d’un acompte.`;
     $('booking-form').reset();

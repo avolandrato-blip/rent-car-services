@@ -127,7 +127,20 @@ async function loadCards() {
 // Galerie des véhicules
 let publicCars = [];
 let publicRentalCounts = {};
-
+function contractVisible(car) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (car.status === 'contract_ended') return false;
+    if (car.contract_start_date && today < new Date(`${car.contract_start_date}T00:00:00`)) return false;
+    if (car.contract_end_date && today >= new Date(`${car.contract_end_date}T00:00:00`).getTime() + 86400000) return false;
+    return true;
+}
+function vehicleClientStatus(car) {
+    const now = new Date();
+    const maintenance = bookingMaintenance.find(item => item.vehicle_id === car.id && new Date(item.start_at) <= now && new Date(item.end_at) > now);
+    if (maintenance) return { key: 'maintenance', label: `En maintenance jusqu’au ${formatAvailabilityDate(maintenance.end_at)}` };
+    if (car.status === 'inactive') return { key: 'inactive', label: 'Indisponible — contactez-nous' };
+    return { key: 'available', label: 'Disponible' };
+}
 function renderPublicCars() {
     const search = (document.getElementById('fleet-search')?.value || '').trim().toLowerCase();
     const transmission = document.getElementById('fleet-transmission')?.value || 'all';
@@ -135,6 +148,7 @@ function renderPublicCars() {
     const maxPrice = Number(document.getElementById('fleet-max-price')?.value || Infinity);
     const sort = document.getElementById('fleet-sort')?.value || 'price-asc';
     let cars = publicCars.filter(car => {
+        if (!contractVisible(car)) return false;
         const haystack = `${car.nom} ${car.make || ''} ${car.model || ''}`.toLowerCase();
         return (!search || haystack.includes(search)) &&
             (transmission === 'all' || car.transmission === transmission) &&
@@ -151,7 +165,7 @@ function renderPublicCars() {
                 <div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : car.prix}</div>
                 <div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant}</span><span><i class="fas fa-users"></i> ${car.places}</span></div>
                 <p class="car-desc">${car.description}</p>
-                <div class="car-actions"><button class="btn btn-primary btn-reserve" onclick="openBookingForVehicle('${car.id || ''}','${car.nom}')">Réserver</button><button class="btn btn-outline" onclick="openLongTermQuote('${car.nom}')">Contactez-nous</button><a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a><a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a></div>
+                <div class="car-actions">${(() => { const state = vehicleClientStatus(car); const ownerPhone = String(car.owner_phone || '').replace(/\D/g, ''); const action = state.key === 'available' ? (car.owner_whatsapp_enabled && ownerPhone ? `<button class="btn btn-whatsapp btn-reserve" onclick="openOwnerRequest('${car.id || ''}')">Réserver via WhatsApp</button>` : `<button class="btn btn-primary btn-reserve" onclick="openBookingForVehicle('${car.id || ''}','${car.nom}')">Réserver</button>`) : state.key === 'maintenance' ? `<button class="btn btn-outline" disabled title="${state.label}">${state.label}</button>` : `<button class="btn btn-outline" disabled>${state.label}</button>`; return `${action}<button class="btn btn-outline" onclick="openLongTermQuote('${car.nom}')">Contactez-nous</button><a href="https://wa.me/${ownerPhone || siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${car.nom}"><i class="fab fa-whatsapp"></i></a>`; })()}<a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${car.nom}"><i class="fas fa-phone"></i></a></div>
             </div>
         </div>`).join('') || '<p class="fleet-empty">Aucune voiture ne correspond à vos critères.</p>';
 }
@@ -167,8 +181,8 @@ async function loadCars() {
     } else {
         const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase
             .from('vehicles')
-            .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates')
-            .neq('status', 'inactive')
+            .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date')
+            .neq('status', 'contract_ended')
             .order('price_per_day',{ascending:true}).order('name',{ascending:true});
         if (vehicleError) console.error('Impossible de charger les véhicules depuis Supabase:', vehicleError);
         publicCars = !vehicleError && remoteCars?.length ? remoteCars.map(car => ({
@@ -372,12 +386,23 @@ function sendWhatsApp(e) {
 let bookingVehicles = [];
 let bookingReservations = [];
 let bookingMaintenance = [];
-
+window.bookingOwnerMode = false;
+function openOwnerRequest(vehicleId) {
+    const vehicle = bookingVehicles.find(item => item.id === vehicleId) || publicCars.find(item => item.id === vehicleId);
+    if (!vehicle) return;
+    window.bookingOwnerMode = true;
+    ['booking-cin','booking-license','booking-cin-place','booking-cin-date','booking-license-place','booking-license-date','booking-cin-recto','booking-cin-verso'].forEach(id => { const field = document.getElementById(id); if (field) { field.required = false; field.closest('label,.identity-upload')?.classList.add('optional-owner-field'); } });
+    const select = document.getElementById('booking-vehicle'); if (select) select.value = vehicleId;
+    document.getElementById('booking')?.scrollIntoView({behavior:'smooth'});
+    if (typeof openTab === 'function') openTab('booking');
+    if (typeof syncBookingTripRates === 'function') syncBookingTripRates();
+    document.getElementById('booking-result')?.replaceChildren(document.createTextNode('Demande rapide : CIN et permis facultatifs. Après validation, WhatsApp ouvrira la conversation avec le propriétaire.'));
+}
 async function loadBookingData() {
     if (!window.rentCarSupabase) return;
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
-        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates').eq('status', 'available').order('name'),
+        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date').neq('status', 'contract_ended').order('name'),
         db.from('reservations').select('vehicle_id,start_at,end_at,status').eq('status', 'reserved'),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
@@ -385,7 +410,7 @@ async function loadBookingData() {
         console.warn('Supabase booking data unavailable:', vehicleError.message);
         return;
     }
-    bookingVehicles = vehicles || [];
+    bookingVehicles = (vehicles || []).filter(vehicle => vehicle.status === 'available' && contractVisible(vehicle));
     window.bookingVehicles = bookingVehicles;
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
@@ -395,6 +420,7 @@ async function loadBookingData() {
     window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}`;
+    if (typeof renderPublicCars === 'function') renderPublicCars();
 }
 
 function overlaps(start, end, item) {
