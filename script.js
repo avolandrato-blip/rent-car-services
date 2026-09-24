@@ -175,7 +175,7 @@ async function loadCars() {
             ...car,
             nom: car.name,
             prix: car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',
-            pricing: { half_day: car.price_12h ? formatMGA(car.price_12h) : 'Sur devis', full_day: car.price_24h ? formatMGA(car.price_24h) : 'Sur devis' },
+            pricing: { half_day: car.price_12h ? formatMGA(car.price_12h) : 'Sur devis', full_day: car.price_12h ? formatMGA(Number(car.price_12h) + 30000) : 'Sur devis' },
             places: car.seats,
             carburant: car.fuel || '—',
             photos: car.image_urls || [],
@@ -449,7 +449,7 @@ function syncBookingTripRates() {
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
-    const rate24 = Number(vehicle.price_24h || rate12 * 2 || 0);
+    const rate24 = rate12 + 30000;
     const billedHours = Math.max(1, Math.ceil(hours));
     const days = Math.max(1, Math.ceil(hours / 24));
     let rentalAmount;
@@ -461,6 +461,8 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     const selectedTrip = document.getElementById('booking-trip-rate')?.value;
     const tripRate = vehicle.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).find(item => item.id === selectedTrip) : null;
     if (tripRate) rentalAmount = tripRateAmount(tripRate) * days;
+    const discountRate = billedHours > 48 ? (days >= 10 ? 0.10 : days >= 5 ? 0.03 : 0) : 0;
+    rentalAmount = Math.round(rentalAmount * (1 - discountRate));
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
     const wantsDriver = document.getElementById('booking-driver')?.checked;
