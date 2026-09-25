@@ -64,16 +64,24 @@ async function initSite() {
         const heroWhatsapp = document.getElementById('hero-whatsapp');
         if(heroWhatsapp) heroWhatsapp.href = `https://wa.me/${siteConfig.footer.whatsapp}`;
 
-        // 6. Chargement des modules de données
+        // Le catalogue Supabase est prioritaire : une erreur dans un fichier
+        // de contenu secondaire ne doit jamais empêcher l'affichage des voitures.
+        await loadCars();
         await loadHome();
         await loadCards();
-        await loadCars();
         await loadFun();
         await loadContact();
         await loadBookingData();
 
     } catch (e) { 
         console.error("Erreur lors de l'initialisation du site:", e); 
+        // Si un contenu éditorial échoue, on retente le catalogue afin que la
+        // réservation reste utilisable.
+        if (!publicCars.length) {
+            try { await loadCars(); } catch (catalogueError) {
+                console.error("Erreur lors du chargement du catalogue Supabase:", catalogueError);
+            }
+        }
     }
 }
 
