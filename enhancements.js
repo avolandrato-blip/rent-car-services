@@ -125,11 +125,11 @@
       deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
       trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null, trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null, delivery_fee: $('booking-delivery').checked ? 20000 : 0,
       recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: promoCode,
-      promo_discount: Math.min(quote.total, promoDiscount), notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: ownerMode ? 'pre_reserved' : (deposit > 0 ? 'reserved' : 'pre_reserved'), owner_confirmation_status: ownerMode ? 'pending' : 'not_required'
+      promo_discount: Math.min(quote.total, promoDiscount), notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: 'pre_reserved', owner_confirmation_status: ownerMode ? 'pending' : 'not_required'
     };
     const reservationResult = await db.from('reservations').insert(payload).select('id,reference').single();
     if (reservationResult.error) { console.error(reservationResult.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
-    if (deposit > 0) await db.from('payments').insert({ reservation_id: reservationResult.data.id, amount: deposit, method: paymentMethod, note: 'Acompte à la réservation' });
+    // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
     const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
     [['cinRecto','booking-cin-recto'],['cinVerso','booking-cin-verso'],['permisRecto','booking-license-recto'],['proofOfAddress','booking-proof-of-address'],['paymentProof','booking-payment-proof']].forEach(([name, id]) => { const file = $(id)?.files?.[0]; if (file) docs.append(name, file, file.name); });
