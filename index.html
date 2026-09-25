@@ -108,11 +108,11 @@
                             <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
                             <label>Numéro du permis de conduire<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
                             <div class="date-range"><label>Lieu de délivrance du permis<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance du permis<input id="booking-license-date" type="date" required></label></div>
-                            <label>Photographie du permis — recto<input id="booking-license-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small class="field-note">Joignez une photographie nette et lisible du recto du permis.</small></label>
+                            <label>Photographie du permis — recto<input id="booking-license-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-license-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small><small class="field-note">Joignez une photographie nette et lisible du recto du permis.</small></label>
                             <label>Numéro de la CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
                             <label>Type de document<select id="booking-cin-type" required><option value="false">Original</option><option value="true">Duplicata</option></select></label>
                             <div class="date-range"><label>Lieu de délivrance de la CIN<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance de la CIN<input id="booking-cin-date" type="date" required></label></div>
-                            <fieldset class="identity-upload"><legend>Photographies de la CIN</legend><p class="field-note">Joignez des photographies nettes et lisibles. Elles sont stockées dans un espace privé et associées à votre contrat.</p><label>Photographie de la CIN — recto<input id="booking-cin-recto" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required></label><label>Photographie de la CIN — verso<input id="booking-cin-verso" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" required></label></fieldset>
+                            <fieldset class="identity-upload"><legend>Photographies de la CIN</legend><p class="field-note">Joignez des photographies nettes et lisibles. Elles sont stockées dans un espace privé et associées à votre contrat.</p><label>Photographie de la CIN — recto<input id="booking-cin-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-cin-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small></label><label>Photographie de la CIN — verso<input id="booking-cin-verso-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-cin-verso-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small></label></fieldset>
                             <label class="document-photo-field">Justificatif de domicile — facultatif<input id="booking-proof-of-address" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment"><small class="field-note">Facture d’eau, d’électricité, certificat de résidence ou document équivalent.</small></label>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="1">Retour</button><button type="button" class="btn btn-primary" data-next-step="3">Continuer</button></div>
                         </section>
@@ -193,8 +193,8 @@
 </a>
 
     <script src="supabase.js"></script>
-    <script src="script.js?v=20260925-1033"></script>
-    <script src="enhancements.js?v=20260925-1033"></script>
-    <script src="morning-changes.js?v=20260924-1127"></script>
+    <script src="script.js?v=20260925-1239"></script>
+    <script src="enhancements.js?v=20260925-1239"></script>
+    <script src="morning-changes.js?v=20260925-1239"></script>
 </body>
 </html>

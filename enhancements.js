@@ -40,6 +40,10 @@
       const vehicleId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(vehicleId, start.toISOString(), end.toISOString());
       if (slot && !slot.available) { showBookingError(`Ce créneau est indisponible (${slot.conflict?.status === 'maintenance' ? 'maintenance' : 'réservation existante'}). Veuillez choisir une autre période.`); return false; }
     }
+    if (step === 2) {
+      const requiredDocs = [['booking-cin-recto-camera','booking-cin-recto-gallery','CIN recto'],['booking-cin-verso-camera','booking-cin-verso-gallery','CIN verso'],['booking-license-recto-camera','booking-license-recto-gallery','permis recto']];
+      for (const [camera,gallery,label] of requiredDocs) if (!$(camera)?.files?.[0] && !$(gallery)?.files?.[0]) { showBookingError(`Veuillez ajouter la photo : ${label}. Vous pouvez utiliser la caméra ou la galerie.`); return false; }
+    }
     if (step === 3) {
       const deposit = Number($('booking-deposit')?.value || 0);
       const method = $('booking-payment-method')?.value || '';
@@ -134,7 +138,7 @@
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
     const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
-    [['cinRecto','booking-cin-recto'],['cinVerso','booking-cin-verso'],['permisRecto','booking-license-recto'],['proofOfAddress','booking-proof-of-address'],['paymentProof','booking-payment-proof']].forEach(([name, id]) => { const file = $(id)?.files?.[0]; if (file) docs.append(name, file, file.name); });
+    [['cinRecto',['booking-cin-recto-camera','booking-cin-recto-gallery']],['cinVerso',['booking-cin-verso-camera','booking-cin-verso-gallery']],['permisRecto',['booking-license-recto-camera','booking-license-recto-gallery']],['proofOfAddress',['booking-proof-of-address']],['paymentProof',['booking-payment-proof']]].forEach(([name, ids]) => { const file = ids.map(id => $(id)?.files?.[0]).find(Boolean); if (file) docs.append(name, file, file.name); });
     if ([...docs.keys()].length > 2) {
       const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
       if (upload.error || upload.data?.error) console.error('identity document upload failed', upload.error || upload.data?.error);
