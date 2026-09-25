@@ -99,11 +99,14 @@
     const endDate = $('booking-end-date')?.value, endTime = $('booking-end-time')?.value;
     const start = startDate && startTime ? `${startDate}T${startTime}` : '', end = endDate && endTime ? `${endDate}T${endTime}` : '';
     if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
+    const latestVehicle = await window.rentCarSupabase.from('vehicles').select('status').eq('id', vehicle.id).maybeSingle();
+    if (latestVehicle.error || latestVehicle.data?.status !== 'available') return showBookingError('Ce véhicule n’est plus disponible. Il est peut-être en maintenance ; actualisez la page ou contactez-nous.');
     if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner l’itinéraire avec chauffeur.');
     if (typeof getVehicleAvailability === 'function' && getVehicleAvailability(vehicle.id, start, end) !== 'available') return showBookingError('Cette voiture n’est pas disponible sur cette période.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
+    if (quote.requiresQuote) return showBookingError('Cette durée est sur devis, car aucun tarif 24 h n’est renseigné. Contactez-nous pour recevoir une proposition.');
     const promoCode = $('booking-promo')?.value.trim().toUpperCase() || null;
     const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0;
     const finalTotal = Math.max(0, quote.total - Math.min(quote.total, promoDiscount));
