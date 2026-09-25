@@ -143,48 +143,57 @@ function contractVisible(car) {
     return true;
 }
 function vehicleClientStatus(car) {
+    const units = Array.isArray(car?.units) ? car.units : [car];
     const now = new Date();
-    const maintenance = bookingMaintenance.find(item => item.vehicle_id === car.id && new Date(item.start_at) <= now && new Date(item.end_at) > now);
-    if (maintenance) return { key: 'maintenance', label: `En maintenance jusqu’au ${formatAvailabilityDate(maintenance.end_at)}` };
-    if (car.status === 'maintenance') return { key: 'maintenance', label: 'Indisponible — en maintenance' };
-    if (car.status === 'inactive') return { key: 'inactive', label: 'Indisponible — contactez-nous' };
-    return { key: 'available', label: 'Disponible' };
+    const result = window.RentCarFleet.countAvailability(car, now.toISOString(), new Date(now.getTime() + 1).toISOString(), bookingReservations, bookingMaintenance);
+    if (result.availableCount) return { key: 'available', label: `${result.availableCount}/${result.totalCount} disponible(s)` };
+    if (!result.totalCount) {
+        const upcoming = units.map(unit => unit.contract_start_date).filter(Boolean).sort()[0];
+        if (upcoming && new Date(`${upcoming}T00:00:00`) > now) return { key: 'upcoming', label: `Disponible à partir du ${new Date(`${upcoming}T00:00:00`).toLocaleDateString('fr-FR')}` };
+    }
+    const underMaintenance = units.some(unit => unit.status === 'maintenance' || bookingMaintenance.some(item => item.vehicle_id === unit.id && new Date(item.start_at) <= now && new Date(item.end_at) > now));
+    const inactive = units.some(unit => unit.status === 'inactive');
+    if (underMaintenance || inactive) return { key: 'maintenance', label: `0/${result.totalCount} disponible(s) — maintenance/indisponible` };
+    if (result.totalCount && result.availableCount === 0) return { key: 'full', label: `Complet actuellement — 0/${result.totalCount}` };
+    return { key: 'inactive', label: 'Indisponible — contactez-nous' };
 }
+
 function renderPublicCars() {
     const search = (document.getElementById('fleet-search')?.value || '').trim().toLowerCase();
     const transmission = document.getElementById('fleet-transmission')?.value || 'all';
     const seats = document.getElementById('fleet-seats')?.value || 'all';
     const maxPrice = Number(document.getElementById('fleet-max-price')?.value || Infinity);
     const sort = document.getElementById('fleet-sort')?.value || 'price-asc';
-    let cars = publicCars.filter(car => {
-        if (!contractVisible(car)) return false;
-        const haystack = `${car.nom} ${car.make || ''} ${car.model || ''}`.toLowerCase();
+    const groups = window.RentCarFleet?.groupFleetVehicles(publicCars.filter(car => car.status !== 'contract_ended')) || [];
+    let cars = groups.filter(group => {
+        const car = group.vehicle;
+        const haystack = `${group.displayName} ${car.name || ''} ${car.make || ''} ${car.model || ''}`.toLowerCase();
         return (!search || haystack.includes(search)) &&
             (transmission === 'all' || car.transmission === transmission) &&
-            (seats === 'all' || String(car.places) === seats) &&
+            (seats === 'all' || String(car.seats) === seats) &&
             Number(car.price_per_day || 0) <= maxPrice;
     });
-    cars.sort((a,b) => sort === 'popular' ? (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0) : sort === 'price-asc' ? Number(a.price_per_day||0)-Number(b.price_per_day||0) : sort === 'price-desc' ? Number(b.price_per_day||0)-Number(a.price_per_day||0) : String(a.nom).localeCompare(String(b.nom), 'fr'));
+    const popularity = group => group.units.reduce((sum, unit) => sum + (publicRentalCounts[unit.id] || 0), 0);
+    cars.sort((a,b) => sort === 'popular' ? popularity(b)-popularity(a) : sort === 'price-asc' ? Number(a.vehicle.price_per_day||0)-Number(b.vehicle.price_per_day||0) : sort === 'price-desc' ? Number(b.vehicle.price_per_day||0)-Number(a.vehicle.price_per_day||0) : String(a.displayName).localeCompare(String(b.displayName), 'fr'));
     const grid = document.getElementById('cars-grid');
     if (!grid) return;
     const safeImage = value => {
-        try {
-            const url = new URL(String(value || ''), location.href);
-            return ['https:', 'http:'].includes(url.protocol) ? url.href : '';
-        } catch (_) { return ''; }
+        try { const url = new URL(String(value || ''), location.href); return ['https:', 'http:'].includes(url.protocol) ? url.href : ''; }
+        catch (_) { return ''; }
     };
     const safePhone = value => String(value || '').replace(/\D/g, '');
-    grid.innerHTML = cars.map(car => {
-        const name = escapeFunHtml(car.nom || 'Véhicule');
-        const id = escapeFunHtml(car.id || '');
-        const state = vehicleClientStatus(car);
+    grid.innerHTML = cars.map(group => {
+        const car = group.vehicle;
+        const name = escapeFunHtml(group.displayName || car.name || 'Véhicule');
+        const fleetId = escapeFunHtml(group.id);
+        const state = vehicleClientStatus(group);
         const ownerPhone = safePhone(car.owner_phone);
         const phone = safePhone(siteConfig.footer?.telephone);
         const whatsapp = ownerPhone || safePhone(siteConfig.footer?.whatsapp);
-        const action = state.key === 'available'
+        const action = state.key === 'available' || state.key === 'upcoming'
             ? (car.owner_whatsapp_enabled && ownerPhone
-                ? `<button class="btn btn-whatsapp btn-reserve" data-public-action="owner" data-vehicle-id="${id}">Réserver via WhatsApp</button>`
-                : `<button class="btn btn-primary btn-reserve" data-public-action="reserve" data-vehicle-id="${id}" data-vehicle-name="${name}">Réserver</button>`)
+                ? `<button class="btn btn-whatsapp btn-reserve" data-public-action="owner" data-fleet-id="${fleetId}">Réserver via WhatsApp</button>`
+                : `<button class="btn btn-primary btn-reserve" data-public-action="reserve" data-fleet-id="${fleetId}" data-vehicle-name="${name}">${state.key === 'upcoming' ? 'Voir les disponibilités' : 'Réserver'}</button>`)
             : `<button class="btn btn-outline" disabled title="${escapeFunHtml(state.label)}">${escapeFunHtml(state.label)}</button>`;
         const prices = car.pricing
             ? `<span>12 h : ${escapeFunHtml(car.pricing.half_day || 'Sur devis')}</span><span>24 h : ${escapeFunHtml(car.pricing.full_day || 'Sur devis')}</span>`
@@ -199,7 +208,8 @@ function renderPublicCars() {
                 <h3>${name}</h3>
                 <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p>
                 <div class="car-price">${prices}</div>
-                <div class="car-tags"><span><i class="fas fa-cog"></i> ${escapeFunHtml(car.transmission || '—')}</span><span><i class="fas fa-gas-pump"></i> ${escapeFunHtml(car.carburant || '—')}</span><span><i class="fas fa-users"></i> ${escapeFunHtml(car.places || '—')}</span></div>
+                <p class="fleet-unit-count">${escapeFunHtml(state.label)} · ${group.capacity} voiture${group.capacity > 1 ? 's' : ''} dans cette flotte</p>
+                <div class="car-tags"><span><i class="fas fa-cog"></i> ${escapeFunHtml(car.transmission || '—')}</span><span><i class="fas fa-gas-pump"></i> ${escapeFunHtml(car.fuel || '—')}</span><span><i class="fas fa-users"></i> ${escapeFunHtml(car.seats || '—')}</span></div>
                 <p class="car-desc">${escapeFunHtml(car.description || '')}</p>
                 <div class="car-actions">${action}<button class="btn btn-outline" data-public-action="quote" data-vehicle-name="${name}">Contactez-nous</button><a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${name}"><i class="fab fa-whatsapp"></i></a><a href="tel:${phone}" class="btn btn-primary btn-icon" aria-label="Appeler ${name}"><i class="fas fa-phone"></i></a></div>
             </div>
@@ -215,9 +225,9 @@ function bindPublicCarFilters() {
         grid.addEventListener('click', event => {
             const button = event.target.closest('[data-public-action]');
             if (!button) return;
-            const { publicAction, vehicleId, vehicleName } = button.dataset;
-            if (publicAction === 'owner') openOwnerRequest(vehicleId);
-            else if (publicAction === 'reserve') openBookingForVehicle(vehicleId, vehicleName);
+            const { publicAction, vehicleId, fleetId, vehicleName } = button.dataset;
+            if (publicAction === 'owner') openOwnerRequest(fleetId || vehicleId);
+            else if (publicAction === 'reserve') openBookingForFleet(fleetId || vehicleId, vehicleName);
             else if (publicAction === 'quote') openLongTermQuote(vehicleName);
         });
     }
@@ -229,8 +239,8 @@ async function loadCars() {
         publicCars = [];
     } else {
         const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase
-            .from('vehicles')
-            .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date')
+            .from('public_fleet_vehicles')
+            .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date,fleet_group')
             .neq('status', 'contract_ended')
             .order('price_per_day',{ascending:true}).order('name',{ascending:true});
         if (vehicleError) console.error('Impossible de charger les véhicules depuis Supabase:', vehicleError);
@@ -403,13 +413,27 @@ function prefill(car) {
     }, 300);
 }
 
-function openBookingForVehicle(vehicleId, vehicleName) {
+function getBookingFleet(fleetId) {
+    return bookingFleets.find(group => group.id === fleetId) || bookingFleets.find(group => group.units.some(unit => unit.id === fleetId)) || null;
+}
+function getAvailableFleetUnits(fleetId, start, end) {
+    const group = getBookingFleet(fleetId);
+    if (!group) return [];
+    return window.RentCarFleet.availableUnitsForGroup(group, start, end, bookingReservations, bookingMaintenance);
+}
+function openBookingForFleet(fleetId, fleetName) {
+    window.bookingOwnerMode = false;
     openTab('booking');
     const select = document.getElementById('booking-vehicle');
-    if (select && vehicleId && [...select.options].some(option => option.value === vehicleId)) select.value = vehicleId;
+    const group = getBookingFleet(fleetId);
+    if (select && group) select.value = group.id;
     syncBookingTripRates();
     updateBookingQuote();
     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
+}
+function openBookingForVehicle(vehicleId, vehicleName) {
+    const group = getBookingFleet(vehicleId) || window.RentCarFleet.groupFleetVehicles(publicCars).find(item => item.units.some(unit => unit.id === vehicleId));
+    return openBookingForFleet(group?.id || vehicleId, vehicleName);
 }
 
 function openLongTermQuote(vehicleName) {
@@ -433,42 +457,45 @@ function sendWhatsApp(e) {
 }
 
 let bookingVehicles = [];
+let bookingFleets = [];
 let bookingReservations = [];
 let bookingMaintenance = [];
 window.bookingOwnerMode = false;
 function openOwnerRequest(vehicleId) {
-    const vehicle = bookingVehicles.find(item => item.id === vehicleId) || publicCars.find(item => item.id === vehicleId);
+    const group = getBookingFleet(vehicleId) || window.RentCarFleet.groupFleetVehicles(publicCars).find(item => item.units.some(unit => unit.id === vehicleId));
+    const vehicle = group?.vehicle;
     if (!vehicle) return;
     window.bookingOwnerMode = true;
     ['booking-cin','booking-license','booking-cin-place','booking-cin-date','booking-license-place','booking-license-date','booking-cin-recto','booking-cin-verso'].forEach(id => { const field = document.getElementById(id); if (field) { field.required = false; field.closest('label,.identity-upload')?.classList.add('optional-owner-field'); } });
-    const select = document.getElementById('booking-vehicle'); if (select) select.value = vehicleId;
+    const select = document.getElementById('booking-vehicle'); if (select && group) select.value = group.id;
     document.getElementById('booking')?.scrollIntoView({behavior:'smooth'});
     if (typeof openTab === 'function') openTab('booking');
     if (typeof syncBookingTripRates === 'function') syncBookingTripRates();
     document.getElementById('booking-result')?.replaceChildren(document.createTextNode('Demande rapide : CIN et permis facultatifs. Après validation, WhatsApp ouvrira la conversation avec le propriétaire.'));
 }
+
 async function loadBookingData() {
     if (!window.rentCarSupabase) return;
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
-        db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date').neq('status', 'contract_ended').order('name'),
+        db.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date,fleet_group').order('name'),
         db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status', ['reserved', 'pre_reserved']),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
-    if (vehicleError) {
-        console.warn('Supabase booking data unavailable:', vehicleError.message);
-        return;
-    }
-    bookingVehicles = (vehicles || []).filter(vehicle => vehicle.status === 'available' && contractVisible(vehicle));
+    if (vehicleError) { console.warn('Supabase booking data unavailable:', vehicleError.message); return; }
+    bookingVehicles = (vehicles || []).filter(vehicle => vehicle.status !== 'contract_ended');
+    bookingFleets = window.RentCarFleet.groupFleetVehicles(bookingVehicles);
     window.bookingVehicles = bookingVehicles;
+    window.bookingFleets = bookingFleets;
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
+    const fleetLabel = group => `${group.displayName} — ${group.capacity} voiture${group.capacity > 1 ? 's' : ''}`;
     const select = document.getElementById('booking-vehicle');
-    if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${escapeFunHtml(v.id)}">${escapeFunHtml(v.name)} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
+    if (select) select.innerHTML = bookingFleets.map(group => `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(fleetLabel(group))} — ${group.vehicle.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
     syncBookingTripRates();
     window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
-    if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${bookingVehicles.map(v => `<option value="${escapeFunHtml(v.id)}">${escapeFunHtml(v.name)}</option>`).join('')}`;
+    if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les flottes</option>${bookingFleets.map(group => `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(fleetLabel(group))}</option>`).join('')}`;
     if (typeof renderPublicCars === 'function') renderPublicCars();
 }
 
@@ -493,10 +520,13 @@ function availabilityConflict(vehicleId, start, end) {
     return [...blocks, ...maintenance].sort((a, b) => new Date(a.start_at) - new Date(b.start_at))[0] || null;
 }
 
-function bookingSlotAvailability(vehicleId, start, end) {
-    if (!vehicleId || !start || !end || new Date(end) <= new Date(start)) return { available: false, conflict: null };
-    const conflict = availabilityConflict(vehicleId, start, end);
-    return { available: !conflict, conflict };
+function bookingSlotAvailability(fleetId, start, end) {
+    if (!fleetId || !start || !end || new Date(end) <= new Date(start)) return { available: false, conflict: null, availableUnits: [] };
+    const group = getBookingFleet(fleetId);
+    if (!group) return { available: false, conflict: null, availableUnits: [] };
+    const availableUnits = getAvailableFleetUnits(group.id, start, end);
+    const conflict = availableUnits.length ? null : availabilityConflict(group.units[0]?.id, start, end);
+    return { available: availableUnits.length > 0, conflict, availableUnits, totalCount: group.capacity };
 }
 
 function availabilityExplanation(vehicle, start, end) {
@@ -519,7 +549,7 @@ function availabilityLabel(status) {
 function tripRateAmount(rate) { return Number(rate?.price_per_day ?? rate?.rate ?? 0); }
 function tripRateLabel(rate) { return rate?.label || [rate?.from, rate?.to].filter(Boolean).join(' → ') || 'Destination spéciale'; }
 function syncBookingTripRates() {
-    const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
+    const vehicle = getBookingFleet(document.getElementById('booking-vehicle')?.value)?.vehicle;
     const wrap = document.getElementById('booking-trip-rate-wrap');
     const select = document.getElementById('booking-trip-rate');
     if (!wrap || !select) return;
@@ -547,15 +577,16 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
 }
 
 function updateBookingQuote() {
-    const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
+    const fleetGroup = getBookingFleet(document.getElementById('booking-vehicle')?.value);
+    const vehicle = fleetGroup?.vehicle;
     const startDate = document.getElementById('booking-start-date')?.value, endDate = document.getElementById('booking-end-date')?.value;
     const startTime = document.getElementById('booking-start-time')?.value, endTime = document.getElementById('booking-end-time')?.value;
     const quote = document.getElementById('booking-quote');
     const mini = document.getElementById('booking-mini-summary');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; if (mini) mini.textContent = 'Choisissez une voiture et vos dates pour voir le récapitulatif financier.'; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    const slot = bookingSlotAvailability(vehicle.id, `${startDate}T${startTime}`, `${endDate}T${endTime}`), slotStatus = document.getElementById('booking-slot-status');
-    if (slotStatus) { slotStatus.className = `booking-slot-status ${slot.available ? 'is-available' : 'is-unavailable'}`; slotStatus.textContent = slot.available ? 'Créneau disponible pour cette voiture.' : `Créneau indisponible : ${slot.conflict?.status === 'maintenance' ? 'maintenance' : 'déjà réservé ou pré-réservé'}.`; }
+    const slot = bookingSlotAvailability(fleetGroup.id, `${startDate}T${startTime}`, `${endDate}T${endTime}`), slotStatus = document.getElementById('booking-slot-status');
+    if (slotStatus) { slotStatus.className = `booking-slot-status ${slot.available ? 'is-available' : 'is-unavailable'}`; slotStatus.textContent = slot.available ? `${slot.availableUnits.length}/${fleetGroup.capacity} véhicule(s) disponible(s) sur ce créneau.` : `Flotte complète pour ce créneau${slot.conflict?.status === 'maintenance' ? ' (maintenance)' : ''}.`; }
     if (q.requiresQuote) {
         if (quote) quote.textContent = 'Sur devis : le tarif 24 h doit être confirmé avant de calculer le montant de cette durée.';
         if (mini) mini.innerHTML = `<strong>${escapeFunHtml(vehicle.name || vehicle.nom || 'Véhicule')}</strong><span>${q.billedHours} h</span><strong>Sur devis</strong><span>Du ${new Date(`${startDate}T${startTime}`).toLocaleDateString('fr-FR')} à ${startTime} au ${new Date(`${endDate}T${endTime}`).toLocaleDateString('fr-FR')} à ${endTime}</span>`;
@@ -572,25 +603,23 @@ function checkAvailability() {
     const start = document.getElementById('availability-start').value;
     const end = document.getElementById('availability-end').value;
     const list = document.getElementById('availability-list');
-    if (!start || !end || new Date(end) <= new Date(start)) {
-        list.innerHTML = '<p class="booking-error">Veuillez choisir une période valide.</p>';
-        return;
-    }
-    const selectedVehicle = document.getElementById('availability-vehicle')?.value || 'all';
-    const displayedVehicles = bookingVehicles.filter(vehicle => selectedVehicle === 'all' || vehicle.id === selectedVehicle);
-    list.innerHTML = displayedVehicles.map(vehicle => {
-        const rawStatus = getVehicleAvailability(vehicle.id, `${start}T00:00:00`, `${end}T23:59:59`);
-        const status = rawStatus === 'available' ? 'available' : 'reserved';
-        return `<div class="availability-row"><div><strong>${escapeFunHtml(vehicle.name)}</strong><small>${vehicle.price_per_day ? formatMGA(vehicle.price_per_day) : 'Sur devis'} / jour</small>${status === 'reserved' ? availabilityExplanation(vehicle, `${start}T00:00:00`, `${end}T23:59:59`) : ''}</div><span class="availability-badge ${status}">${status === 'available' ? 'Disponible' : 'Réservé'}</span></div>`;
-    }).join('') || '<p class="muted">Aucun véhicule actif pour le moment.</p>';
-    const alternatives = bookingVehicles.filter(vehicle => vehicle.id !== selectedVehicle && getVehicleAvailability(vehicle.id, `${start}T00:00:00`, `${end}T23:59:59`) === 'available');
-    if (selectedVehicle !== 'all' && alternatives.length) list.innerHTML += `<p class="availability-alternatives"><strong>Vous pouvez choisir une autre voiture disponible :</strong> ${alternatives.map(vehicle => vehicle.name).join(', ')}.</p>`;
+    if (!start || !end || new Date(end) <= new Date(start)) { list.innerHTML = '<p class="booking-error">Veuillez choisir une période valide.</p>'; return; }
+    const selectedGroup = document.getElementById('availability-vehicle')?.value || 'all';
+    const groups = bookingFleets.filter(group => selectedGroup === 'all' || group.id === selectedGroup);
+    const startAt = `${start}T00:00:00`, endAt = `${end}T23:59:59`;
+    list.innerHTML = groups.map(group => {
+        const result = window.RentCarFleet.countAvailability(group, startAt, endAt, bookingReservations, bookingMaintenance);
+        const available = result.availableCount > 0;
+        const rate = group.vehicle.price_per_day ? formatMGA(group.vehicle.price_per_day) : 'Sur devis';
+        return `<div class="availability-row"><div><strong>${escapeFunHtml(group.displayName)}</strong><small>${escapeFunHtml(rate)} / jour · ${result.availableCount}/${result.totalCount} disponible(s)</small></div><span class="availability-badge ${available ? 'available' : 'reserved'}">${available ? `${result.availableCount} disponible(s)` : 'Complet'}</span></div>`;
+    }).join('') || '<p class="muted">Aucune flotte active pour le moment.</p>';
 }
 
 async function submitReservation(event) {
     event.preventDefault();
     const result = document.getElementById('booking-result');
-    const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle').value);
+    const group = getBookingFleet(document.getElementById('booking-vehicle').value);
+    const vehicle = group?.vehicle;
     const startDate = document.getElementById('booking-start-date').value;
     const startTime = document.getElementById('booking-start-time').value;
     const endDate = document.getElementById('booking-end-date').value;
@@ -602,10 +631,10 @@ async function submitReservation(event) {
         result.textContent = 'Vérifiez le véhicule et les dates choisies.';
         return;
     }
-    const availability = getVehicleAvailability(vehicle.id, start, end);
-    if (availability !== 'available') {
+    const availableUnits = getAvailableFleetUnits(group.id, start, end);
+    if (!availableUnits.length) {
         result.className = 'booking-result booking-error';
-        result.textContent = `Cette voiture est ${availabilityLabel(availability).toLowerCase()} sur cette période.`;
+        result.textContent = 'Toutes les voitures de cette flotte sont indisponibles sur cette période.';
         return;
     }
     const rentalType = document.getElementById('booking-rental-type').value;
@@ -621,7 +650,7 @@ async function submitReservation(event) {
     if (deposit > 0 && !paymentMethod) { result.className = 'booking-result booking-error'; result.textContent = 'Sélectionnez le mode de paiement de l’acompte.'; return; }
     const days = quote.days;
     const payload = {
-        vehicle_id: vehicle.id,
+        vehicle_id: availableUnits[0].id,
         customer_name: document.getElementById('booking-name').value.trim(),
         customer_phone: document.getElementById('booking-phone').value.trim(),
         customer_email: document.getElementById('booking-email').value.trim() || null,
@@ -662,7 +691,7 @@ async function submitReservation(event) {
     const { data, error } = await window.rentCarSupabase.from('reservations').insert(payload).select('id,reference').single();
     if (error) {
         result.className = 'booking-result booking-error';
-        result.textContent = 'Impossible d’enregistrer la demande pour le moment. Contactez-nous par WhatsApp.';
+        result.textContent = error.code === '23P01' ? 'Cette voiture vient d’être réservée par une autre personne. Actualisez les disponibilités et réessayez.' : 'Impossible d’enregistrer la demande pour le moment. Contactez-nous par WhatsApp.';
         console.error(error);
         return;
     }

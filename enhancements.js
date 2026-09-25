@@ -37,8 +37,8 @@
       const start = $('booking-start-date')?.value && $('booking-start-time')?.value ? new Date(`${$('booking-start-date').value}T${$('booking-start-time').value}`) : null;
       const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
       if (!start || !end || end <= start) { showBookingError('Veuillez sélectionner une période de location valide.'); return false; }
-      const vehicleId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(vehicleId, start.toISOString(), end.toISOString());
-      if (slot && !slot.available) { showBookingError(`Ce créneau est indisponible (${slot.conflict?.status === 'maintenance' ? 'maintenance' : 'réservation existante'}). Veuillez choisir une autre période.`); return false; }
+      const fleetId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(fleetId, start.toISOString(), end.toISOString());
+      if (slot && !slot.available) { showBookingError('Toutes les voitures de cette flotte sont déjà réservées ou en maintenance sur cette période. Choisissez une autre période.'); return false; }
     }
     if (step === 2) {
       const requiredDocs = [['booking-cin-recto-camera','booking-cin-recto-gallery','CIN recto'],['booking-cin-verso-camera','booking-cin-verso-gallery','CIN verso'],['booking-license-recto-camera','booking-license-recto-gallery','permis recto']];
@@ -93,16 +93,16 @@
   async function submitReservationEnhanced(event) {
     event.preventDefault();
     const result = $('booking-result');
-    const availableVehicles = typeof bookingVehicles !== 'undefined' ? bookingVehicles : [];
-    const vehicle = availableVehicles.find(item => item.id === $('booking-vehicle')?.value);
+    const selectedFleetId = $('booking-vehicle')?.value;
+    const fleetGroup = (window.bookingFleets || []).find(group => group.id === selectedFleetId);
+    const vehicle = fleetGroup?.vehicle;
     const startDate = $('booking-start-date')?.value, startTime = $('booking-start-time')?.value;
     const endDate = $('booking-end-date')?.value, endTime = $('booking-end-time')?.value;
     const start = startDate && startTime ? `${startDate}T${startTime}` : '', end = endDate && endTime ? `${endDate}T${endTime}` : '';
     if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    const latestVehicle = await window.rentCarSupabase.from('vehicles').select('status').eq('id', vehicle.id).maybeSingle();
-    if (latestVehicle.error || latestVehicle.data?.status !== 'available') return showBookingError('Ce véhicule n’est plus disponible. Il est peut-être en maintenance ; actualisez la page ou contactez-nous.');
+    const candidateUnits = window.RentCarFleet.availableUnitsForGroup(fleetGroup, new Date(start).toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance);
+    if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
     if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner l’itinéraire avec chauffeur.');
-    if (typeof getVehicleAvailability === 'function' && getVehicleAvailability(vehicle.id, start, end) !== 'available') return showBookingError('Cette voiture n’est pas disponible sur cette période.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
@@ -136,8 +136,16 @@
       recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: promoCode,
       promo_discount: Math.min(quote.total, promoDiscount), notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: 'pre_reserved', owner_confirmation_status: ownerMode ? 'pending' : 'not_required'
     };
-    const reservationResult = await db.from('reservations').insert(payload).select('id,reference').single();
-    if (reservationResult.error) { console.error(reservationResult.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
+    let reservationResult = null;
+    let reservedUnit = null;
+    for (const unit of candidateUnits) {
+      const latestVehicle = await db.from('vehicles').select('status').eq('id', unit.id).maybeSingle();
+      if (latestVehicle.error || latestVehicle.data?.status !== 'available') continue;
+      const attempt = await db.from('reservations').insert({ ...payload, vehicle_id: unit.id }).select('id,reference').single();
+      if (!attempt.error) { reservationResult = attempt; reservedUnit = unit; break; }
+      if (attempt.error.code !== '23P01') { console.error(attempt.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
+    }
+    if (!reservationResult) return showBookingError('Les dernières voitures disponibles viennent d’être réservées. Actualisez le calendrier puis réessayez.');
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
     const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
@@ -146,8 +154,8 @@
       const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
       if (upload.error || upload.data?.error) console.error('identity document upload failed', upload.error || upload.data?.error);
     }
-    const recipient = ownerMode && vehicle.owner_phone ? String(vehicle.owner_phone).replace(/\D/g, '') : String(siteConfig.footer.whatsapp).replace(/\D/g, '');
-    const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.full_name)}%0ATéléphone : ${encodeURIComponent(customer.phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(vehicle.name || vehicle.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal estimé : ${encodeURIComponent(formatMGA(finalTotal))}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
+    const recipient = ownerMode && reservedUnit.owner_phone ? String(reservedUnit.owner_phone).replace(/\D/g, '') : String(siteConfig.footer.whatsapp).replace(/\D/g, '');
+    const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.full_name)}%0ATéléphone : ${encodeURIComponent(customer.phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(reservedUnit.name || reservedUnit.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal estimé : ${encodeURIComponent(formatMGA(finalTotal))}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
     window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';
     result.textContent = deposit > 0 ? `Votre demande ${r.reference} a bien été enregistrée avec l’acompte indiqué.` : `Votre demande ${r.reference} a bien été enregistrée. La facture et le contrat seront transmis après réception d’un acompte.`;
