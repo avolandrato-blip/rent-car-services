@@ -37,6 +37,8 @@
       const start = $('booking-start-date')?.value && $('booking-start-time')?.value ? new Date(`${$('booking-start-date').value}T${$('booking-start-time').value}`) : null;
       const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
       if (!start || !end || end <= start) { showBookingError('Veuillez sélectionner une période de location valide.'); return false; }
+      const vehicleId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(vehicleId, start.toISOString(), end.toISOString());
+      if (slot && !slot.available) { showBookingError(`Ce créneau est indisponible (${slot.conflict?.status === 'maintenance' ? 'maintenance' : 'réservation existante'}). Veuillez choisir une autre période.`); return false; }
     }
     if (step === 3) {
       const deposit = Number($('booking-deposit')?.value || 0);

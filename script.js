@@ -403,7 +403,7 @@ async function loadBookingData() {
     const db = window.rentCarSupabase;
     const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = await Promise.all([
         db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date').neq('status', 'contract_ended').order('name'),
-        db.from('reservations').select('vehicle_id,start_at,end_at,status').eq('status', 'reserved'),
+        db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status', ['reserved', 'pre_reserved']),
         db.from('maintenance').select('vehicle_id,start_at,end_at')
     ]);
     if (vehicleError) {
@@ -442,6 +442,12 @@ function availabilityConflict(vehicleId, start, end) {
     const blocks = bookingReservations.filter(item => item.vehicle_id === vehicleId && overlaps(start, end, item)).sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
     const maintenance = bookingMaintenance.filter(item => item.vehicle_id === vehicleId && overlaps(start, end, item)).map(item => ({ ...item, status: 'maintenance' }));
     return [...blocks, ...maintenance].sort((a, b) => new Date(a.start_at) - new Date(b.start_at))[0] || null;
+}
+
+function bookingSlotAvailability(vehicleId, start, end) {
+    if (!vehicleId || !start || !end || new Date(end) <= new Date(start)) return { available: false, conflict: null };
+    const conflict = availabilityConflict(vehicleId, start, end);
+    return { available: !conflict, conflict };
 }
 
 function availabilityExplanation(vehicle, start, end) {
@@ -506,6 +512,8 @@ function updateBookingQuote() {
     const mini = document.getElementById('booking-mini-summary');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; if (mini) mini.textContent = 'Choisissez une voiture et vos dates pour voir le récapitulatif financier.'; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
+    const slot = bookingSlotAvailability(vehicle.id, `${startDate}T${startTime}`, `${endDate}T${endTime}`), slotStatus = document.getElementById('booking-slot-status');
+    if (slotStatus) { slotStatus.className = `booking-slot-status ${slot.available ? 'is-available' : 'is-unavailable'}`; slotStatus.textContent = slot.available ? 'Créneau disponible pour cette voiture.' : `Créneau indisponible : ${slot.conflict?.status === 'maintenance' ? 'maintenance' : 'déjà réservé ou pré-réservé'}.`; }
     const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     const dateFormat = value => new Date(value).toLocaleDateString('fr-FR');
     if (mini) mini.innerHTML = `<strong>${escapeFunHtml(vehicle.name || vehicle.nom || 'Véhicule')}</strong><span>${q.billedHours} h</span><strong>${formatMGA(q.rentalAmount)}</strong><span>Du ${dateFormat(`${startDate}T${startTime}`)} à ${startTime} au ${dateFormat(`${endDate}T${endTime}`)} à ${endTime}</span>`;

@@ -156,6 +156,9 @@ body[data-theme="royal-night"] .youtube-playlist-empty { background: #0b1021; co
 .availability-badge.pre_reserved { background: #fef3c7; color: #92400e; }
 .availability-badge.reserved, .availability-badge.maintenance { background: #fee2e2; color: #991b1b; }
 .booking-result { margin-top: 16px; font-weight: 600; }
+.booking-slot-status { min-height: 20px; margin-top: 8px; font-weight: 600; }
+.booking-slot-status.is-available { color: #16803c; }
+.booking-slot-status.is-unavailable { color: #b42318; }
 .booking-mini-summary { display: grid; gap: 4px; margin: 16px 0 4px; padding: 13px 15px; border: 1px solid #d9e4ec; border-left: 4px solid var(--accent); border-radius: 10px; background: #f7fbfd; color: var(--primary); font-size: .92rem; }
 .booking-mini-summary strong { font-size: 1rem; }
 .booking-mini-summary span { color: #5f7180; }

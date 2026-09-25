@@ -7,7 +7,7 @@
   const reservation = id => (typeof reservations !== 'undefined' ? reservations.find(r => r.id === id) : null);
   const vehicle = r => (r && typeof vehicles !== 'undefined' ? vehicles.find(v => v.id === r.vehicle_id) || {} : {});
   const paid = r => typeof paidFor === 'function' ? paidFor(r) : Number(r?.deposit_amount || 0);
-  const printWindow = html => { const w = window.open('', '_blank'); if (!w) return alert('Autorisez les fenêtres pop-up pour générer le document.'); w.document.write(html); w.document.close(); };
+  const printWindow = (html, existing) => { const w = existing || window.open('', '_blank'); if (!w) return alert('Autorisez les fenêtres pop-up pour générer le document.'); w.document.write(html); w.document.close(); };
   const styles = `body{font:12px Arial;line-height:1.35;padding:28px;color:#111;max-width:850px;margin:auto}h1{text-align:center;font-size:19px;margin:0 0 14px}h2{font-size:14px;margin:14px 0 5px}.intro{text-align:justify}.grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}.box{border:1px solid #777;padding:8px;margin:6px 0}.line{border-bottom:1px solid #555;display:inline-block;min-width:190px}.sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:45px;min-height:105px}.small{font-size:11px}.total{font-weight:bold;font-size:15px}.page-break{page-break-before:always}@media print{body{padding:18px}}`;
 
   const contractArticles = [
@@ -23,12 +23,26 @@
     ['Article 11 : Acceptation', 'Le locataire reconnaît avoir lu, compris et accepté les conditions du présent contrat, notamment celles relatives à la zone, aux usages interdits, à la vente, à la sous-location, à la fraude, à la vérification, à la reprise et au remboursement.']
   ];
 
-  function printContractOrInvoice(id, kind) {
+  async function printContractOrInvoice(id, kind) {
     const r = reservation(id); if (!r) return; const v = vehicle(r); const p = paid(r); const isInvoice = kind === 'invoice';
+    const printTab = window.open('', '_blank');
+    if (!printTab) return alert('Autorisez les fenêtres pop-up pour générer le document.');
+    printTab.document.write('<p style="font:16px Arial;padding:30px">Préparation du document…</p>');
+    let documentImages = [];
+    if (!isInvoice && window.rentCarSupabase) {
+      const found = await window.rentCarSupabase.from('contract_documents').select('document_kind,storage_bucket,storage_path,original_name').eq('reservation_id', id);
+      for (const doc of (found.data || [])) {
+        const signed = await window.rentCarSupabase.storage.from(doc.storage_bucket || 'contract-documents').createSignedUrl(doc.storage_path, 300);
+        if (signed.data?.signedUrl) documentImages.push({kind: doc.document_kind, url: signed.data.signedUrl});
+      }
+    }
+    const documentByKind = kind => documentImages.find(item => item.kind === kind)?.url;
+    const documentBox = (label, kind) => documentByKind(kind) ? `<div><img src="${esc(documentByKind(kind))}" alt="${label}"><small>${label}</small></div>` : `<div class="missing-doc"><span>Document non fourni</span><small>${label}</small></div>`;
+    const documentAppendix = !isInvoice ? `<div class="page-break"><h2>Annexe — Pièces d’identité</h2><div class="document-grid">${documentBox('CIN — Recto','cin_recto')}${documentBox('CIN — Verso','cin_verso')}${documentBox('Permis — Recto','permis_recto')}</div></div>` : '';
     const header = `<h1>${isInvoice ? 'FACTURE' : 'CONTRAT DE LOCATION DE VÉHICULE SANS CHAUFFEUR'}</h1><p><b>LE LOUEUR</b><br>Nom : ANDRIANASOLO Volandrato<br>Adresse : 67 HA Nord-Ouest, Antananarivo, 101<br>Téléphone : 034 91 207 26</p><p><b>LE LOCATAIRE</b><br>Nom et prénom : ${esc(r.customer_name)}<br>Adresse : ${esc(r.customer_address || '________________________')}<br>Téléphone : ${esc(r.customer_phone)}<br>Numéro de permis : ${esc(r.customer_license || '________________________')}<br>Permis délivré à : ${esc(r.license_acquired_place || '________________________')} — le : ${esc(r.license_acquired_at || '________________')}<br>CIN : ${esc(r.customer_cin || '________________________')} — ${r.cin_is_duplicate ? 'DUPLICATA' : 'ORIGINAL'}<br>CIN délivrée à : ${esc(r.cin_acquired_place || '________________________')} — le : ${esc(r.cin_acquired_at || '________________')}</p>`;
     const details = `<h2>Article 1 : Objet et conditions financières</h2><div class="grid"><div>Marque / Modèle : ${esc(v.make || '')} ${esc(v.model || v.name || '')}</div><div>Immatriculation : ${esc(v.registration_number || '')}</div><div>Départ : ${dateTime(r.start_at)}</div><div>Retour : ${dateTime(r.end_at)}</div><div>Trajet : de ${esc(r.trip_from || '________________')} à ${esc(r.trip_to || '________________')}</div><div>Montant total : ${money(r.total_amount)}</div><div>Acompte : ${money(p)}</div><div>Reste à payer : ${money(Math.max(0, Number(r.total_amount || 0) - p))}</div><div>Livraison : ${money(r.delivery_fee)}</div><div>Récupération : ${money(r.recovery_fee)}</div></div><p>Le solde doit être payé avant la remise du véhicule. La réservation est confirmée par un acompte de 50 % du montant total ou d’au moins 30 000 Ariary, versé dans les 24 heures suivant la demande. En cas d’annulation volontaire après confirmation, l’acompte reste acquis au loueur, sauf accord écrit contraire. Pour une location de plus d’une semaine, le paiement s’effectue chaque lundi.</p>`;
     const articles = isInvoice ? '<p>Cette facture reprend les montants enregistrés pour la réservation.</p>' : contractArticles.map(a => `<h2>${a[0]}</h2><p>${a[1]}</p>`).join('');
-    printWindow(`<html><head><title>${isInvoice ? 'Facture' : 'Contrat'} ${esc(r.reference)}</title><style>${styles}</style></head><body>${header}${details}${articles}<p>${at()}</p><div class="sign"><span><b>LOCATAIRE : ${esc(r.customer_name)}</b><br>Mention manuscrite : « Lu et approuvé »<br><br>Signature :</span><span><b>LOUEUR</b><br>Mention manuscrite : « Lu et approuvé »<br><br>Signature :</span></div><script>window.print()<\/script></body></html>`);
+    printWindow(`<html><head><title>${isInvoice ? 'Facture' : 'Contrat'} ${esc(r.reference)}</title><style>${styles}.document-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start}.document-grid>div{border:1px solid #bbb;padding:6px;text-align:center;min-height:145px}.document-grid img{display:block;width:100%;height:115px;object-fit:contain}.document-grid small{display:block;margin-top:5px;font-weight:bold}.missing-doc{display:flex;flex-direction:column;justify-content:center;color:#777}.missing-doc span{height:115px;display:grid;place-items:center;font-size:11px}</style></head><body>${header}${details}${articles}<p>${at()}</p><div class="sign"><span><b>LOCATAIRE : ${esc(r.customer_name)}</b><br>Mention manuscrite : « Lu et approuvé »<br><br>Signature :</span><span><b>LOUEUR</b><br>Mention manuscrite : « Lu et approuvé »<br><br>Signature :</span></div>${documentAppendix}<script>window.onload=()=>window.print()<\/script></body></html>`, printTab);
   }
 
   function modal(id, kind) {
