@@ -38,7 +38,8 @@
       const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
       if (!start || !end || end <= start) { showBookingError('Veuillez sélectionner une période de location valide.'); return false; }
       const fleetId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(fleetId, start.toISOString(), end.toISOString());
-      if (slot && !slot.available) { showBookingError('Toutes les voitures de cette flotte sont déjà réservées ou en maintenance sur cette période. Choisissez une autre période.'); return false; }
+      if (slot && !slot.available) { showBookingError('Créneau complet : aucune voiture de cette flotte n’est disponible pour toute la période choisie. Sélectionnez d’autres dates.'); return false; }
+      if (slot?.available) window.clearStaleBookingAvailabilityError?.();
     }
     if (step === 2) {
       const requiredDocs = [['booking-cin-recto-camera','booking-cin-recto-gallery','CIN recto'],['booking-cin-verso-camera','booking-cin-verso-gallery','CIN verso'],['booking-license-recto-camera','booking-license-recto-gallery','permis recto']];

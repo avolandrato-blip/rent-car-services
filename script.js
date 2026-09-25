@@ -576,6 +576,17 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     return { hours, billedHours, days, rate12, rate24: pricing.rate24, rentalAmount, delivery, recovery, chauffeur: tripRate ? 0 : chauffeur, tripRate, requiresQuote: pricing.requiresQuote, total };
 }
 
+function clearStaleBookingAvailabilityError() {
+    const result = document.getElementById('booking-result');
+    if (!result || !result.classList.contains('booking-error')) return;
+    const message = result.textContent || '';
+    if (/^(Créneau complet : aucune voiture de cette flotte n’est disponible|Toutes les voitures de cette flotte sont déjà réservées ou en maintenance sur cette période\.|Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance\.|Les dernières voitures disponibles viennent d’être réservées\.)/.test(message)) {
+        result.className = 'booking-result';
+        result.textContent = '';
+    }
+}
+window.clearStaleBookingAvailabilityError = clearStaleBookingAvailabilityError;
+
 function updateBookingQuote() {
     const fleetGroup = getBookingFleet(document.getElementById('booking-vehicle')?.value);
     const vehicle = fleetGroup?.vehicle;
@@ -586,6 +597,7 @@ function updateBookingQuote() {
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; if (mini) mini.textContent = 'Choisissez une voiture et vos dates pour voir le récapitulatif financier.'; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const slot = bookingSlotAvailability(fleetGroup.id, `${startDate}T${startTime}`, `${endDate}T${endTime}`), slotStatus = document.getElementById('booking-slot-status');
+    if (slot.available) clearStaleBookingAvailabilityError();
     if (slotStatus) { slotStatus.className = `booking-slot-status ${slot.available ? 'is-available' : 'is-unavailable'}`; slotStatus.textContent = slot.available ? `${slot.availableUnits.length}/${fleetGroup.capacity} véhicule(s) disponible(s) sur ce créneau.` : `Flotte complète pour ce créneau${slot.conflict?.status === 'maintenance' ? ' (maintenance)' : ''}.`; }
     if (q.requiresQuote) {
         if (quote) quote.textContent = 'Sur devis : le tarif 24 h doit être confirmé avant de calculer le montant de cette durée.';

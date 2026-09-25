@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 const publicScript = read('script.js');
@@ -37,6 +38,26 @@ test('client reservation chooses a free physical unit and reports database confl
   assert.match(bookingScript, /availableUnitsForGroup\(fleetGroup/);
   assert.match(bookingScript, /vehicle_id: unit\.id/);
   assert.match(bookingScript, /attempt\.error\.code !== '23P01'/);
+});
+
+test('client can continue after a full-slot warning when the selected period has an available car', () => {
+  const assignment = 'window.clearStaleBookingAvailabilityError = clearStaleBookingAvailabilityError;';
+  const start = publicScript.indexOf('function clearStaleBookingAvailabilityError()');
+  const end = publicScript.indexOf(assignment, start);
+  assert.ok(start >= 0 && end > start, 'stale-availability clearing helper is present');
+  const result = { className: 'booking-result booking-error', textContent: 'Créneau complet : aucune voiture de cette flotte n’est disponible pour toute la période choisie. Sélectionnez d’autres dates.', classList: { contains: name => result.className.split(/\s+/).includes(name) } };
+  const context = { document: { getElementById: id => id === 'booking-result' ? result : null }, window: {} };
+  vm.runInNewContext(publicScript.slice(start, end + assignment.length), context);
+  context.window.clearStaleBookingAvailabilityError();
+  assert.equal(result.textContent, '');
+  assert.equal(result.className, 'booking-result');
+  result.className = 'booking-result booking-error';
+  result.textContent = 'Veuillez cocher la case d’acceptation des conditions.';
+  context.window.clearStaleBookingAvailabilityError();
+  assert.equal(result.textContent, 'Veuillez cocher la case d’acceptation des conditions.');
+  assert.match(publicScript, /if \(slot\.available\) clearStaleBookingAvailabilityError\(\)/);
+  assert.match(bookingScript, /if \(slot && !slot\.available\).*Créneau complet : aucune voiture de cette flotte n’est disponible/s);
+  assert.match(bookingScript, /if \(slot\?\.available\) window\.clearStaleBookingAvailabilityError\?\.\(\)/);
 });
 
 test('database migration exposes a minimal view and prevents overlapping active reservations per car', () => {
