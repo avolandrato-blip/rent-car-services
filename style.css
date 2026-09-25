@@ -51,7 +51,7 @@ body {
 .nav-container { width: 90%; max-width: 1200px; margin: auto; display: flex; justify-content: space-between; align-items: center; }
 #brand-name { font-size: 1.2rem; color: var(--primary); font-weight: 700; display: flex; align-items: center; }
 #brand-name span { color: var(--accent); margin-left: 5px; }
-#nav-menu button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: var(--dark); font-size: 0.95rem; }
+#nav-menu button, #nav-menu a { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: var(--dark); font-size: 0.95rem; text-decoration: none; display: inline-block; }
 .menu-burger { display: none; font-size: 1.5rem; cursor: pointer; color: var(--primary); }
 
 /* --- TABS & SECTIONS --- */

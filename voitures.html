@@ -1,0 +1,13 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="style.css"><title>Nos voitures | Rent Car Service</title><link rel="stylesheet" href="voitures.css"></head><body><header class="header"><div class="nav-container"><a href="acceuil.html" class="brand-link"><h1 id="brand-name">Rent Car Service</h1></a><div class="menu-burger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div><nav id="nav-menu"><a href="acceuil.html">Accueil</a><a href="voitures.html">Véhicules</a><a href="reservation.html">Réservation</a><a href="media.html">Médias</a><a href="condition&contacter.html">Conditions & contact</a></nav></div></header><main><section id="cars" class="tab">
+        <div class="container">
+            <h2 class="section-title">Notre flotte de véhicules</h2>
+            <div class="fleet-controls" aria-label="Filtrer et trier les véhicules">
+                <label>Rechercher un véhicule<input id="fleet-search" type="search" placeholder="Nom, marque ou modèle"></label>
+                <label>Type de transmission<select id="fleet-transmission"><option value="all">Toutes</option></select></label>
+                <label>Capacité<select id="fleet-seats"><option value="all">Toutes</option></select></label>
+                <label>Prix maximal par jour<input id="fleet-max-price" type="number" min="0" placeholder="Ex. 150000"></label>
+                <label>Ordre d’affichage<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
+            </div>
+            <div id="cars-grid" class="cars-grid"></div>
+        </div>
+    </section></main><footer class="footer-fixed"><div class="container"><div id="footer-info" class="footer-text"></div><div id="social-links" class="social-footer"></div></div></footer><a id="fab-call" href="#" class="fab-call btn btn-primary"><i class="fas fa-phone-alt"></i><span>Nous appeler</span></a><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script><script src="script.js?v=20260925-1325"></script><script src="enhancements.js?v=20260925-1325"></script><script src="morning-changes.js?v=20260925-1325"></script></body></html>

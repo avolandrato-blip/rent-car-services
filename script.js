@@ -78,6 +78,7 @@ async function initSite() {
 }
 
 async function loadHome() {
+    if (!document.getElementById('hero-banner')) return;
     const res = await fetch('home.json');
     const data = await res.json();
     const banner = document.getElementById('hero-banner');
@@ -90,11 +91,12 @@ async function loadHome() {
 
 // Gestion des Cartes Tournantes (Flip Cards)
 async function loadCards() {
+    if (!document.getElementById('features-grid') && !document.getElementById('conditions-grid')) return;
     const res = await fetch('data_cards.json');
     const data = await res.json();
     
     // Grille "Pourquoi nous choisir" avec effet rotation
-    document.getElementById('features-grid').innerHTML = data.features.map(f => `
+    if (document.getElementById('features-grid')) document.getElementById('features-grid').innerHTML = data.features.map(f => `
         <div class="flip-card" onclick="this.classList.toggle('flipped')">
             <div class="flip-card-inner">
                 <div class="flip-front">
@@ -109,7 +111,7 @@ async function loadCards() {
     `).join('');
 
     // Grille "Conditions" avec effet rotation
-    document.getElementById('conditions-grid').innerHTML = data.conditions.map(c => `
+    if (document.getElementById('conditions-grid')) document.getElementById('conditions-grid').innerHTML = data.conditions.map(c => `
         <div class="flip-card" onclick="this.classList.toggle('flipped')">
             <div class="flip-card-inner">
                 <div class="flip-front">
@@ -142,6 +144,7 @@ function vehicleClientStatus(car) {
     return { key: 'available', label: 'Disponible' };
 }
 function renderPublicCars() {
+    if (!document.getElementById('cars-grid')) return;
     const search = (document.getElementById('fleet-search')?.value || '').trim().toLowerCase();
     const transmission = document.getElementById('fleet-transmission')?.value || 'all';
     const seats = document.getElementById('fleet-seats')?.value || 'all';
@@ -175,6 +178,7 @@ function bindPublicCarFilters() {
 }
 
 async function loadCars() {
+    if (!document.getElementById('cars-grid')) return;
     if (!window.rentCarSupabase) {
         console.error('Supabase est indisponible : impossible de charger le catalogue des véhicules.');
         publicCars = [];
@@ -276,6 +280,7 @@ function bindEntertainmentPlayers(data) {
 }
 
 async function loadFun() {
+    if (!document.getElementById('radios-grid')) return;
     const res = await fetch('fun.json', { cache: 'no-store' });
     const localData = await res.json();
     let data = { radios: localData.radios || [], playlists: localData.playlists || [] };
@@ -314,6 +319,7 @@ async function loadFun() {
 
 // Formulaire de contact dynamique
 async function loadContact() {
+    if (!document.getElementById('dynamic-form')) return;
     const res = await fetch('contact.json');
     const data = await res.json();
     const form = document.getElementById('dynamic-form');
@@ -344,6 +350,7 @@ function toggleMenu() {
 }
 
 function prefill(car) {
+    if (!document.getElementById('contact')) { window.location.href = `condition&contacter.html?vehicle=${encodeURIComponent(car || '')}`; return; }
     openTab('contact');
     setTimeout(() => {
         const msgField = document.getElementById('message');
@@ -355,6 +362,7 @@ function prefill(car) {
 }
 
 function openBookingForVehicle(vehicleId, vehicleName) {
+    if (!document.getElementById('booking')) { window.location.href = `reservation.html?vehicle=${encodeURIComponent(vehicleId || '')}`; return; }
     openTab('booking');
     const select = document.getElementById('booking-vehicle');
     if (select && vehicleId && [...select.options].some(option => option.value === vehicleId)) select.value = vehicleId;
@@ -364,6 +372,7 @@ function openBookingForVehicle(vehicleId, vehicleName) {
 }
 
 function openLongTermQuote(vehicleName) {
+    if (!document.getElementById('contact')) { window.location.href = `condition&contacter.html?vehicle=${encodeURIComponent(vehicleName || '')}`; return; }
     openTab('contact');
     setTimeout(() => {
         const message = document.getElementById('message');
@@ -415,7 +424,7 @@ async function loadBookingData() {
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
     const select = document.getElementById('booking-vehicle');
-    if (select) select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
+    if (select) { select.innerHTML = bookingVehicles.map(v => `<option value="${v.id}">${v.name} — ${v.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join(''); const requestedVehicle = new URLSearchParams(location.search).get('vehicle'); if (requestedVehicle && bookingVehicles.some(v => v.id === requestedVehicle)) select.value = requestedVehicle; }
     syncBookingTripRates();
     window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
