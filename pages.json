@@ -1,9 +1,0 @@
-{
-  "pages": [
-    {"file":"acceuil.html","data":["config.json","home.json","data_cards.json"]},
-    {"file":"voitures.html","data":["config.json","Supabase: vehicles"]},
-    {"file":"reservation.html","data":["config.json","Supabase: vehicles, reservations, maintenance"]},
-    {"file":"media.html","data":["config.json","fun.json","Supabase: entertainment_items"]},
-    {"file":"condition&contacter.html","data":["config.json","data_cards.json","contact.json"]}
-  ]
-}
