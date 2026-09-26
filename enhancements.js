@@ -126,36 +126,33 @@
     if (deposit > 0 && !paymentMethod) return showBookingError('Sélectionnez le mode de paiement de l’acompte.');
     if (deposit > 0 && paymentMethod === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) return showBookingError('Veuillez joindre la preuve de paiement Mobile Money.');
     const customer = {
-      customer_name: $('booking-name').value.trim(), customer_phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
-      customer_email: $('booking-email').value.trim() || null, customer_address: $('booking-address').value.trim(), customer_license: $('booking-license').value.trim(), customer_cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
+      full_name: $('booking-name').value.trim(), phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
+      email: $('booking-email').value.trim() || null, address: $('booking-address').value.trim(), driving_license: $('booking-license').value.trim(), cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
       license_acquired_at: $('booking-license-date').value || null, license_acquired_place: $('booking-license-place').value.trim(),
       cin_acquired_at: $('booking-cin-date').value || null, cin_acquired_place: $('booking-cin-place').value.trim()
     };
     const db = window.rentCarSupabase;
+    const customerResult = await db.from('customers').insert(customer).select('id').single();
+    if (customerResult.error) return showBookingError('Impossible d’enregistrer vos informations. Veuillez nous contacter par WhatsApp.');
     const payload = {
-      ...customer, vehicle_id: vehicle.id,
-      start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(),
-      with_driver: $('booking-driver').checked, rental_type: $('booking-rental-type').value,
-      delivery_requested: $('booking-delivery').checked, recovery_requested: $('booking-recovery').checked,
-      total_amount: finalTotal, deposit_amount: deposit, payment_method: paymentMethod,
-      mobile_reference: $('booking-mobile-reference')?.value.trim() || null,
-      mobile_number: $('booking-mobile-number')?.value.trim() || null,
-      trip_rate_id: $('booking-trip-rate')?.value || null,
-      trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(),
-      trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null,
-      trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null,
-      promo_code: promoCode, notes: $('booking-notes').value.trim() || null,
-      terms_accepted_at: nowLocal()
+      vehicle_id: vehicle.id, customer_id: customerResult.data.id, customer_name: customer.full_name, customer_phone: customer.phone, whatsapp_phone: customer.whatsapp_phone,
+      customer_email: customer.email, customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin, cin_is_duplicate: customer.cin_is_duplicate,
+      license_acquired_at: customer.license_acquired_at, license_acquired_place: customer.license_acquired_place,
+      cin_acquired_at: customer.cin_acquired_at, cin_acquired_place: customer.cin_acquired_place,
+      start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(), with_driver: $('booking-driver').checked, rental_type: $('booking-rental-type').value,
+      rate_12h: quote.rate12, rate_24h: quote.rate24, daily_rate: quote.rate12, days: quote.days, extra_fees: quote.delivery + quote.recovery, total_amount: finalTotal,
+      deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: $('booking-mobile-reference')?.value.trim() || null, mobile_number: $('booking-mobile-number')?.value.trim() || null,
+      trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(), trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null, trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null, delivery_fee: $('booking-delivery').checked ? 20000 : 0,
+      recovery_fee: $('booking-recovery').checked ? 20000 : 0, chauffeur_fee: quote.chauffeur, promo_code: promoCode,
+      promo_discount: Math.min(quote.total, promoDiscount), notes: $('booking-notes').value.trim() || null, terms_accepted_at: nowLocal(), status: 'pre_reserved', owner_confirmation_status: ownerMode ? 'pending' : 'not_required'
     };
     let reservationResult = null;
     let reservedUnit = null;
     for (const unit of candidateUnits) {
-      const attempt = await db.rpc('create_public_reservation', { p_payload: { ...payload, vehicle_id: unit.id } });
-      if (!attempt.error) {
-        const row = Array.isArray(attempt.data) ? attempt.data[0] : attempt.data;
-        if (row?.id && row?.reference) { reservationResult = { data: row }; reservedUnit = unit; break; }
-        return showBookingError('La réservation n’a pas pu être confirmée. Actualisez la page puis réessayez.');
-      }
+      const latestVehicle = await db.from('vehicles').select('status').eq('id', unit.id).maybeSingle();
+      if (latestVehicle.error || latestVehicle.data?.status !== 'available') continue;
+      const attempt = await db.from('reservations').insert({ ...payload, vehicle_id: unit.id }).select('id,reference').single();
+      if (!attempt.error) { reservationResult = attempt; reservedUnit = unit; break; }
       if (attempt.error.code !== '23P01') { console.error(attempt.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
     }
     if (!reservationResult) return showBookingError('Les dernières voitures disponibles viennent d’être réservées. Actualisez le calendrier puis réessayez.');
