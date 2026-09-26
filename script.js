@@ -3,6 +3,49 @@ let activePromo = null;
 function setClientTheme(theme) { document.body.dataset.theme = theme; localStorage.setItem("rentcar-theme", theme); }
 function initClientTheme() { setClientTheme(localStorage.getItem("rentcar-theme") || "royal-night"); }
 
+function syncClientRequiredMarks(root = document) {
+    const scope = root || document;
+    const labels = scope.querySelectorAll ? scope.querySelectorAll('label') : [];
+    labels.forEach(label => {
+        const controls = [...label.querySelectorAll('input, select, textarea')].filter(control => control.type !== 'hidden' && !control.disabled);
+        const required = label.dataset.clientRequired === 'true' || controls.some(control => control.required);
+        let marker = label.querySelector('.required-asterisk');
+        if (required && !marker) {
+            marker = document.createElement('span');
+            marker.className = 'required-asterisk';
+            marker.setAttribute('aria-hidden', 'true');
+            marker.textContent = ' *';
+            const firstControl = label.querySelector('input, select, textarea');
+            if (firstControl && firstControl.type !== 'checkbox' && firstControl.type !== 'radio') label.insertBefore(marker, firstControl);
+            else label.append(marker);
+        } else if (!required && marker) {
+            marker.remove();
+        }
+    });
+    const fieldsets = scope.querySelectorAll ? scope.querySelectorAll('fieldset[data-client-required="true"]') : [];
+    fieldsets.forEach(fieldset => {
+        const legend = fieldset.querySelector('legend');
+        if (legend && !legend.querySelector('.required-asterisk')) {
+            const marker = document.createElement('span');
+            marker.className = 'required-asterisk';
+            marker.setAttribute('aria-hidden', 'true');
+            marker.textContent = ' *';
+            legend.append(marker);
+        }
+    });
+}
+window.syncClientRequiredMarks = syncClientRequiredMarks;
+window.setBookingIdentityRequired = required => {
+    const ids = ['booking-license','booking-license-place','booking-license-date','booking-cin','booking-cin-type','booking-cin-place','booking-cin-date'];
+    ids.forEach(id => { const field = document.getElementById(id); if (field) field.required = !!required; });
+    document.querySelectorAll('[data-identity-document="true"]').forEach(label => {
+        label.dataset.clientRequired = String(!!required);
+        label.classList.toggle('optional-owner-field', !required);
+    });
+    syncClientRequiredMarks(document.getElementById('booking-form') || document);
+};
+document.addEventListener('DOMContentLoaded', () => syncClientRequiredMarks());
+
 document.addEventListener('DOMContentLoaded', async () => {
     await initSite();
 });
@@ -214,7 +257,7 @@ function renderPublicCars() {
                 <div class="car-actions">${action}<button class="btn btn-outline" data-public-action="quote" data-vehicle-name="${name}">Contactez-nous</button><a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${name}"><i class="fab fa-whatsapp"></i></a><a href="tel:${phone}" class="btn btn-primary btn-icon" aria-label="Appeler ${name}"><i class="fas fa-phone"></i></a></div>
             </div>
         </div>`;
-    }).join('') || '<p class="fleet-empty">Aucune voiture ne correspond à vos critères.</p>';
+    }).join('') || '<p class="fleet-empty">Aucun véhicule ne correspond à votre recherche.</p>';
 }
 
 function bindPublicCarFilters() {
@@ -365,7 +408,7 @@ async function loadFun() {
             <h4 id="youtube-playlist-title" class="youtube-playlist-title">Aucune playlist sélectionnée</h4>
             <div id="youtube-playlist-empty" class="youtube-playlist-empty">Sélectionnez une playlist pour afficher le lecteur.</div>
             <iframe id="youtube-playlist-frame" class="youtube-playlist-frame hidden" title="Lecteur de playlist YouTube" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-            <p class="multitask-note"><i class="fas fa-window-restore"></i> Pour écouter en multitâche, ouvrez la playlist dans un nouvel onglet. Brave est recommandé avec le mode image dans l’image lorsque disponible.</p>
+            <p class="multitask-note"><i class="fas fa-window-restore"></i> Pour écouter la playlist tout en poursuivant votre navigation, ouvrez-la dans un nouvel onglet. Brave est recommandé pour utiliser le mode Image dans l’image, lorsqu’il est disponible.</p>
             <a id="youtube-playlist-external" class="btn btn-primary hidden" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet</a>
         </div>`;
     bindEntertainmentPlayers(data);
@@ -380,14 +423,16 @@ async function loadContact() {
     form.innerHTML = data.formulaire.map(f => {
         let inputHtml = '';
         if(f.type === 'select') {
-            inputHtml = `<select id="${f.id}">${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select>`;
+            inputHtml = `<select id="${f.id}"${f.required ? ' required' : ''}>${f.required ? `<option value="">${f.placeholder || 'Sélectionnez une option'}</option>` : ''}${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select>`;
         } else if(f.type === 'textarea') {
-            inputHtml = `<textarea id="${f.id}" rows="4" placeholder="${f.placeholder}"></textarea>`;
+            inputHtml = `<textarea id="${f.id}" rows="4" placeholder="${f.placeholder}"${f.required ? ' required' : ''}></textarea>`;
         } else {
-            inputHtml = `<input type="${f.type}" id="${f.id}" placeholder="${f.placeholder}">`;
+            inputHtml = `<input type="${f.type}" id="${f.id}" placeholder="${f.placeholder}"${f.required ? ' required' : ''}>`;
         }
-        return `<div class="form-group"><label>${f.label}</label>${inputHtml}</div>`;
-    }).join('') + `<button type="submit" class="btn btn-whatsapp btn-submit">Envoyer sur WhatsApp <i class="fab fa-whatsapp"></i></button>`;
+        return `<div class="form-group"><label>${f.label}${inputHtml}</label></div>`;
+    }).join('') + `<button type="submit" class="btn btn-whatsapp btn-submit">Envoyer votre demande par WhatsApp <i class="fab fa-whatsapp"></i></button>`;
+    form.insertAdjacentHTML('afterbegin', '<p class="required-fields-note"><span class="required-asterisk" aria-hidden="true">*</span> Champ obligatoire.</p>');
+    syncClientRequiredMarks(form);
 }
 
 // Fonctions utilitaires (Onglets, Menu, Prefill)
@@ -423,6 +468,7 @@ function getAvailableFleetUnits(fleetId, start, end) {
 }
 function openBookingForFleet(fleetId, fleetName) {
     window.bookingOwnerMode = false;
+    window.setBookingIdentityRequired?.(true);
     openTab('booking');
     const select = document.getElementById('booking-vehicle');
     const group = getBookingFleet(fleetId);
@@ -450,10 +496,10 @@ function sendWhatsApp(e) {
     const inputs = document.querySelectorAll('#dynamic-form input, #dynamic-form select, #dynamic-form textarea');
     let msg = "Bonjour, voici ma demande :%0A%0A";
     inputs.forEach(input => {
-        const label = input.previousElementSibling ? input.previousElementSibling.innerText : "Champ";
-        if(input.value) msg += `*${label}*: ${input.value}%0A`;
+        const label = input.closest('.form-group')?.querySelector('label')?.textContent.replace('*', '').trim() || 'Champ';
+        if(input.value) msg += `*${label}*: ${input.value}\n`;
     });
-    window.open(`https://wa.me/${siteConfig.footer.whatsapp}?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${siteConfig.footer.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
 }
 
 let bookingVehicles = [];
@@ -466,12 +512,12 @@ function openOwnerRequest(vehicleId) {
     const vehicle = group?.vehicle;
     if (!vehicle) return;
     window.bookingOwnerMode = true;
-    ['booking-cin','booking-license','booking-cin-place','booking-cin-date','booking-license-place','booking-license-date','booking-cin-recto','booking-cin-verso'].forEach(id => { const field = document.getElementById(id); if (field) { field.required = false; field.closest('label,.identity-upload')?.classList.add('optional-owner-field'); } });
+    window.setBookingIdentityRequired?.(false);
     const select = document.getElementById('booking-vehicle'); if (select && group) select.value = group.id;
     document.getElementById('booking')?.scrollIntoView({behavior:'smooth'});
     if (typeof openTab === 'function') openTab('booking');
     if (typeof syncBookingTripRates === 'function') syncBookingTripRates();
-    document.getElementById('booking-result')?.replaceChildren(document.createTextNode('Demande rapide : CIN et permis facultatifs. Après validation, WhatsApp ouvrira la conversation avec le propriétaire.'));
+    document.getElementById('booking-result')?.replaceChildren(document.createTextNode('Demande rapide : les justificatifs d’identité et le permis de conduire ne sont pas requis à cette étape. Après vérification des disponibilités, WhatsApp s’ouvrira pour vous permettre d’échanger avec le loueur.'));
 }
 
 async function loadBookingData() {
@@ -571,6 +617,7 @@ function syncBookingTripRates() {
         destinationInput.value = selectedRate ? tripRateLabel(selectedRate) : (sameFleet && !rates.length ? destinationInput.value : '');
     }
     destinationWrap?.classList.toggle('hidden', rates.length > 0);
+    if (typeof window !== 'undefined') window.syncClientRequiredMarks?.(document.getElementById('booking-form') || document);
 }
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
@@ -609,7 +656,7 @@ function updateBookingQuote() {
     const startTime = document.getElementById('booking-start-time')?.value, endTime = document.getElementById('booking-end-time')?.value;
     const quote = document.getElementById('booking-quote');
     const mini = document.getElementById('booking-mini-summary');
-    if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; if (mini) mini.textContent = 'Choisissez une voiture et vos dates pour voir le récapitulatif financier.'; return; }
+    if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; if (mini) mini.textContent = 'Sélectionnez un véhicule et une période pour afficher une estimation du prix.'; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const slot = bookingSlotAvailability(fleetGroup.id, `${startDate}T${startTime}`, `${endDate}T${endTime}`), slotStatus = document.getElementById('booking-slot-status');
     if (slot.available) clearStaleBookingAvailabilityError();
@@ -621,7 +668,7 @@ function updateBookingQuote() {
         if (balanceNote) balanceNote.textContent = 'Solde à confirmer après établissement du devis.';
         return;
     }
-    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? q.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour${q.days === 1 ? '' : 's'}` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Solde à régler lors de la remise du véhicule : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     const dateFormat = value => new Date(value).toLocaleDateString('fr-FR');
     if (mini) mini.innerHTML = `<strong>${escapeFunHtml(vehicle.name || vehicle.nom || 'Véhicule')}</strong><span>${q.billedHours} h</span><strong>${formatMGA(q.rentalAmount)}</strong><span>Du ${dateFormat(`${startDate}T${startTime}`)} à ${startTime} au ${dateFormat(`${endDate}T${endTime}`)} à ${endTime}</span>`;
 }
@@ -661,14 +708,14 @@ async function submitReservation(event) {
     const availableUnits = getAvailableFleetUnits(group.id, start, end);
     if (!availableUnits.length) {
         result.className = 'booking-result booking-error';
-        result.textContent = 'Toutes les voitures de cette flotte sont indisponibles sur cette période.';
+        result.textContent = 'Aucun véhicule de cette flotte n’est disponible pour la période sélectionnée.';
         return;
     }
     const rentalType = document.getElementById('booking-rental-type').value;
     const quote = calculateBookingQuote(vehicle, start, end, rentalType);
     if (quote.requiresQuote) {
         result.className = 'booking-result booking-error';
-        result.textContent = 'Cette durée est sur devis, car aucun tarif 24 h n’est renseigné. Contactez-nous pour obtenir une proposition.';
+        result.textContent = 'Cette durée nécessite un devis, car aucun tarif pour 24 h n’est renseigné. Contactez-nous pour recevoir une proposition.';
         return;
     }
     const deposit = Math.max(0, Number(document.getElementById('booking-deposit').value || 0));
@@ -761,15 +808,15 @@ async function verifyInvoiceOtp(event) {
     const phone = document.getElementById('invoice-phone').value.trim();
     const otp = document.getElementById('invoice-otp').value.trim();
     const { data: invoice, error } = await window.rentCarSupabase.rpc('get_public_invoice_by_otp', { p_reference: reference, p_phone: phone, p_otp: otp });
-    if (error || !invoice?.reservation) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
+    if (error || !invoice?.reservation) { result.className = 'booking-result booking-error'; result.textContent = 'La référence de réservation, le numéro de téléphone ou le code de vérification est incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
     const data = invoice.reservation, vehicleData = invoice.vehicle || {}, owner = invoice.owner || {};
-    const typeLabel = data.rental_type === 'night' ? 'Nuit — 12 h (19h00 à 06h00)' : data.rental_type === '24h' ? '24 heures' : 'Jour — 12 h (07h00 à 18h00)';
+    const typeLabel = data.rental_type === 'night' ? 'Nuit — 12 h (de 19 h à 6 h)' : data.rental_type === '24h' ? '24 heures' : 'Jour — 12 h (de 7 h à 18 h)';
     const rentalOnly = Number(data.total_amount||0) - Number(data.delivery_fee||0) - Number(data.recovery_fee||0) - Number(data.chauffeur_fee||0);
     const reste = Math.max(0, Number(data.total_amount||0) - Number(data.deposit_amount||0));
     const vehicle = `${vehicleData.make || ''} ${vehicleData.model || vehicleData.name || ''}`.trim();
-    const shared = `<p>Référence : ${escapeFunHtml(data.reference)}<br>Client : ${escapeFunHtml(data.customer_name)}<br>Téléphone : ${escapeFunHtml(data.customer_phone)}<br>Adresse : ${escapeFunHtml(data.customer_address || '—')}<br>Véhicule : ${escapeFunHtml(vehicle)}<br>Immatriculation : ${escapeFunHtml(vehicleData.registration_number || '—')}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Nombre de jour(s) : ${Number(data.days || 1)}<br>Formule : ${escapeFunHtml(typeLabel)}</p>`;
-    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Chauffeur : ${formatMGA(data.chauffeur_fee)} (30 000 Ar / jour × ${data.days || 1})<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p>`;
-    const contractArticles = `<h2>Article 2 : Conditions du locataire</h2><p>Le locataire doit être âgé d’au moins 21 ans et détenir un permis valide depuis au moins 2 ans. Il doit présenter une pièce d’identité et une copie du permis de conduire. Il doit être solvable, assuré et conducteur déclaré par écrit dans le présent contrat.</p><h2>Article 3 : Zone et conditions d’utilisation</h2><p>Le véhicule est autorisé à circuler dans la commune d’Antananarivo et jusqu’à un rayon maximal de 30 kilomètres, sauf accord écrit préalable du loueur. Tout déplacement hors zone sans autorisation peut être facturé 1 000 Ariary par kilomètre supplémentaire, selon le compteur ou le GPS. Le locataire doit respecter le code de la route et utiliser le véhicule avec soin. Il est interdit de l’utiliser pour une activité commerciale ou professionnelle rémunérée, notamment comme taxi ou pour le transport via InDrive, sauf autorisation écrite préalable. Sont également interdits le transport illégal, les courses, les marchandises dangereuses, la surcharge et les routes incompatibles avec le véhicule.</p><h2>Article 4 : Prêt, sous-location, vente et fraude</h2><p>Le véhicule reste la propriété exclusive du loueur. Il est interdit de le prêter, céder, louer, re-louer, sous-louer, vendre, tenter de vendre, mettre en gage, publier une annonce à son sujet ou percevoir un paiement pour sa remise à un tiers. Toute fausse identité, faux document, dissimulation du conducteur, fausse signature, fausse déclaration ou manœuvre frauduleuse peut entraîner la reprise immédiate, la résiliation et une plainte.</p><h2>Article 5 : État, carburant et restitution</h2><p>Un état des lieux, le kilométrage, le carburant, les équipements, accessoires et clés sont vérifiés avant et après la location. Des photos ou vidéos datées peuvent être transmises par WhatsApp. Le véhicule doit être rendu à la date et à l’heure convenues avec le même niveau de carburant et les mêmes équipements. Le carburant manquant est facturé avec 20 000 Ariary de frais de service. En cas de retard : jusqu’à 1 heure, 10 000 Ariary ; de plus d’1 heure à 3 heures, 25 000 Ariary par heure entamée ; au-delà de 3 heures, une journée supplémentaire.</p><h2>Article 6 : Accident, panne, casse et frais</h2><p>Le locataire doit assurer la sécurité, prévenir immédiatement le loueur, communiquer le lieu, prendre des photos, suivre ses instructions et faire les démarches nécessaires. Aucune réparation, modification ou remorquage ne peut être engagé sans accord du loueur, sauf urgence de sécurité. Les frais directement liés à une faute, négligence, mauvaise utilisation, sortie de zone ou autre manquement sont à la charge du locataire.</p><h2>Article 7 : Vol, clés et non-restitution</h2><p>En cas de vol, disparition ou non-restitution, le locataire doit prévenir le loueur, contacter les autorités, déposer plainte, transmettre le récépissé et remettre les clés, documents et accessoires encore en sa possession. La perte ou détérioration des clés et les frais de remplacement peuvent être facturés.</p><h2>Article 8 : Vérification et reprise du véhicule</h2><p>Le loueur peut vérifier à tout moment l’état, la localisation, le kilométrage et les conditions d’utilisation. Il peut reprendre le véhicule sans préavis en cas de non-paiement, fraude, usage interdit, sortie non autorisée, accident, immobilisation, disparition ou risque sérieux de perte. Un état des lieux de reprise est établi dans la mesure du possible.</p><h2>Article 9 : Remboursement en cas de retrait anticipé</h2><p>Si le retrait n’est pas imputable au locataire, le prix de la période restant à courir est remboursé au prorata des jours ou heures non utilisés. Les périodes commencées et les frais de livraison, récupération ou prestations déjà exécutées ne sont pas remboursés. Aucun remboursement n’est dû si le retrait est causé par un manquement du locataire.</p><h2>Article 10 : Responsabilité financière et règlement</h2><p>Aucune caution n’est demandée, mais le locataire reste responsable des dommages, pertes, retards, amendes, fourrière, carburant, clés, accessoires et autres frais qui lui sont imputables. Les sommes certaines, exigibles et non contestées sont payables dans les 10 jours.</p><h2>Article 11 : Acceptation</h2><p>Le locataire reconnaît avoir lu, compris et accepté les conditions du présent contrat, notamment celles relatives à la zone, aux usages interdits, à la vente, à la sous-location, à la fraude, à la vérification, à la reprise et au remboursement.</p>`;
+    const shared = `<p>Référence : ${escapeFunHtml(data.reference)}<br>Client : ${escapeFunHtml(data.customer_name)}<br>Téléphone : ${escapeFunHtml(data.customer_phone)}<br>Adresse : ${escapeFunHtml(data.customer_address || '—')}<br>Véhicule : ${escapeFunHtml(vehicle)}<br>Immatriculation : ${escapeFunHtml(vehicleData.registration_number || '—')}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Durée de location (jours) : ${Number(data.days || 1)}<br>Formule : ${escapeFunHtml(typeLabel)}</p>`;
+    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Chauffeur : ${formatMGA(data.chauffeur_fee)} (30 000 Ar / jour × ${data.days || 1})<br>Acompte enregistré : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> les tarifs n’incluent pas le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à la charge du client.</p>`;
+    const contractArticles = `<h2>Article 2 : Conditions du locataire</h2><p>Le locataire doit être âgé d’au moins 21 ans et détenir un permis valide depuis au moins 2 ans. Il doit présenter une pièce d’identité et une copie du permis de conduire. Il doit être solvable, assuré et conducteur déclaré par écrit dans le présent contrat.</p><h2>Article 3 : Zone et conditions d’utilisation</h2><p>Le véhicule est autorisé à circuler dans la commune d’Antananarivo et jusqu’à un rayon maximal de 30 kilomètres, sauf accord écrit préalable du loueur. Tout déplacement hors zone sans autorisation peut être facturé 1 000 Ariary par kilomètre supplémentaire, selon le compteur ou le GPS. Le locataire doit respecter le code de la route et utiliser le véhicule avec soin. Il est interdit de l’utiliser pour une activité commerciale ou professionnelle rémunérée, notamment comme taxi ou pour le transport via InDrive, sauf autorisation écrite préalable. Sont également interdits le transport illégal, les courses, les marchandises dangereuses, la surcharge et les routes incompatibles avec le véhicule.</p><h2>Article 4 : Prêt, sous-location, vente et fraude</h2><p>Le véhicule reste la propriété exclusive du loueur. Il est interdit de le prêter, céder, louer, relouer ou sous-louer, vendre, tenter de vendre, mettre en gage, publier une annonce à son sujet ou percevoir un paiement pour sa remise à un tiers. Toute fausse identité, faux document, dissimulation du conducteur, fausse signature, fausse déclaration ou manœuvre frauduleuse peut entraîner la reprise immédiate, la résiliation et une plainte.</p><h2>Article 5 : État, carburant et restitution</h2><p>Un état des lieux, le kilométrage, le carburant, les équipements, accessoires et clés sont vérifiés avant et après la location. Des photos ou vidéos datées peuvent être transmises par WhatsApp. Le véhicule doit être rendu à la date et à l’heure convenues avec le même niveau de carburant et les mêmes équipements. Le carburant manquant est facturé avec 20 000 Ariary de frais de service. En cas de retard : jusqu’à 1 heure, 10 000 Ariary ; de plus d’1 heure à 3 heures, 25 000 Ariary par heure entamée ; au-delà de 3 heures, une journée supplémentaire.</p><h2>Article 6 : Accident, panne, casse et frais</h2><p>Le locataire doit assurer la sécurité, prévenir immédiatement le loueur, communiquer le lieu, prendre des photos, suivre ses instructions et faire les démarches nécessaires. Aucune réparation, modification ou remorquage ne peut être engagé sans accord du loueur, sauf urgence de sécurité. Les frais directement liés à une faute, négligence, mauvaise utilisation, sortie de zone ou autre manquement sont à la charge du locataire.</p><h2>Article 7 : Vol, clés et non-restitution</h2><p>En cas de vol, disparition ou non-restitution, le locataire doit prévenir le loueur, contacter les autorités, déposer plainte, transmettre le récépissé et remettre les clés, documents et accessoires encore en sa possession. La perte ou détérioration des clés et les frais de remplacement peuvent être facturés.</p><h2>Article 8 : Vérification et reprise du véhicule</h2><p>Le loueur peut vérifier à tout moment l’état, la localisation, le kilométrage et les conditions d’utilisation. Il peut reprendre le véhicule sans préavis en cas de non-paiement, fraude, usage interdit, sortie non autorisée, accident, immobilisation, disparition ou risque sérieux de perte. Un état des lieux de reprise est établi dans la mesure du possible.</p><h2>Article 9 : Remboursement en cas de retrait anticipé</h2><p>Si le retrait n’est pas imputable au locataire, le prix de la période restant à courir est remboursé au prorata des jours ou heures non utilisés. Les périodes commencées et les frais de livraison, récupération ou prestations déjà exécutées ne sont pas remboursés. Aucun remboursement n’est dû si le retrait est causé par un manquement du locataire.</p><h2>Article 10 : Responsabilité financière et règlement</h2><p>Aucune caution n’est demandée, mais le locataire reste responsable des dommages, pertes, retards, amendes, fourrière, carburant, clés, accessoires et autres frais qui lui sont imputables. Les sommes certaines, exigibles et non contestées sont payables dans les 10 jours.</p><h2>Article 11 : Acceptation</h2><p>Le locataire reconnaît avoir lu, compris et accepté les conditions du présent contrat, notamment celles relatives à la zone, aux usages interdits, à la vente, à la sous-location, à la fraude, à la vérification, à la reprise et au remboursement.</p>`;
     const html = `<html><head><title>Facture et contrat ${escapeFunHtml(data.reference)}</title><style>body{font:15px Arial;padding:35px;color:#0b1f33;max-width:820px;margin:auto;line-height:1.45}h1{color:#0d5c8f}h2{border-bottom:1px solid #ddd;padding-bottom:8px}.total{font-size:22px;font-weight:bold}.page-break{page-break-before:always}.sign{display:flex;justify-content:space-between;margin-top:90px}</style></head><body><h1>${escapeFunHtml(owner.name || 'Rent Car Service')}</h1><p>${escapeFunHtml(owner.address || '')}<br>${escapeFunHtml(owner.phone || '')}${owner.email ? `<br>${escapeFunHtml(owner.email)}` : ''}${owner.legal_id ? `<br>${escapeFunHtml(owner.legal_id)}` : ''}</p><h2>FACTURE</h2>${shared}${finance}<div class="page-break"><h1>${escapeFunHtml(owner.name || 'Rent Car Service')}</h1><h2>CONTRAT DE LOCATION</h2>${shared}<p>Le présent contrat concerne la location du véhicule indiqué ci-dessus. Le locataire reconnaît avoir fourni les informations nécessaires et accepte les conditions de location, de vérification, de reprise et de restitution du véhicule.</p>${finance}<p>Le locataire doit présenter une pièce d’identité et un permis de conduire valide. Toute restitution tardive, dommage, perte de clé, accident ou utilisation non autorisée est soumise aux conditions du loueur.</p><div class="sign"><span>LOCATAIRE<br>Lu et approuvé<br><br>Signature :</span><span>LOUEUR<br>Lu et approuvé<br><br>Signature :</span></div></div><script>window.print()<\/script></body></html>`;
     const win = window.open('', '_blank'); win.document.write(html); win.document.close();
 }

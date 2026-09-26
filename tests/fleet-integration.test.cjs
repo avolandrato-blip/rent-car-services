@@ -31,7 +31,7 @@ test('chauffeur destination is selected after the vehicle and before the dates',
   assert.match(publicScript, /destinationInput\.value = selectedRate \? tripRateLabel\(selectedRate\)/);
   assert.ok(publicScript.includes("document.getElementById('booking-trip-rate')?.addEventListener('change', () => { syncBookingTripRates(); updateBookingQuote(); });"));
   assert.match(bookingScript, /if \(fleet\?\.vehicle\?\.driver_mode === 'with_driver' && destination && !destination\.disabled && !destination\.value\)/);
-  assert.match(bookingScript, /Veuillez choisir une destination pour ce véhicule avec chauffeur avant de continuer/);
+  assert.match(bookingScript, /Veuillez sélectionner un itinéraire pour ce véhicule avec chauffeur avant de continuer/);
   assert.match(bookingScript, /trip_rate_label: quote\.tripRate \? tripRateLabel\(quote\.tripRate\) : null/);
 });
 
