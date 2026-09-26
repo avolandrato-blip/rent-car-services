@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const contractTerms = require('../contract-terms.js');
 
 const read = (name) => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 
@@ -43,4 +44,21 @@ test('les libellés français révisés apparaissent dans le parcours client', (
   assert.doesNotMatch(script, /La perte ou détérioration des clés/);
   assert.equal(cards.features.length, 3);
   assert.ok(cards.conditions.every((item) => item.reponse && !/Mada\.|hôtel|voitures libres/i.test(item.reponse)));
+});
+
+test('le contrat avec chauffeur conserve l’essentiel sans clauses de dommages ou d’accessoires', () => {
+  const driver = contractTerms.buildContractTerms(true);
+  const selfDrive = contractTerms.buildContractTerms(false);
+  assert.match(driver, /chauffeur/);
+  assert.match(driver, /client convient avec le loueur de l’itinéraire et des horaires/);
+  assert.doesNotMatch(driver, /dommage|accident|perte|accessoire|clé/i);
+  assert.match(selfDrive, /dommage|accident|perte|clé/i);
+  const html = read('index.html');
+  assert.match(html, /contract-terms\.js/);
+  const source = read('script.js');
+  assert.match(source, /data\.with_driver \|\| vehicleData\.driver_mode === 'with_driver'/);
+  assert.match(source, /RentCarContractTerms\.buildContractTerms/);
+  assert.match(source, /\$\{contractArticles\}/);
+  assert.match(source, /withDriverContract && routeDetails/);
+  assert.match(source, /Itinéraire : \$\{escapeFunHtml\(routeDetails\)\}/);
 });
