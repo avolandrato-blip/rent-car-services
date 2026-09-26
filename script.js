@@ -146,15 +146,15 @@ function vehicleClientStatus(car) {
     const units = Array.isArray(car?.units) ? car.units : [car];
     const now = new Date();
     const result = window.RentCarFleet.countAvailability(car, now.toISOString(), new Date(now.getTime() + 1).toISOString(), bookingReservations, bookingMaintenance);
-    if (result.availableCount) return { key: 'available', label: `${result.availableCount}/${result.totalCount} disponible(s)` };
+    if (result.availableCount) return { key: 'available', label: 'Disponible' };
     if (!result.totalCount) {
         const upcoming = units.map(unit => unit.contract_start_date).filter(Boolean).sort()[0];
         if (upcoming && new Date(`${upcoming}T00:00:00`) > now) return { key: 'upcoming', label: `Disponible à partir du ${new Date(`${upcoming}T00:00:00`).toLocaleDateString('fr-FR')}` };
     }
     const underMaintenance = units.some(unit => unit.status === 'maintenance' || bookingMaintenance.some(item => item.vehicle_id === unit.id && new Date(item.start_at) <= now && new Date(item.end_at) > now));
     const inactive = units.some(unit => unit.status === 'inactive');
-    if (underMaintenance || inactive) return { key: 'maintenance', label: `0/${result.totalCount} disponible(s) — maintenance/indisponible` };
-    if (result.totalCount && result.availableCount === 0) return { key: 'full', label: `Complet actuellement — 0/${result.totalCount}` };
+    if (underMaintenance || inactive) return { key: 'maintenance', label: 'Indisponible — maintenance ou indisponibilité' };
+    if (result.totalCount && result.availableCount === 0) return { key: 'full', label: 'Complet actuellement' };
     return { key: 'inactive', label: 'Indisponible — contactez-nous' };
 }
 
@@ -208,7 +208,7 @@ function renderPublicCars() {
                 <h3>${name}</h3>
                 <p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p>
                 <div class="car-price">${prices}</div>
-                <p class="fleet-unit-count">${escapeFunHtml(state.label)} · ${group.capacity} voiture${group.capacity > 1 ? 's' : ''} dans cette flotte</p>
+                <p class="fleet-unit-count">${escapeFunHtml(state.label)}</p>
                 <div class="car-tags"><span><i class="fas fa-cog"></i> ${escapeFunHtml(car.transmission || '—')}</span><span><i class="fas fa-gas-pump"></i> ${escapeFunHtml(car.fuel || '—')}</span><span><i class="fas fa-users"></i> ${escapeFunHtml(car.seats || '—')}</span></div>
                 <p class="car-desc">${escapeFunHtml(car.description || '')}</p>
                 <div class="car-actions">${action}<button class="btn btn-outline" data-public-action="quote" data-vehicle-name="${name}">Contactez-nous</button><a href="https://wa.me/${whatsapp}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${name}"><i class="fab fa-whatsapp"></i></a><a href="tel:${phone}" class="btn btn-primary btn-icon" aria-label="Appeler ${name}"><i class="fas fa-phone"></i></a></div>
@@ -489,7 +489,7 @@ async function loadBookingData() {
     window.bookingFleets = bookingFleets;
     bookingReservations = reservations || [];
     bookingMaintenance = maintenance || [];
-    const fleetLabel = group => `${group.displayName} — ${group.capacity} voiture${group.capacity > 1 ? 's' : ''}`;
+    const fleetLabel = group => group.displayName;
     const select = document.getElementById('booking-vehicle');
     if (select) select.innerHTML = bookingFleets.map(group => `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(fleetLabel(group))} — ${group.vehicle.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
     syncBookingTripRates();
@@ -598,7 +598,7 @@ function updateBookingQuote() {
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const slot = bookingSlotAvailability(fleetGroup.id, `${startDate}T${startTime}`, `${endDate}T${endTime}`), slotStatus = document.getElementById('booking-slot-status');
     if (slot.available) clearStaleBookingAvailabilityError();
-    if (slotStatus) { slotStatus.className = `booking-slot-status ${slot.available ? 'is-available' : 'is-unavailable'}`; slotStatus.textContent = slot.available ? `${slot.availableUnits.length}/${fleetGroup.capacity} véhicule(s) disponible(s) sur ce créneau.` : `Flotte complète pour ce créneau${slot.conflict?.status === 'maintenance' ? ' (maintenance)' : ''}.`; }
+    if (slotStatus) { slotStatus.className = `booking-slot-status ${slot.available ? 'is-available' : 'is-unavailable'}`; slotStatus.textContent = slot.available ? 'Au moins un véhicule est disponible sur ce créneau.' : `Complet pour ce créneau${slot.conflict?.status === 'maintenance' ? ' (maintenance)' : ''}.`; }
     if (q.requiresQuote) {
         if (quote) quote.textContent = 'Sur devis : le tarif 24 h doit être confirmé avant de calculer le montant de cette durée.';
         if (mini) mini.innerHTML = `<strong>${escapeFunHtml(vehicle.name || vehicle.nom || 'Véhicule')}</strong><span>${q.billedHours} h</span><strong>Sur devis</strong><span>Du ${new Date(`${startDate}T${startTime}`).toLocaleDateString('fr-FR')} à ${startTime} au ${new Date(`${endDate}T${endTime}`).toLocaleDateString('fr-FR')} à ${endTime}</span>`;
@@ -623,7 +623,7 @@ function checkAvailability() {
         const result = window.RentCarFleet.countAvailability(group, startAt, endAt, bookingReservations, bookingMaintenance);
         const available = result.availableCount > 0;
         const rate = group.vehicle.price_per_day ? formatMGA(group.vehicle.price_per_day) : 'Sur devis';
-        return `<div class="availability-row"><div><strong>${escapeFunHtml(group.displayName)}</strong><small>${escapeFunHtml(rate)} / jour · ${result.availableCount}/${result.totalCount} disponible(s)</small></div><span class="availability-badge ${available ? 'available' : 'reserved'}">${available ? `${result.availableCount} disponible(s)` : 'Complet'}</span></div>`;
+        return `<div class="availability-row"><div><strong>${escapeFunHtml(group.displayName)}</strong><small>${escapeFunHtml(rate)} / jour</small></div><span class="availability-badge ${available ? 'available' : 'reserved'}">${available ? 'Disponible' : 'Complet'}</span></div>`;
     }).join('') || '<p class="muted">Aucune flotte active pour le moment.</p>';
 }
 

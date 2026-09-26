@@ -22,6 +22,17 @@ test('client availability summary is calculated for the selected period', () => 
   assert.match(publicScript, /result\.availableCount/);
 });
 
+test('public pages show availability states without exposing fleet counts', () => {
+  assert.match(publicScript, /<p class="fleet-unit-count">\$\{escapeFunHtml\(state\.label\)\}<\/p>/);
+  assert.doesNotMatch(publicScript, /group\.capacity\}\s*voiture/);
+  assert.doesNotMatch(publicScript, /\$\{result\.availableCount\}\/\$\{result\.totalCount\}/);
+  assert.doesNotMatch(publicScript, /\$\{slot\.availableUnits\.length\}\/\$\{fleetGroup\.capacity\}/);
+  assert.match(publicScript, /const fleetLabel = group => group\.displayName/);
+  assert.doesNotMatch(publicScript, /group\.capacity\} voiture/);
+  assert.match(publicScript, /slot\.available \? 'Au moins un véhicule est disponible sur ce créneau\.'/);
+  assert.match(publicScript, /available \? 'Disponible' : 'Complet'/);
+});
+
 test('admin calendar aggregates both daytime and nighttime capacity per fleet', () => {
   assert.match(adminPage, /fleet-admin\.js\?v=/);
   assert.match(adminScript, /localSlot\(date, 7, 19\)/);
