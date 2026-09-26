@@ -165,16 +165,27 @@
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
     const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
-    [['cinRecto',['booking-cin-recto-camera','booking-cin-recto-gallery']],['cinVerso',['booking-cin-verso-camera','booking-cin-verso-gallery']],['permisRecto',['booking-license-recto-camera','booking-license-recto-gallery']],['proofOfAddress',['booking-proof-of-address']],['paymentProof',['booking-payment-proof']]].forEach(([name, ids]) => { const file = ids.map(id => $(id)?.files?.[0]).find(Boolean); if (file) docs.append(name, file, file.name); });
+    const identityFiles = [['cinRecto',['booking-cin-recto-camera','booking-cin-recto-gallery']],['cinVerso',['booking-cin-verso-camera','booking-cin-verso-gallery']],['permisRecto',['booking-license-recto-camera','booking-license-recto-gallery']]];
+    [...identityFiles,['proofOfAddress',['booking-proof-of-address']],['paymentProof',['booking-payment-proof']]].forEach(([name, ids]) => { const file = ids.map(id => $(id)?.files?.[0]).find(Boolean); if (file) docs.append(name, file, file.name); });
+    let identityUploadFailed = false;
     if ([...docs.keys()].length > 2) {
-      const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
-      if (upload.error || upload.data?.error) console.error('identity document upload failed', upload.error || upload.data?.error);
+      try {
+        const upload = await db.functions.invoke('upload-identity-documents', { body: docs });
+        const uploadedKinds = new Set((upload.data?.uploaded || []).map(item => item.kind));
+        const requiredIdentityKinds = identityFiles.filter(([name, ids]) => ids.map(id => $(id)?.files?.[0]).some(Boolean)).map(([name]) => ({ cinRecto: 'cin_recto', cinVerso: 'cin_verso', permisRecto: 'permis_recto' })[name]);
+        identityUploadFailed = !!upload.error || !!upload.data?.error || requiredIdentityKinds.some(kind => !uploadedKinds.has(kind));
+        if (identityUploadFailed) console.error('identity document upload failed', upload.error || upload.data?.error || 'One or more identity documents were not confirmed as uploaded.');
+      } catch (uploadError) {
+        identityUploadFailed = true;
+        console.error('identity document upload failed', uploadError);
+      }
     }
     const recipient = ownerMode && reservedUnit.owner_phone ? String(reservedUnit.owner_phone).replace(/\D/g, '') : String(siteConfig.footer.whatsapp).replace(/\D/g, '');
     const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.full_name)}%0ATéléphone : ${encodeURIComponent(customer.phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(reservedUnit.name || reservedUnit.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal estimé : ${encodeURIComponent(formatMGA(finalTotal))}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
     window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
-    result.className = 'booking-result booking-success';
-    result.textContent = deposit > 0 ? `Votre demande de réservation (${r.reference}) a bien été enregistrée avec l’acompte indiqué. La période est bloquée sous réserve de validation de l’acompte.` : `Votre demande de réservation (${r.reference}) a bien été enregistrée. La période reste disponible jusqu’au versement et à la validation de l’acompte.`;
+    result.className = identityUploadFailed ? 'booking-result booking-error' : 'booking-result booking-success';
+    const reservationMessage = deposit > 0 ? `Votre demande de réservation (${r.reference}) a bien été enregistrée avec l’acompte indiqué. La période est bloquée sous réserve de validation de l’acompte.` : `Votre demande de réservation (${r.reference}) a bien été enregistrée. La période reste disponible jusqu’au versement et à la validation de l’acompte.`;
+    result.textContent = reservationMessage + (identityUploadFailed ? ' Attention : les photos d’identité n’ont pas pu être confirmées. Ne créez pas une seconde réservation; contactez-nous en indiquant cette référence pour transmettre les pièces.' : '');
     $('booking-form').reset();
     $('invoice-access-panel')?.classList.toggle('hidden', deposit <= 0);
     setBookingStep(1); updatePaymentProofVisibility();
