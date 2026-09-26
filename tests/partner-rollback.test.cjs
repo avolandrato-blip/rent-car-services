@@ -9,6 +9,7 @@ const admin = read('admin.html');
 const accountJsExists = fs.existsSync(path.join(__dirname, '..', 'account-access.js'));
 const booking = read('enhancements.js');
 const publicScript = read('script.js');
+const contractPackageFunction = read('supabase/functions/get-invoice-contract-package/index.ts');
 
 test('rollback aborts instead of orphaning a partner account', () => {
   assert.match(rollback, /IF EXISTS \(SELECT 1 FROM public\.account_profiles WHERE role = 'partner'\)/);
@@ -35,5 +36,7 @@ test('admin source is restored while public booking safeguards stay enabled', ()
   assert.match(admin, /data-tab="overview">Tableau de bord/);
   assert.match(booking, /rpc\('create_public_reservation'/);
   assert.match(publicScript, /public_fleet_busy_slots/);
-  assert.match(publicScript, /rpc\('get_public_invoice_by_otp'/);
+  assert.match(publicScript, /functions\.invoke\('get-invoice-contract-package'/);
+  assert.match(contractPackageFunction, /rest\/v1\/rpc\/get_public_invoice_by_otp/);
+  assert.match(contractPackageFunction, /reservationId/);
 });
