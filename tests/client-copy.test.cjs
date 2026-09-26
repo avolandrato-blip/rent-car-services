@@ -38,7 +38,7 @@ test('les libellés français révisés apparaissent dans le parcours client', (
   assert.match(html, /Nombre de places/);
   assert.match(html, /Adresse e-mail \(facultative\)/);
   assert.match(html, /Envoyer ma demande de réservation/);
-  assert.match(html, /Elles ne sont pas insérées dans le contrat généré/);
+  assert.match(html, /ajoutées en annexe au contrat généré après vérification de votre code/);
   assert.match(script, /Aucun véhicule ne correspond à votre recherche/);
   assert.match(script, /code de vérification est incorrect/);
   assert.doesNotMatch(script, /Aucune réparation, modification ou remorquage ne peut être engagé/);
@@ -62,4 +62,21 @@ test('le contrat avec chauffeur conserve l’essentiel sans clauses de dommages 
   assert.match(source, /\$\{contractArticles\}/);
   assert.match(source, /withDriverContract && routeDetails/);
   assert.match(source, /Itinéraire : \$\{escapeFunHtml\(routeDetails\)\}/);
+});
+
+test('les photos CIN et permis sont intégrées au contrat seulement après validation OTP', () => {
+  const script = read('script.js');
+  const index = read('index.html');
+  const edgeFunction = read('supabase/functions/get-invoice-contract-package/index.ts');
+  assert.match(script, /get-invoice-contract-package/);
+  assert.match(script, /Annexes — pièces d’identité/);
+  assert.match(script, /escapeFunHtml\(doc\.url\)/);
+  assert.match(script, /Bon pour acceptation/);
+  assert.match(script, /image\.decode\(\)/);
+  assert.match(index, /ajoutées en annexe au contrat généré après vérification de votre code/);
+  assert.match(edgeFunction, /get_public_invoice_by_otp/);
+  assert.match(edgeFunction, /storage\/v1\/object\/sign/);
+  assert.match(edgeFunction, /contract-documents/);
+  assert.match(edgeFunction, /expiresIn: 1800/);
+  assert.match(edgeFunction, /startsWith\("\/object\/sign\/"\)/);
 });
