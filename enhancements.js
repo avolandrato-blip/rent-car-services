@@ -31,6 +31,15 @@
   function validateBookingStep(step) {
     const section = document.querySelector(`[data-booking-step="${step}"]`);
     if (!section) return true;
+    if (step === 1) {
+      const fleet = window.bookingFleets?.find(group => group.id === $('booking-vehicle')?.value);
+      const destination = $('booking-trip-rate');
+      if (fleet?.vehicle?.driver_mode === 'with_driver' && destination && !destination.disabled && !destination.value) {
+        showBookingError('Veuillez choisir une destination pour ce véhicule avec chauffeur avant de continuer.');
+        destination.focus();
+        return false;
+      }
+    }
     const fields = [...section.querySelectorAll('input, select, textarea')].filter(field => !field.disabled && field.type !== 'hidden');
     for (const field of fields) { if (!field.checkValidity()) { field.reportValidity(); return false; } }
     if (step === 1) {

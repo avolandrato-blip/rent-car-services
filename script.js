@@ -549,13 +549,28 @@ function availabilityLabel(status) {
 function tripRateAmount(rate) { return Number(rate?.price_per_day ?? rate?.rate ?? 0); }
 function tripRateLabel(rate) { return rate?.label || [rate?.from, rate?.to].filter(Boolean).join(' → ') || 'Destination spéciale'; }
 function syncBookingTripRates() {
-    const vehicle = getBookingFleet(document.getElementById('booking-vehicle')?.value)?.vehicle;
+    const fleetGroup = getBookingFleet(document.getElementById('booking-vehicle')?.value);
+    const vehicle = fleetGroup?.vehicle;
     const wrap = document.getElementById('booking-trip-rate-wrap');
     const select = document.getElementById('booking-trip-rate');
     if (!wrap || !select) return;
     const rates = vehicle?.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).filter(rate => tripRateAmount(rate) > 0) : [];
     wrap.classList.toggle('hidden', !rates.length);
-    select.innerHTML = '<option value="">Choisir une destination</option>' + rates.map(rate => `<option value="${rate.id}">${tripRateLabel(rate)} — ${formatMGA(tripRateAmount(rate))} / jour</option>`).join('');
+    select.required = rates.length > 0;
+    select.disabled = rates.length === 0;
+    const sameFleet = select.dataset.fleetId === fleetGroup?.id;
+    const previousValue = sameFleet ? select.value : '';
+    select.innerHTML = '<option value="">Choisir une destination</option>' + rates.map(rate => `<option value="${escapeFunHtml(rate.id)}">${escapeFunHtml(tripRateLabel(rate))} — ${formatMGA(tripRateAmount(rate))} / jour</option>`).join('');
+    select.dataset.fleetId = fleetGroup?.id || '';
+    if (rates.some(rate => rate.id === previousValue)) select.value = previousValue;
+    const destinationWrap = document.getElementById('booking-trip-destination-wrap');
+    const destinationInput = document.getElementById('booking-trip-to');
+    const selectedRate = rates.find(rate => rate.id === select.value);
+    if (destinationInput) {
+        destinationInput.required = rates.length === 0;
+        destinationInput.value = selectedRate ? tripRateLabel(selectedRate) : (sameFleet && !rates.length ? destinationInput.value : '');
+    }
+    destinationWrap?.classList.toggle('hidden', rates.length > 0);
 }
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
@@ -754,6 +769,7 @@ async function verifyInvoiceOtp(event) {
 
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-trip-rate'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 document.getElementById('booking-vehicle')?.addEventListener('change', () => { syncBookingTripRates(); updateBookingQuote(); });
+document.getElementById('booking-trip-rate')?.addEventListener('change', () => { syncBookingTripRates(); updateBookingQuote(); });
 
 
 function syncRentalTimes() {
