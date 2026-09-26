@@ -38,6 +38,7 @@ test('les libellés français révisés apparaissent dans le parcours client', (
   assert.match(html, /Nombre de places/);
   assert.match(html, /Adresse e-mail \(facultative\)/);
   assert.match(html, /Envoyer ma demande de réservation/);
+  assert.match(html, /Elles ne sont pas insérées dans le contrat généré/);
   assert.match(script, /Aucun véhicule ne correspond à votre recherche/);
   assert.match(script, /code de vérification est incorrect/);
   assert.doesNotMatch(script, /Aucune réparation, modification ou remorquage ne peut être engagé/);
