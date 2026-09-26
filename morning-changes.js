@@ -1,5 +1,7 @@
 (() => {
   const $ = id => document.getElementById(id);
+  let savedTripRates = [];
+  const removedTripRateIds = new Set();
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const addRequiredStars = root => {
     (root || document).querySelectorAll('input[required],select[required],textarea[required]').forEach(input => {
@@ -32,9 +34,25 @@
   }
   function renderTripRates(rates = []) {
     const wrap = $('v-trip-rates'); if (!wrap) return;
-    wrap.innerHTML = rates.map((rate, index) => { const label = rate.label || [rate.from, rate.to].filter(Boolean).join(' → '); const amount = Number(rate.rate ?? rate.price_per_day ?? 0); return `<div class="trip-rate-row" data-trip-id="${esc(rate.id || '')}" data-trip-index="${index}" style="display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin:8px 0"><input data-trip-label class="trip-label" placeholder="Destination / trajet" value="${esc(label)}"><input data-trip-rate class="trip-rate" type="number" min="0" placeholder="Tarif / jour" value="${amount||''}"><button type="button" class="btn danger" data-remove-trip>Supprimer</button></div>`; }).join('');
+    const utils = window.RentCarTripRates;
+    wrap.innerHTML = rates.map((rate, index) => {
+      const label = rate.label || [rate.from, rate.to].filter(Boolean).join(' → ');
+      const amount = Number(rate.rate ?? rate.price_per_day ?? 0);
+      const id = utils?.idFor(rate, index) || rate.id || '';
+      return `<div class="trip-rate-row" data-trip-id="${esc(id)}" data-trip-index="${index}" style="display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;margin:8px 0"><input data-trip-label class="trip-label" placeholder="Destination / trajet" value="${esc(label)}"><input data-trip-rate class="trip-rate" type="number" min="0" placeholder="Tarif / jour" value="${amount || ''}"><button type="button" class="btn danger" data-remove-trip>Supprimer</button></div>`;
+    }).join('');
   }
-  function collectTripRates() { return Array.from(document.querySelectorAll('#v-trip-rates .trip-rate-row')).map(row => ({id: row.dataset.tripId || (row.querySelector('[data-trip-label]')?.value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-'), label: row.querySelector('[data-trip-label]')?.value.trim() || '', rate: Number(row.querySelector('[data-trip-rate]')?.value || 0)})).filter(rate => rate.label && rate.rate > 0); }
+  function readTripRateRows() {
+    const utils = window.RentCarTripRates;
+    return Array.from(document.querySelectorAll('#v-trip-rates .trip-rate-row')).map((row, index) => {
+      const label = row.querySelector('[data-trip-label]')?.value.trim() || '';
+      const id = row.dataset.tripId || utils?.slugFor(label) || `destination-${Date.now()}-${index}`;
+      return {id, label, rate: Number(row.querySelector('[data-trip-rate]')?.value || 0)};
+    });
+  }
+  function collectTripRates() {
+    return readTripRateRows().filter(rate => rate.label && Number.isFinite(rate.rate) && rate.rate > 0);
+  }
   function photoControls() {
     const preview = $('v-photo-preview'); const urlBox = $('v-photo-url'); if (!preview || !urlBox) return;
     const urls = urlBox.value.split('\n').map(x => x.trim()).filter(Boolean);
@@ -42,11 +60,11 @@
   }
   function startVehicleForm() {
     const form = $('vehicle-form'); if (!form) return;
-    ensureVehicleFields(); form.reset(); $('v-id').value = ''; if ($('v-driver-mode')) $('v-driver-mode').value = 'without_driver'; if ($('v-driver-fee')) $('v-driver-fee').value = 30000; if ($('v-extra-driver-fee')) $('v-extra-driver-fee').value = 30000; if ($('v-price-24h')) $('v-price-24h').value = ''; if ($('v-photo-url')) $('v-photo-url').value = ''; if ($('v-photo-file')) $('v-photo-file').value = ''; renderTripRates([]); photoControls(); form.classList.remove('hidden');
+    ensureVehicleFields(); form.reset(); $('v-id').value = ''; savedTripRates = []; removedTripRateIds.clear(); if ($('v-driver-mode')) $('v-driver-mode').value = 'without_driver'; if ($('v-driver-fee')) $('v-driver-fee').value = 30000; if ($('v-extra-driver-fee')) $('v-extra-driver-fee').value = 30000; if ($('v-price-24h')) $('v-price-24h').value = ''; if ($('v-photo-url')) $('v-photo-url').value = ''; if ($('v-photo-file')) $('v-photo-file').value = ''; renderTripRates([]); photoControls(); form.classList.remove('hidden');
   }
   async function editVehicleForm(id) {
     ensureVehicleFields(); const result = await window.rentCarSupabase.from('vehicles').select('*').eq('id', id).single(); const v = result.data; if (result.error || !v) return alert(result.error?.message || 'Véhicule introuvable.');
-    $('v-id').value = v.id; $('v-name').value = v.name || ''; $('v-registration').value = v.registration_number || ''; $('v-make').value = v.make || ''; $('v-model').value = v.model || ''; if ($('v-fleet-group')) $('v-fleet-group').value = v.fleet_group || ''; if ($('v-driver-mode')) $('v-driver-mode').value = v.driver_mode || 'without_driver'; $('v-price-12h').value = v.price_12h || v.price_per_day || 0; $('v-price-24h').value = v.price_24h ?? ''; if ($('v-driver-fee')) $('v-driver-fee').value = v.driver_fee ?? 30000; if ($('v-extra-driver-fee')) $('v-extra-driver-fee').value = v.extra_driver_fee ?? 30000; $('v-price').value = v.price_per_day || v.price_12h || 0; $('v-transmission').value = v.transmission || ''; $('v-fuel').value = v.fuel || ''; $('v-seats').value = v.seats || ''; $('v-status').value = v.status || 'available'; $('v-description').value = v.description || ''; $('v-owner-name').value = v.owner_name || ''; $('v-owner-phone').value = v.owner_phone || ''; if ($('v-contract-start')) $('v-contract-start').value = v.contract_start_date || ''; if ($('v-contract-end')) $('v-contract-end').value = v.contract_end_date || ''; if ($('v-owner-whatsapp-enabled')) $('v-owner-whatsapp-enabled').checked = !!v.owner_whatsapp_enabled; if ($('v-photo-url')) $('v-photo-url').value = (v.image_urls || []).join('\n'); if ($('v-photo-file')) $('v-photo-file').value = ''; renderTripRates(v.trip_rates || []); photoControls(); $('vehicle-form').classList.remove('hidden'); $('vehicle-form').scrollIntoView({behavior:'smooth'});
+    $('v-id').value = v.id; $('v-name').value = v.name || ''; $('v-registration').value = v.registration_number || ''; $('v-make').value = v.make || ''; $('v-model').value = v.model || ''; if ($('v-fleet-group')) $('v-fleet-group').value = v.fleet_group || ''; if ($('v-driver-mode')) $('v-driver-mode').value = v.driver_mode || 'without_driver'; $('v-price-12h').value = v.price_12h || v.price_per_day || 0; $('v-price-24h').value = v.price_24h ?? ''; if ($('v-driver-fee')) $('v-driver-fee').value = v.driver_fee ?? 30000; if ($('v-extra-driver-fee')) $('v-extra-driver-fee').value = v.extra_driver_fee ?? 30000; $('v-price').value = v.price_per_day || v.price_12h || 0; $('v-transmission').value = v.transmission || ''; $('v-fuel').value = v.fuel || ''; $('v-seats').value = v.seats || ''; $('v-status').value = v.status || 'available'; $('v-description').value = v.description || ''; $('v-owner-name').value = v.owner_name || ''; $('v-owner-phone').value = v.owner_phone || ''; if ($('v-contract-start')) $('v-contract-start').value = v.contract_start_date || ''; if ($('v-contract-end')) $('v-contract-end').value = v.contract_end_date || ''; if ($('v-owner-whatsapp-enabled')) $('v-owner-whatsapp-enabled').checked = !!v.owner_whatsapp_enabled; if ($('v-photo-url')) $('v-photo-url').value = (v.image_urls || []).join('\n'); if ($('v-photo-file')) $('v-photo-file').value = ''; savedTripRates = window.RentCarTripRates.merge(v.trip_rates || [], [], []); removedTripRateIds.clear(); renderTripRates(savedTripRates); photoControls(); $('vehicle-form').classList.remove('hidden'); $('vehicle-form').scrollIntoView({behavior:'smooth'});
   }
   async function openMaintenanceForVehicle(id) {
     const form = $('maintenance-form'); if (!form) return alert('Formulaire de maintenance introuvable.');
@@ -60,8 +78,8 @@
   function installAdmin() {
     ensureVehicleFields(); addRequiredStars(document);
     const urlBox = $('v-photo-url'); urlBox?.addEventListener('input', photoControls);
-    $('add-trip-rate')?.addEventListener('click', () => { const rates = collectTripRates(); rates.push({from:'',to:'',price_per_day:0}); renderTripRates(rates); });
-    $('v-trip-rates')?.addEventListener('click', e => { if (e.target.closest('[data-remove-trip]')) e.target.closest('.trip-rate-row').remove(); });
+    $('add-trip-rate')?.addEventListener('click', () => { const rates = readTripRateRows(); rates.push({id: `destination-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, label:'', rate:0}); renderTripRates(rates); $('v-trip-rates .trip-rate-row:last-child [data-trip-label]')?.focus(); });
+    $('v-trip-rates')?.addEventListener('click', e => { const button = e.target.closest('[data-remove-trip]'); if (!button) return; const row = button.closest('.trip-rate-row'); const id = row?.dataset.tripId; if (id && savedTripRates.some(rate => rate.id === id)) removedTripRateIds.add(id); row?.remove(); });
     $('v-photo-preview')?.addEventListener('click', async e => { const button = e.target.closest('[data-photo-index]'); if (!button) return; const urls = urlBox.value.split('\n').map(x => x.trim()).filter(Boolean); const removed = urls.splice(Number(button.dataset.photoIndex), 1)[0]; urlBox.value = urls.join('\n'); photoControls(); const marker = '/vehicle-images/'; const index = removed.indexOf(marker); if (index >= 0) await window.rentCarSupabase.storage.from('vehicle-images').remove([decodeURIComponent(removed.slice(index + marker.length).split('?')[0])]); });
     $('v-photo-file')?.addEventListener('change', () => { const files = Array.from($('v-photo-file').files || []); const note = $('v-photo-preview'); if (files.length) note.insertAdjacentHTML('beforeend', `<span class="photo-thumb"><span style="padding:18px 8px;border:1px dashed var(--line)">${files.length} nouvelle(s) photo(s)</span></span>`); });
     const form = $('vehicle-form');
@@ -71,9 +89,17 @@
       if (!Number.isFinite(price12h) || price12h <= 0) return alert('Le tarif 12 h est obligatoire et doit être supérieur à zéro.');
       if (price24h !== null && (!Number.isFinite(price24h) || price24h <= 0)) return alert('Le tarif 24 h doit être supérieur à zéro ou laissé vide pour afficher « Sur devis ».');
       if (!Number.isFinite(dailyPrice) || dailyPrice < 0) return alert('Le tarif affiché par jour doit être un nombre positif ou nul.');
-      const payload = {name:$('v-name').value.trim(),slug:$('v-name').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-'),registration_number:$('v-registration').value.trim()||null,make:$('v-make').value.trim(),model:$('v-model').value.trim(),fleet_group:$('v-fleet-group')?.value.trim()||null,driver_mode:$('v-driver-mode')?.value || 'without_driver',driver_fee:Number($('v-driver-fee')?.value || 0),extra_driver_fee:Number($('v-extra-driver-fee')?.value || 0),trip_rates:collectTripRates(),price_12h:price12h,price_24h:price24h,price_per_day:dailyPrice,transmission:$('v-transmission').value,fuel:$('v-fuel').value,seats:Number($('v-seats').value)||null,status:$('v-status').value,description:$('v-description').value,owner_name:$('v-owner-name').value.trim()||null,owner_phone:$('v-owner-phone').value.trim()||null,contract_start_date:$('v-contract-start')?.value || null,contract_end_date:$('v-contract-end')?.value || null,owner_whatsapp_enabled:!!$('v-owner-whatsapp-enabled')?.checked};
+      const currentRoutes = id ? await window.rentCarSupabase.from('vehicles').select('trip_rates').eq('id', id).single() : {data:{trip_rates:[]},error:null};
+      if (currentRoutes.error) return alert(`Impossible de relire les destinations enregistrées : ${currentRoutes.error.message}`);
+      const routeRows = readTripRateRows();
+      const incompleteRoute = routeRows.find(route => (route.label || route.rate > 0) && (!route.label || !Number.isFinite(route.rate) || route.rate <= 0));
+      if (incompleteRoute) return alert('Chaque destination commencée doit avoir un nom et un tarif supérieur à zéro.');
+      const editedRoutes = collectTripRates();
+      const mergedTripRates = window.RentCarTripRates.merge(currentRoutes.data?.trip_rates || [], editedRoutes, Array.from(removedTripRateIds));
+      const payload = {name:$('v-name').value.trim(),slug:$('v-name').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-'),registration_number:$('v-registration').value.trim()||null,make:$('v-make').value.trim(),model:$('v-model').value.trim(),fleet_group:$('v-fleet-group')?.value.trim()||null,driver_mode:$('v-driver-mode')?.value || 'without_driver',driver_fee:Number($('v-driver-fee')?.value || 0),extra_driver_fee:Number($('v-extra-driver-fee')?.value || 0),trip_rates:mergedTripRates,price_12h:price12h,price_24h:price24h,price_per_day:dailyPrice,transmission:$('v-transmission').value,fuel:$('v-fuel').value,seats:Number($('v-seats').value)||null,status:$('v-status').value,description:$('v-description').value,owner_name:$('v-owner-name').value.trim()||null,owner_phone:$('v-owner-phone').value.trim()||null,contract_start_date:$('v-contract-start')?.value || null,contract_end_date:$('v-contract-end')?.value || null,owner_whatsapp_enabled:!!$('v-owner-whatsapp-enabled')?.checked};
       const response = id ? await window.rentCarSupabase.from('vehicles').update(payload).eq('id', id).select('id').single() : await window.rentCarSupabase.from('vehicles').insert(payload).select('id').single();
       if (response.error) return alert(response.error.message); const vehicleId = response.data.id;
+      savedTripRates = mergedTripRates; removedTripRateIds.clear();
       const files = Array.from($('v-photo-file').files || []); const urls = $('v-photo-url').value.split('\n').map(x => x.trim()).filter(Boolean);
       for (const file of files) { const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'-'); const path = `${vehicleId}/${Date.now()}-${safe}`; const upload = await window.rentCarSupabase.storage.from('vehicle-images').upload(path,file,{upsert:false,contentType:file.type}); if (!upload.error) urls.push(window.rentCarSupabase.storage.from('vehicle-images').getPublicUrl(path).data.publicUrl); }
       const imageUpdate = await window.rentCarSupabase.from('vehicles').update({image_urls:urls}).eq('id', vehicleId); if (imageUpdate.error) alert(imageUpdate.error.message);
