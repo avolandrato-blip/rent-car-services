@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Car Service | Location de voiture à Antananarivo</title>
+    <title>Rent Car Service | Location de voitures à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -19,7 +19,7 @@
             <button onclick="openTab('home')">Accueil</button>
             <button onclick="openTab('cars')">Véhicules</button>
             <button onclick="openTab('booking')">Réservation</button>
-            <button onclick="openTab('fun')">Médias & divertissement</button>
+            <button onclick="openTab('fun')">Médias et divertissement</button>
             <button onclick="openTab('terms')">Conditions de location</button>
             <button onclick="openTab('contact')" class="nav-special">Nous contacter</button>
         </nav>
@@ -43,7 +43,7 @@
         </div>
         
         <div class="container">
-            <h2 class="section-title">Les avantages de notre service</h2>
+            <h2 class="section-title">Pourquoi choisir Rent Car Service&nbsp;?</h2>
             <div id="features-grid" class="features-grid"></div>
         </div>
     </section>
@@ -54,9 +54,9 @@
             <div class="fleet-controls" aria-label="Filtrer et trier les véhicules">
                 <label>Rechercher un véhicule<input id="fleet-search" type="search" placeholder="Nom, marque ou modèle"></label>
                 <label>Type de transmission<select id="fleet-transmission"><option value="all">Toutes</option></select></label>
-                <label>Capacité<select id="fleet-seats"><option value="all">Toutes</option></select></label>
+                <label>Nombre de places<select id="fleet-seats"><option value="all">Toutes</option></select></label>
                 <label>Prix maximal par jour<input id="fleet-max-price" type="number" min="0" placeholder="Ex. 150000"></label>
-                <label>Ordre d’affichage<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
+                <label>Trier par<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
             </div>
             <div id="cars-grid" class="cars-grid"></div>
         </div>
@@ -67,78 +67,79 @@
             <h2 class="section-title">Demande de réservation en ligne</h2>
             <div class="booking-layout">
                 <div class="booking-panel">
-                    <h3>Vérifier la disponibilité</h3><p class="muted">Le résultat indique le nombre de voitures libres dans la flotte pour toute la période choisie.</p>
+                    <h3>Vérifier la disponibilité</h3><p class="muted">Les résultats indiquent le nombre de véhicules disponibles dans la flotte pour toute la période sélectionnée.</p>
                     <div class="date-range">
-                        <label>Véhicule<select id="availability-vehicle"><option value="all">Toutes les voitures</option></select></label>
+                        <label>Véhicule<select id="availability-vehicle"><option value="all">Tous les véhicules</option></select></label>
                         <label>Date de départ<input id="availability-start" type="date"></label>
                         <label>Date de retour<input id="availability-end" type="date"></label>
                     </div>
-                    <button class="btn btn-primary" onclick="checkAvailability()"><i class="fas fa-calendar-check"></i> Actualiser le calendrier</button>
-                    <div id="availability-list" class="availability-list"><p class="muted">Sélectionnez vos dates afin de consulter les disponibilités.</p></div>
+                    <button class="btn btn-primary" onclick="checkAvailability()"><i class="fas fa-calendar-check"></i> Vérifier les disponibilités</button>
+                    <div id="availability-list" class="availability-list"><p class="muted">Sélectionnez une période pour consulter les disponibilités.</p></div>
                 </div>
                 <div class="booking-panel">
-                    <h3>Demander une réservation</h3>
+                    <h3>Réserver un véhicule</h3>
                     <form id="booking-form" onsubmit="submitReservation(event)">
                         <div class="booking-progress" aria-label="Étapes de réservation">
-                            <div class="booking-progress-step active" data-progress-step="1"><span>1</span><strong>Véhicule et dates</strong></div>
-                            <div class="booking-progress-step" data-progress-step="2"><span>2</span><strong>Informations client</strong></div>
+                            <div class="booking-progress-step active" data-progress-step="1"><span>1</span><strong>Véhicule et période</strong></div>
+                            <div class="booking-progress-step" data-progress-step="2"><span>2</span><strong>Vos coordonnées</strong></div>
                             <div class="booking-progress-step" data-progress-step="3"><span>3</span><strong>Options et paiement</strong></div>
                             <div class="booking-progress-step" data-progress-step="4"><span>4</span><strong>Résumé et confirmation</strong></div>
                         </div>
+                        <p class="required-fields-note"><span class="required-asterisk" aria-hidden="true">*</span> Champ obligatoire.</p>
                         <section class="booking-step active" data-booking-step="1">
                             <h4>1. Véhicule et période</h4>
-                            <p class="muted">Sélectionnez le véhicule et la période souhaitée pour consulter le tarif estimatif.</p>
+                            <p class="muted">Sélectionnez un véhicule et une période pour consulter le tarif estimé.</p>
                             <label>Véhicule<select id="booking-vehicle" required></select></label>
-                            <label id="booking-trip-rate-wrap" class="hidden">Destination — voiture avec chauffeur<select id="booking-trip-rate"><option value="">Choisir une destination</option></select><small class="field-note">Le tarif affiché est appliqué par jour de location.</small></label>
+                            <label id="booking-trip-rate-wrap" class="hidden">Destination (location avec chauffeur)<select id="booking-trip-rate"><option value="">Choisir une destination</option></select><small class="field-note">Le tarif affiché est appliqué par jour de location.</small></label>
                             <div class="date-range">
                                 <label>Date de départ<input id="booking-start-date" type="date" required></label>
                                 <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
                                 <label>Date de retour<input id="booking-end-date" type="date" required></label>
                                 <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
                             </div>
-                            <div id="booking-mini-summary" class="booking-mini-summary" role="status" aria-live="polite">Choisissez une voiture et vos dates pour voir le récapitulatif financier.</div>
+                            <div id="booking-mini-summary" class="booking-mini-summary" role="status" aria-live="polite">Sélectionnez un véhicule et une période pour afficher une estimation du prix.</div>
                             <div id="booking-slot-status" class="booking-slot-status" role="status" aria-live="polite"></div>
                             <div class="booking-step-actions"><span></span><button type="button" class="btn btn-primary" data-next-step="2">Continuer</button></div>
                         </section>
                         <section class="booking-step" data-booking-step="2">
-                            <h4>2. Informations client</h4>
-                            <p class="muted">Renseignez vos informations exactement comme elles figurent sur vos documents officiels.</p>
+                            <h4>2. Vos coordonnées</h4>
+                            <p class="muted">Veuillez saisir vos informations telles qu’elles figurent sur vos documents officiels.</p>
                             <label>Nom et prénom<input id="booking-name" required placeholder="Saisissez votre nom et prénom"></label>
-                            <label>Adresse<input id="booking-address" required placeholder="Saisissez votre adresse complète"></label>
+                            <label>Adresse complète<input id="booking-address" required placeholder="Saisissez votre adresse complète"></label>
                             <label>Téléphone<input id="booking-phone" required placeholder="Ex. 034 91 207 26"></label>
-                            <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
-                            <label>Numéro du permis de conduire<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
+                            <label>Adresse e-mail (facultative)<input id="booking-email" type="email" placeholder="exemple@domaine.com"></label>
+                            <label>Numéro du permis de conduire<input id="booking-license" required placeholder="Saisissez le numéro indiqué sur votre permis"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
                             <div class="date-range"><label>Lieu de délivrance du permis<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance du permis<input id="booking-license-date" type="date" required></label></div>
-                            <label>Photographie du permis — recto<input id="booking-license-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-license-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small><small class="field-note">Joignez une photographie nette et lisible du recto du permis.</small></label>
-                            <label>Numéro de la CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
-                            <label>Type de document<select id="booking-cin-type" required><option value="false">Original</option><option value="true">Duplicata</option></select></label>
+                            <label data-identity-document="true">Photographie du permis — recto<input id="booking-license-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Prendre une photo</small><input id="booking-license-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Choisir un fichier</small><small class="field-note">Joignez une photo nette et lisible du recto du permis.</small></label>
+                            <label>Numéro de la CIN<input id="booking-cin" required placeholder="Saisissez le numéro indiqué sur votre CIN"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
+                            <label>Type de pièce d’identité<select id="booking-cin-type" required><option value="false">Original</option><option value="true">Duplicata</option></select></label>
                             <div class="date-range"><label>Lieu de délivrance de la CIN<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance de la CIN<input id="booking-cin-date" type="date" required></label></div>
-                            <fieldset class="identity-upload"><legend>Photographies de la CIN</legend><p class="field-note">Joignez des photographies nettes et lisibles. Elles sont stockées dans un espace privé et associées à votre contrat.</p><label>Photographie de la CIN — recto<input id="booking-cin-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-cin-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small></label><label>Photographie de la CIN — verso<input id="booking-cin-verso-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-cin-verso-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small></label></fieldset>
-                            <label class="document-photo-field">Justificatif de domicile — facultatif<input id="booking-proof-of-address" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment"><small class="field-note">Facture d’eau, d’électricité, certificat de résidence ou document équivalent.</small></label>
+                            <fieldset class="identity-upload"><legend>Photographies de la CIN</legend><p class="field-note">Joignez des photos nettes et lisibles du recto et du verso. Elles seront conservées dans un espace privé et associées à votre contrat.</p><label data-identity-document="true">Photographie de la CIN — recto<input id="booking-cin-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Prendre une photo</small><input id="booking-cin-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Choisir un fichier</small></label><label data-identity-document="true">Photographie de la CIN — verso<input id="booking-cin-verso-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Prendre une photo</small><input id="booking-cin-verso-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Choisir un fichier</small></label></fieldset>
+                            <label class="document-photo-field">Justificatif de domicile (facultatif)<input id="booking-proof-of-address" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment"><small class="field-note">Facture d’eau, d’électricité, certificat de résidence ou document équivalent.</small></label>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="1">Retour</button><button type="button" class="btn btn-primary" data-next-step="3">Continuer</button></div>
                         </section>
                         <section class="booking-step" data-booking-step="3">
                             <h4>3. Options et paiement</h4>
-                            <p class="muted">Choisissez les services complémentaires et indiquez les modalités de paiement de l’acompte.</p>
+                            <p class="muted">Sélectionnez les services complémentaires et indiquez, le cas échéant, le mode de paiement de votre acompte.</p>
                             <input id="booking-rental-type" type="hidden" value="automatic">
-                            <div class="date-range"><label>Itinéraire — lieu de départ<input id="booking-trip-from" required placeholder="Ville ou lieu de départ"></label><label id="booking-trip-destination-wrap">Itinéraire — destination<input id="booking-trip-to" required placeholder="Ville ou lieu d’arrivée"></label></div>
+                            <div class="date-range"><label>Lieu de départ<input id="booking-trip-from" required placeholder="Ville ou lieu de départ"></label><label id="booking-trip-destination-wrap">Lieu d’arrivée<input id="booking-trip-to" required placeholder="Ville ou lieu d’arrivée"></label></div>
                             <div class="date-range"><label class="checkbox-line"><input id="booking-delivery" type="checkbox"> Livraison du véhicule — 20 000 Ar</label><label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération du véhicule — 20 000 Ar</label></div>
                             <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Service avec chauffeur — 30 000 Ar / jour</label>
-                            <div class="date-range"><label>Acompte versé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte versé</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label></div>
+                            <div class="date-range"><label>Montant de l’acompte (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Mode de paiement de l’acompte<select id="booking-payment-method"><option value="">Sélectionnez un mode de paiement</option><option value="espece">Espèces</option><option value="mobile_money">Mobile Money</option></select></label></div>
                             <label>Code promotionnel — facultatif<input id="booking-promo" placeholder="Ex. RCS10"><small class="field-note">La remise éventuelle sera appliquée au total après validation du code.</small></label>
-                            <div id="mobile-money-fields" class="date-range hidden"><label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label><label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="Ex. 034 91 207 26"></label></div>
-                            <fieldset id="payment-proof-field" class="identity-upload hidden"><legend>Justificatif de paiement Mobile Money</legend><p class="field-note">Ajoutez une capture d’écran ou une photographie lisible de la preuve de paiement. Ce justificatif est obligatoire pour un acompte Mobile Money.</p><label>Preuve de paiement<input id="booking-payment-proof" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label></fieldset>
-                            <p id="booking-quote" class="booking-result" role="status"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Le prix total exclut le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à la charge du client.</p>
-                            <label>Informations complémentaires<textarea id="booking-notes" rows="3" placeholder="Précisez, si nécessaire, le lieu de prise en charge ou toute information utile."></textarea></label>
+                            <div id="mobile-money-fields" class="date-range hidden"><label>Référence de transaction Mobile Money (facultative)<input id="booking-mobile-reference" placeholder="Référence de transaction"></label><label>Numéro utilisé pour le paiement Mobile Money (facultatif)<input id="booking-mobile-number" placeholder="Ex. 034 91 207 26"></label></div>
+                            <fieldset id="payment-proof-field" class="identity-upload hidden"><legend>Justificatif de paiement Mobile Money</legend><p class="field-note">Joignez une capture d’écran ou une photo lisible du paiement. Ce justificatif est requis si vous réglez l’acompte par Mobile Money.</p><label>Justificatif de paiement<input id="booking-payment-proof" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label></fieldset>
+                            <p id="booking-quote" class="booking-result" role="status"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Le tarif total n’inclut pas le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à votre charge.</p>
+                            <label>Informations complémentaires (facultatives)<textarea id="booking-notes" rows="3" placeholder="Précisez, si nécessaire, le lieu de prise en charge ou toute information utile."></textarea></label>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="2">Retour</button><button type="button" class="btn btn-primary" data-next-step="4">Vérifier la demande</button></div>
                         </section>
                         <section class="booking-step" data-booking-step="4">
                             <h4>4. Résumé et confirmation</h4>
-                            <p class="muted">Vérifiez attentivement les informations ci-dessous avant l’envoi définitif.</p>
+                            <p class="muted">Veuillez vérifier attentivement les informations ci-dessous avant d’envoyer votre demande.</p>
                             <div id="booking-summary" class="booking-summary"></div>
-                            <label class="checkbox-line booking-confirmation"><input id="booking-terms-consent" type="checkbox" required> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label>
-                            <p class="muted booking-policy-note">Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception et validation d’un acompte.</p>
-                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
+                            <label class="checkbox-line booking-confirmation"><input id="booking-terms-consent" type="checkbox" required> Je confirme l’exactitude des informations fournies et accepte les conditions de location.</label>
+                            <p class="muted booking-policy-note">Sans acompte, la facture et le contrat seront transmis après réception et validation de celui-ci.</p>
+                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Envoyer ma demande de réservation</button></div>
                         </section>
                     </form>
                     <p id="booking-result" class="booking-result" role="status"></p>
@@ -146,10 +147,11 @@
             </div>
             <div id="invoice-access-panel" class="booking-panel invoice-access-panel hidden">
                 <h3>Accéder à la facture et au contrat</h3>
-                <p class="muted">La facture et le contrat sont accessibles après validation de l’acompte par Rent Car Service. Le solde restant est payable lors de la remise du véhicule.</p>
+                <p class="muted">La facture et le contrat sont accessibles après validation de votre acompte par Rent Car Service. Le solde est à régler lors de la remise du véhicule.</p>
+                <p class="required-fields-note"><span class="required-asterisk" aria-hidden="true">*</span> Champ obligatoire.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
-                    <div class="date-range"><label>Référence de réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
-                    <button class="btn btn-primary" type="submit">Vérifier et télécharger les documents</button>
+                    <div class="date-range"><label>Référence de réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Numéro de téléphone<input id="invoice-phone" required></label><label>Code de vérification<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
+                    <button class="btn btn-primary" type="submit">Consulter la facture et le contrat</button>
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
             </div>

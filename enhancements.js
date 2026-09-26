@@ -13,7 +13,7 @@
     const form = $('booking-form');
     if (!form || $('booking-whatsapp')) return;
     const phone = $('booking-phone')?.closest('label');
-    phone?.insertAdjacentHTML('afterend', '<label>WhatsApp actif<input id="booking-whatsapp" required placeholder="034 xx xxx xx"><small class="field-note">Ce numéro recevra la facture et le contrat.</small></label>');
+    phone?.insertAdjacentHTML('afterend', '<label>Numéro WhatsApp<input id="booking-whatsapp" required placeholder="Ex. 034 91 207 26"><small class="field-note">Nous utiliserons ce numéro pour vous transmettre la facture et le contrat.</small></label>');
     if (!$('booking-license-place')) $('booking-license')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>Permis délivré à<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Permis délivré le<input id="booking-license-date" type="date" required></label></div>');
     if (!$('booking-cin-place')) $('booking-cin')?.closest('label')?.insertAdjacentHTML('afterend', '<div class="date-range identity-meta"><label>CIN délivrée à<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>CIN délivrée le<input id="booking-cin-date" type="date" required></label></div>');
   }
@@ -35,7 +35,7 @@
       const fleet = window.bookingFleets?.find(group => group.id === $('booking-vehicle')?.value);
       const destination = $('booking-trip-rate');
       if (fleet?.vehicle?.driver_mode === 'with_driver' && destination && !destination.disabled && !destination.value) {
-        showBookingError('Veuillez choisir une destination pour ce véhicule avec chauffeur avant de continuer.');
+        showBookingError('Veuillez sélectionner un itinéraire pour ce véhicule avec chauffeur avant de continuer.');
         destination.focus();
         return false;
       }
@@ -50,7 +50,7 @@
       if (slot && !slot.available) { showBookingError('Créneau complet : aucune voiture de cette flotte n’est disponible pour toute la période choisie. Sélectionnez d’autres dates.'); return false; }
       if (slot?.available) window.clearStaleBookingAvailabilityError?.();
     }
-    if (step === 2) {
+    if (step === 2 && !window.bookingOwnerMode) {
       const requiredDocs = [['booking-cin-recto-camera','booking-cin-recto-gallery','CIN recto'],['booking-cin-verso-camera','booking-cin-verso-gallery','CIN verso'],['booking-license-recto-camera','booking-license-recto-gallery','permis recto']];
       for (const [camera,gallery,label] of requiredDocs) if (!$(camera)?.files?.[0] && !$(gallery)?.files?.[0]) { showBookingError(`Veuillez ajouter la photo : ${label}. Vous pouvez utiliser la caméra ou la galerie.`); return false; }
     }
@@ -58,7 +58,7 @@
       const deposit = Number($('booking-deposit')?.value || 0);
       const method = $('booking-payment-method')?.value || '';
       if (deposit > 0 && !method) { showBookingError('Veuillez sélectionner le mode de paiement de l’acompte.'); return false; }
-      if (deposit > 0 && method === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) { showBookingError('Veuillez joindre la preuve de paiement Mobile Money.'); return false; }
+      if (deposit > 0 && method === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) { showBookingError('Veuillez joindre le justificatif de paiement Mobile Money.'); return false; }
       const promo = $('booking-promo')?.value.trim().toUpperCase();
       if (promo && !activePromo) { showBookingError('Le code promotionnel est invalide ou inactif.'); return false; }
     }
@@ -69,11 +69,13 @@
     const deposit = Number($('booking-deposit')?.value || 0);
     const method = $('booking-payment-method')?.value || '';
     const mobile = method === 'mobile_money';
-    $('mobile-money-fields')?.classList.toggle('hidden', !mobile);
+    $('mobile-money-fields')?.classList.toggle('hidden', !(mobile && deposit > 0));
     $('payment-proof-field')?.classList.toggle('hidden', !(mobile && deposit > 0));
+    const paymentMethod = $('booking-payment-method'); if (paymentMethod) paymentMethod.required = deposit > 0;
     let note = $('mobile-money-instructions');
-    if (mobile) { if (!note) { note = document.createElement('p'); note.id = 'mobile-money-instructions'; note.className = 'field-note'; $('mobile-money-fields')?.before(note); } const date = $('booking-start-date')?.value?.replace(/-/g, '').slice(6, 8) + ($('booking-start-date')?.value?.replace(/-/g, '').slice(4, 6) || ''); note.innerHTML = `Pour confirmer, envoyez <strong>${deposit.toLocaleString('fr-FR')} Ar</strong> au <strong>034 91 207 26</strong>.<br>Motif : <strong>resa_voiture_${date || 'JJMM'}</strong>.<br>Joignez ensuite la preuve de paiement.`; } else note?.remove();
+    if (mobile && deposit > 0) { if (!note) { note = document.createElement('p'); note.id = 'mobile-money-instructions'; note.className = 'field-note'; $('mobile-money-fields')?.before(note); } const date = $('booking-start-date')?.value?.replace(/-/g, '').slice(6, 8) + ($('booking-start-date')?.value?.replace(/-/g, '').slice(4, 6) || ''); note.innerHTML = `Pour régler votre acompte, envoyez <strong>${deposit.toLocaleString('fr-FR')} Ar</strong> au <strong>034 91 207 26</strong>.<br>Motif : <strong>resa_voiture_${date || 'JJMM'}</strong>.<br>Joignez ensuite votre justificatif de paiement.`; } else note?.remove();
     if ($('booking-payment-proof')) $('booking-payment-proof').required = mobile && deposit > 0;
+    window.syncClientRequiredMarks?.($('booking-form') || document);
   }
 
   function buildBookingSummary() {
@@ -103,6 +105,7 @@
   async function submitReservationEnhanced(event) {
     event.preventDefault();
     const result = $('booking-result');
+    window.syncClientRequiredMarks?.($('booking-form') || document);
     const selectedFleetId = $('booking-vehicle')?.value;
     const fleetGroup = (window.bookingFleets || []).find(group => group.id === selectedFleetId);
     const vehicle = fleetGroup?.vehicle;
@@ -124,7 +127,7 @@
     if (deposit > finalTotal) return showBookingError('L’acompte ne peut pas dépasser le montant total après remise.');
     const paymentMethod = $('booking-payment-method').value || null;
     if (deposit > 0 && !paymentMethod) return showBookingError('Sélectionnez le mode de paiement de l’acompte.');
-    if (deposit > 0 && paymentMethod === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) return showBookingError('Veuillez joindre la preuve de paiement Mobile Money.');
+    if (deposit > 0 && paymentMethod === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) return showBookingError('Veuillez joindre le justificatif de paiement Mobile Money.');
     const customer = {
       customer_name: $('booking-name').value.trim(), customer_phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
       customer_email: $('booking-email').value.trim() || null, customer_address: $('booking-address').value.trim(), customer_license: $('booking-license').value.trim(), customer_cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
@@ -171,7 +174,7 @@
     const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.full_name)}%0ATéléphone : ${encodeURIComponent(customer.phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(reservedUnit.name || reservedUnit.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal estimé : ${encodeURIComponent(formatMGA(finalTotal))}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
     window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';
-    result.textContent = deposit > 0 ? `Votre demande ${r.reference} a bien été enregistrée avec l’acompte indiqué.` : `Votre demande ${r.reference} a bien été enregistrée. La facture et le contrat seront transmis après réception d’un acompte.`;
+    result.textContent = deposit > 0 ? `Votre demande de réservation (${r.reference}) a bien été enregistrée avec l’acompte indiqué. La période est bloquée sous réserve de validation de l’acompte.` : `Votre demande de réservation (${r.reference}) a bien été enregistrée. La période reste disponible jusqu’au versement et à la validation de l’acompte.`;
     $('booking-form').reset();
     $('invoice-access-panel')?.classList.toggle('hidden', deposit <= 0);
     setBookingStep(1); updatePaymentProofVisibility();
@@ -183,20 +186,21 @@
   function enhanceReturnPanel() {
     const section = $('booking');
     if (!section || $('return-public-panel')) return;
-    section.querySelector('.invoice-access-panel')?.insertAdjacentHTML('afterend', `<div id="return-public-panel" class="booking-panel return-panel"><h3>Restitution et signalement</h3><p class="muted">Le loueur remplit ce constat au moment du clic : la date et l’heure sont enregistrées automatiquement.</p><form id="return-public-form"><div class="date-range"><label>Référence réservation<input id="return-reference" required placeholder="RCS-..."></label><label>Type<select id="return-kind"><option value="restitution">Restitution</option><option value="degradation">Signalement d’une dégradation</option></select></label><label>Kilométrage retour<input id="return-km" type="number" min="0" required></label><label>Nombre de clés restituées<input id="return-keys" type="number" min="0" required></label><label>Niveau carburant retour<input id="return-fuel" required placeholder="Ex. 3/4"></label><label>Montant à payer (Ar)<input id="return-due" type="number" min="0" value="0" required></label></div><label>Signalement d’une dégradation<textarea id="return-details" rows="3" placeholder="Détails, photos, observations..."></textarea></label><button class="btn btn-primary" type="submit">Enregistrer le constat</button></form><p id="return-result" class="booking-result"></p></div>`);
+    section.querySelector('.invoice-access-panel')?.insertAdjacentHTML('afterend', `<div id="return-public-panel" class="booking-panel return-panel"><h3>Restitution et signalement</h3><p class="muted">Le loueur renseigne ce formulaire au moment de la restitution ou du signalement. La date et l’heure sont enregistrées automatiquement.</p><form id="return-public-form"><div class="date-range"><label>Référence de réservation<input id="return-reference" required placeholder="RCS-..."></label><label>Type<select id="return-kind"><option value="restitution">Restitution</option><option value="degradation">Signalement d’une dégradation</option></select></label><label>Kilométrage à la restitution<input id="return-km" type="number" min="0" required></label><label>Nombre de clés restituées<input id="return-keys" type="number" min="0" required></label><label>Niveau de carburant à la restitution<input id="return-fuel" required placeholder="Ex. 3/4"></label><label>Montant dû (Ar)<input id="return-due" type="number" min="0" value="0" required></label></div><label>Observations ou dégradations constatées<textarea id="return-details" rows="3" placeholder="Détails, photos, observations..."></textarea></label><button class="btn btn-primary" type="submit">Enregistrer le formulaire</button></form><p id="return-result" class="booking-result"></p></div>`);
+    window.syncClientRequiredMarks?.($('return-public-panel'));
     $('return-public-form')?.addEventListener('submit', async (e) => {
       e.preventDefault(); const result = $('return-result'); const ref = $('return-reference').value.trim();
       const {data: reservation, error} = await window.rentCarSupabase.from('reservations').select('id,reference,customer_name,total_amount,deposit_amount,whatsapp_phone,customer_phone').eq('reference', ref).maybeSingle();
-      if (error || !reservation) { result.className = 'booking-result booking-error'; result.textContent = 'Référence de réservation introuvable.'; return; }
+      if (error || !reservation) { result.className = 'booking-result booking-error'; result.textContent = 'Aucune réservation ne correspond à cette référence.'; return; }
       const payload = { recorded_at: nowLocal(), km_return: Number($('return-km').value), keys_returned: Number($('return-keys').value), fuel_return: $('return-fuel').value, degradation: $('return-details').value, amount_due: Number($('return-due').value || 0), customer_name: reservation.customer_name };
       const saved = await window.rentCarSupabase.from('return_forms').insert({reservation_id: reservation.id, kind: $('return-kind').value, payload});
-      if (saved.error) { result.className = 'booking-result booking-error'; result.textContent = 'Impossible d’enregistrer le constat. Veuillez réessayer ou nous contacter.'; return; }
+      if (saved.error) { result.className = 'booking-result booking-error'; result.textContent = 'Impossible d’enregistrer ce constat. Veuillez réessayer ou nous contacter.'; return; }
       result.className = 'booking-result booking-success'; result.textContent = `Constat enregistré le ${new Date().toLocaleString('fr-FR')}. La facture est prête à être générée dans l’administration.`;
     });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    autoTheme(); setInterval(autoTheme, 60000); addBookingFields(); setupBookingSteps();
+    autoTheme(); setInterval(autoTheme, 60000); addBookingFields(); window.setBookingIdentityRequired?.(!window.bookingOwnerMode); setupBookingSteps(); window.syncClientRequiredMarks?.(document);
     window.submitReservation = submitReservationEnhanced;
   });
 })();

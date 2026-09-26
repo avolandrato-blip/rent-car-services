@@ -8,26 +8,35 @@
     {
       "type": "text",
       "id": "nom",
-      "label": "Nom",
-      "placeholder": "Votre nom"
+      "label": "Nom et prénom",
+      "placeholder": "Saisissez votre nom complet",
+      "required": true
     },
     {
       "type": "email",
       "id": "email",
-      "label": "Email",
-      "placeholder": "votre@mail.com"
+      "label": "Adresse e-mail (facultative)",
+      "placeholder": "exemple@domaine.com",
+      "required": false
     },
     {
       "type": "select",
       "id": "subject",
-      "label": "Motif",
-      "options": ["Réservation", "Demande de devis", "Information"]
+      "label": "Motif de votre demande",
+      "options": [
+        "Réservation",
+        "Demande de devis",
+        "Demande d’information"
+      ],
+      "placeholder": "Sélectionnez un motif",
+      "required": true
     },
     {
       "type": "textarea",
       "id": "message",
-      "label": "Message (Dates, véhicule souhaité...)",
-      "placeholder": "Bonjour..."
+      "label": "Votre message",
+      "placeholder": "Décrivez votre demande en quelques mots.",
+      "required": true
     }
   ]
 }

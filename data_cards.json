@@ -1,56 +1,56 @@
 {
   "features": [
     {
-      "titre": "Location claire",
+      "titre": "Tarifs transparents",
       "icon": "fa-car",
-      "description": "Les conditions et le prix sont connus avant la remise du véhicule."
+      "description": "Les conditions et le tarif sont communiqués avant la remise du véhicule."
     },
     {
-      "titre": "État vérifié",
+      "titre": "Véhicules contrôlés",
       "icon": "fa-clipboard-check",
-      "description": "Kilométrage, carburant, clés et accessoires sont contrôlés au départ et au retour."
+      "description": "Le kilométrage, le niveau de carburant, les clés et les accessoires sont vérifiés à la remise et à la restitution."
     },
     {
-      "titre": "Sécurité",
+      "titre": "Assistance",
       "icon": "fa-shield-alt",
-      "description": "En cas d’incident, prévenez immédiatement le loueur et suivez ses instructions."
+      "description": "En cas d’incident, mettez les personnes en sécurité, prévenez immédiatement le loueur et suivez ses instructions."
     }
   ],
   "conditions": [
     {
       "titre": "Locataire",
       "icon": "fa-id-card",
-      "reponse": "21 ans minimum, permis valide depuis au moins 2 ans et pièces originales à présenter."
+      "reponse": "Le conducteur doit avoir au moins 21 ans, détenir un permis valide depuis au moins 2 ans et présenter les documents originaux."
     },
     {
       "titre": "Zone",
       "icon": "fa-map-marker-alt",
-      "reponse": "Antananarivo et 30 km maximum, sauf accord écrit. Hors zone : 1 000 Ar par km supplémentaire."
+      "reponse": "La circulation est autorisée à Antananarivo et dans un rayon maximal de 30 km, sauf accord écrit. Au-delà, un supplément de 1 000 Ar par kilomètre peut s’appliquer."
     },
     {
       "titre": "Usages interdits",
       "icon": "fa-ban",
-      "reponse": "Pas de taxi, InDrive, course, surcharge, marchandises dangereuses ou route incompatible."
+      "reponse": "L’utilisation comme taxi ou pour InDrive, les courses, la surcharge, le transport de marchandises dangereuses et les routes incompatibles avec le véhicule sont interdits."
     },
     {
       "titre": "Carburant",
       "icon": "fa-gas-pump",
-      "reponse": "Le véhicule revient avec le même niveau de carburant. Manquant : consommation + 20 000 Ar de service."
+      "reponse": "Le véhicule doit être restitué avec le même niveau de carburant. Le carburant manquant, ainsi que 20 000 Ar de frais de service, seront facturés."
     },
     {
       "titre": "Retard",
       "icon": "fa-clock",
-      "reponse": "Jusqu’à 1 h : 10 000 Ar. De 1 à 3 h : 25 000 Ar par heure commencée. Au-delà : une journée."
+      "reponse": "Jusqu’à 1 heure de retard : 10 000 Ar. Au-delà d’1 heure et jusqu’à 3 heures : 25 000 Ar par heure commencée. Au-delà de 3 heures : facturation d’une journée supplémentaire."
     },
     {
       "titre": "Accident",
       "icon": "fa-car-crash",
-      "reponse": "Sécurisez les lieux, prévenez le loueur, envoyez des photos et n’engagez aucune réparation sans accord."
+      "reponse": "Sécurisez les lieux, prévenez immédiatement le loueur, transmettez des photos et n’engagez aucune réparation sans son accord."
     },
     {
       "titre": "Vol et clés",
       "icon": "fa-key",
-      "reponse": "Prévenez le loueur et les autorités. La perte ou détérioration des clés est facturée sur justificatifs."
+      "reponse": "En cas de vol, prévenez immédiatement le loueur et les autorités. La perte ou la détérioration des clés sera facturée sur présentation de justificatifs."
     },
     {
       "titre": "Vérification",
@@ -60,17 +60,17 @@
     {
       "titre": "Remboursement",
       "icon": "fa-money-bill-wave",
-      "reponse": "En cas de retrait non imputable au locataire, remboursement au prorata des heures ou jours non utilisés."
+      "reponse": "Si le retrait du véhicule n’est pas imputable au locataire, le montant correspondant aux heures ou jours non utilisés est remboursé au prorata."
     },
     {
       "titre": "Responsabilité",
       "icon": "fa-scale-balanced",
-      "reponse": "Aucune caution, mais les dommages, pertes, amendes, retards et frais imputables restent dus."
+      "reponse": "Aucune caution n’est exigée. Le locataire reste toutefois responsable des dommages, pertes, amendes, retards et frais qui lui sont imputables."
     },
     {
       "titre": "Acceptation",
       "icon": "fa-file-signature",
-      "reponse": "La signature confirme la lecture et l’acceptation des conditions du contrat."
+      "reponse": "La signature du contrat confirme que le locataire a lu et accepté les conditions de location."
     }
   ]
 }
