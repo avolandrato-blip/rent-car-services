@@ -80,3 +80,10 @@ test('les photos CIN et permis sont intégrées au contrat seulement après vali
   assert.match(edgeFunction, /expiresIn: 1800/);
   assert.match(edgeFunction, /startsWith\("\/object\/sign\/"\)/);
 });
+
+test('le bouton de réservation de l’accueil ouvre directement l’onglet Réserver', () => {
+  const html = read('index.html');
+  const hero = html.match(/<div class="hero-btns">([\s\S]*?)<\/div>/)?.[1] || '';
+  assert.match(hero, /Réservez une voiture/);
+  assert.match(hero, /onclick="openTab\('booking'\)"/);
+});
