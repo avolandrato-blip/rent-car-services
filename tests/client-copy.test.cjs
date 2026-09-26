@@ -39,6 +39,8 @@ test('les libellés français révisés apparaissent dans le parcours client', (
   assert.match(html, /Envoyer ma demande de réservation/);
   assert.match(script, /Aucun véhicule ne correspond à votre recherche/);
   assert.match(script, /code de vérification est incorrect/);
+  assert.doesNotMatch(script, /Aucune réparation, modification ou remorquage ne peut être engagé/);
+  assert.doesNotMatch(script, /La perte ou détérioration des clés/);
   assert.equal(cards.features.length, 3);
   assert.ok(cards.conditions.every((item) => item.reponse && !/Mada\.|hôtel|voitures libres/i.test(item.reponse)));
 });
