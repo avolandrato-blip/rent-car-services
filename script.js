@@ -129,7 +129,7 @@ async function initSite() {
 }
 
 async function loadHome() {
-    const res = await fetch('home.json');
+    const res = await fetch('home.json?v=20260926-1535');
     const data = await res.json();
     const banner = document.getElementById('hero-banner');
     if(banner) banner.style.backgroundImage = `url('${data.hero.image}')`;
@@ -141,7 +141,7 @@ async function loadHome() {
 
 // Gestion des Cartes Tournantes (Flip Cards)
 async function loadCards() {
-    const res = await fetch('data_cards.json');
+    const res = await fetch('data_cards.json?v=20260926-1535');
     const data = await res.json();
     
     // Grille "Pourquoi nous choisir" avec effet rotation
@@ -416,7 +416,7 @@ async function loadFun() {
 
 // Formulaire de contact dynamique
 async function loadContact() {
-    const res = await fetch('contact.json');
+    const res = await fetch('contact.json?v=20260926-1535');
     const data = await res.json();
     const form = document.getElementById('dynamic-form');
     
