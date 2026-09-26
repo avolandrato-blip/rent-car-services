@@ -11,6 +11,7 @@
     if ($('v-status') && !$('v-status').querySelector('option[value="contract_ended"]')) $('v-status').insertAdjacentHTML('beforeend', '<option value="contract_ended">Fin de contrat</option>');
     const status = $('v-status')?.closest('.field');
     if (status && !$('v-contract-start')) status.insertAdjacentHTML('afterend', '<div class="field"><label>Date de début du contrat</label><input id="v-contract-start" type="date"></div><div class="field"><label>Date de fin du contrat</label><input id="v-contract-end" type="date"></div>');
+    if (window.currentAccountProfile?.role === 'partner' && $('v-contract-end')) { $('v-contract-end').required = true; $('v-contract-end').max = window.currentAccountProfile.access_ends_on || ''; }
     const model = $('v-model')?.closest('.field');
     if (model && !$('v-fleet-group')) model.insertAdjacentHTML('afterend', '<div class="field"><label>Groupe de flotte (facultatif)</label><input id="v-fleet-group" placeholder="Ex. Kia Morning automatique"><small class="field-note">Utilise exactement le même nom sur toutes les unités comparables pour les regrouper au calendrier.</small></div>');
     const owner = $('v-owner-phone')?.closest('.field');
@@ -42,7 +43,7 @@
   }
   function startVehicleForm() {
     const form = $('vehicle-form'); if (!form) return;
-    ensureVehicleFields(); form.reset(); $('v-id').value = ''; if ($('v-driver-mode')) $('v-driver-mode').value = 'without_driver'; if ($('v-driver-fee')) $('v-driver-fee').value = 30000; if ($('v-extra-driver-fee')) $('v-extra-driver-fee').value = 30000; if ($('v-price-24h')) $('v-price-24h').value = ''; if ($('v-photo-url')) $('v-photo-url').value = ''; if ($('v-photo-file')) $('v-photo-file').value = ''; renderTripRates([]); photoControls(); form.classList.remove('hidden');
+    ensureVehicleFields(); form.reset(); $('v-id').value = ''; if (window.currentAccountProfile?.role === 'partner' && $('v-contract-end')) $('v-contract-end').value = window.currentAccountProfile.access_ends_on || ''; if ($('v-driver-mode')) $('v-driver-mode').value = 'without_driver'; if ($('v-driver-fee')) $('v-driver-fee').value = 30000; if ($('v-extra-driver-fee')) $('v-extra-driver-fee').value = 30000; if ($('v-price-24h')) $('v-price-24h').value = ''; if ($('v-photo-url')) $('v-photo-url').value = ''; if ($('v-photo-file')) $('v-photo-file').value = ''; renderTripRates([]); photoControls(); form.classList.remove('hidden');
   }
   async function editVehicleForm(id) {
     ensureVehicleFields(); const result = await window.rentCarSupabase.from('vehicles').select('*').eq('id', id).single(); const v = result.data; if (result.error || !v) return alert(result.error?.message || 'Véhicule introuvable.');
@@ -72,6 +73,7 @@
       if (price24h !== null && (!Number.isFinite(price24h) || price24h <= 0)) return alert('Le tarif 24 h doit être supérieur à zéro ou laissé vide pour afficher « Sur devis ».');
       if (!Number.isFinite(dailyPrice) || dailyPrice < 0) return alert('Le tarif affiché par jour doit être un nombre positif ou nul.');
       const payload = {name:$('v-name').value.trim(),slug:$('v-name').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-'),registration_number:$('v-registration').value.trim()||null,make:$('v-make').value.trim(),model:$('v-model').value.trim(),fleet_group:$('v-fleet-group')?.value.trim()||null,driver_mode:$('v-driver-mode')?.value || 'without_driver',driver_fee:Number($('v-driver-fee')?.value || 0),extra_driver_fee:Number($('v-extra-driver-fee')?.value || 0),trip_rates:collectTripRates(),price_12h:price12h,price_24h:price24h,price_per_day:dailyPrice,transmission:$('v-transmission').value,fuel:$('v-fuel').value,seats:Number($('v-seats').value)||null,status:$('v-status').value,description:$('v-description').value,owner_name:$('v-owner-name').value.trim()||null,owner_phone:$('v-owner-phone').value.trim()||null,contract_start_date:$('v-contract-start')?.value || null,contract_end_date:$('v-contract-end')?.value || null,owner_whatsapp_enabled:!!$('v-owner-whatsapp-enabled')?.checked};
+      if (!id && window.currentAccountProfile?.role === 'partner') payload.owner_user_id = window.currentAccountUserId;
       const response = id ? await window.rentCarSupabase.from('vehicles').update(payload).eq('id', id).select('id').single() : await window.rentCarSupabase.from('vehicles').insert(payload).select('id').single();
       if (response.error) return alert(response.error.message); const vehicleId = response.data.id;
       const files = Array.from($('v-photo-file').files || []); const urls = $('v-photo-url').value.split('\n').map(x => x.trim()).filter(Boolean);
