@@ -64,6 +64,15 @@ test('le contrat avec chauffeur conserve l’essentiel sans clauses de dommages 
   assert.match(source, /Itinéraire : \$\{escapeFunHtml\(routeDetails\)\}/);
 });
 
+test('la prise en charge des repas et de l’hébergement apparaît pour les locations avec chauffeur', () => {
+  const cards = JSON.parse(read('data_cards.json'));
+  const condition = cards.conditions.find((item) => item.titre === 'Location avec chauffeur');
+  assert.ok(condition);
+  assert.match(condition.reponse, /repas et l’hébergement du chauffeur sont à la charge du client/);
+  assert.match(read('script.js'), /data_cards\.json\?v=20260927-driver-meals-lodging/);
+  assert.match(contractTerms.buildContractTerms(true), /repas et l’hébergement du chauffeur restent à la charge du client/);
+});
+
 test('les photos CIN et permis sont intégrées au contrat seulement après validation OTP', () => {
   const script = read('script.js');
   const index = read('index.html');

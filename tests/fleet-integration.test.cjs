@@ -232,3 +232,9 @@ test('admin calendar filter lists each car and narrows the calendar to the selec
   assert.doesNotMatch(target.innerHTML, /Pride/);
   assert.doesNotMatch(target.innerHTML, /ABC-123/);
 });
+
+test('the clean Mitsubishi Pajero photo is available to the catalog at the requested asset path', () => {
+  const asset = path.join(__dirname, '..', 'images', 'cars-clean', 'pajero.png');
+  assert.ok(fs.existsSync(asset));
+  assert.ok(fs.statSync(asset).size > 100_000);
+});
