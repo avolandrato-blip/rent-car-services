@@ -38,6 +38,11 @@
       "reponse": "Le véhicule doit être restitué avec le même niveau de carburant. Le carburant manquant, ainsi que 20 000 Ar de frais de service, seront facturés."
     },
     {
+      "titre": "Location avec chauffeur",
+      "icon": "fa-utensils",
+      "reponse": "Pour toute location avec chauffeur, les repas et l’hébergement du chauffeur sont à la charge du client."
+    },
+    {
       "titre": "Retard",
       "icon": "fa-clock",
       "reponse": "Jusqu’à 1 heure de retard : 10 000 Ar. Au-delà d’1 heure et jusqu’à 3 heures : 25 000 Ar par heure commencée. Au-delà de 3 heures : facturation d’une journée supplémentaire."

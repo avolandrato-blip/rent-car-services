@@ -141,7 +141,7 @@ async function loadHome() {
 
 // Gestion des Cartes Tournantes (Flip Cards)
 async function loadCards() {
-    const res = await fetch('data_cards.json?v=20260926-1535');
+    const res = await fetch('data_cards.json?v=20260927-driver-meals-lodging');
     const data = await res.json();
     
     // Grille "Pourquoi nous choisir" avec effet rotation
