@@ -121,7 +121,7 @@
     if (kind === 'invoice') return printOriginal(reservationId, kind);
     const reservationResult = await db
       .from('reservations')
-      .select('id,customer_phone')
+      .select('id,customer_phone,vehicles(driver_mode)')
       .eq('id', reservationId)
       .maybeSingle();
     if (reservationResult.error || !reservationResult.data?.customer_phone) {
@@ -144,7 +144,11 @@
         && doc.storage_path.startsWith(`${reservationId}/`)
         && acceptedTypes.has(doc.mime_type))
       .map(doc => doc.document_kind));
-    const missing = requiredDocuments.filter(item => !validKinds.has(item.kind));
+    const driverRental = reservationResult.data.vehicles?.driver_mode === 'with_driver';
+    const applicableDocuments = driverRental
+      ? requiredDocuments.filter(item => item.kind !== 'permis_recto')
+      : requiredDocuments;
+    const missing = applicableDocuments.filter(item => !validKinds.has(item.kind));
     if (missing.length) {
       showMissingDocumentsDialog(reservationId, reservationResult.data.customer_phone, missing);
       return;

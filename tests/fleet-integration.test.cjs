@@ -16,6 +16,8 @@ test('public catalog reads the restricted fleet view and groups only explicit fl
   assert.match(publicScript, /from\('public_fleet_vehicles'\)/);
   assert.match(publicScript, /groupFleetVehicles\(publicCars\.filter\(car => car\.status !== 'contract_ended'\)\)/);
   assert.match(publicScript, /data-fleet-id=/);
+  assert.match(publicScript, /photos: car\.image_urls \|\| \[\]/);
+  assert.match(publicScript, /Array\.isArray\(car\.photos\) \? car\.photos : \[\]/);
 });
 
 test('client availability summary is calculated for the selected period', () => {
@@ -235,6 +237,9 @@ test('admin calendar filter lists each car and narrows the calendar to the selec
 
 test('the clean Mitsubishi Pajero photo is available to the catalog at the requested asset path', () => {
   const asset = path.join(__dirname, '..', 'images', 'cars-clean', 'pajero.png');
+  const cruzeSecondImage = path.join(__dirname, '..', 'images', 'cars-clean', 'cruze-2.png');
   assert.ok(fs.existsSync(asset));
   assert.ok(fs.statSync(asset).size > 100_000);
+  assert.ok(fs.existsSync(cruzeSecondImage));
+  assert.ok(fs.statSync(cruzeSecondImage).size > 100_000);
 });

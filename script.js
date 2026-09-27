@@ -35,12 +35,26 @@ function syncClientRequiredMarks(root = document) {
     });
 }
 window.syncClientRequiredMarks = syncClientRequiredMarks;
+function selectedBookingVehicle() {
+    const fleetId = document.getElementById('booking-vehicle')?.value;
+    return (window.bookingFleets || []).find(group => group.id === fleetId)?.vehicle || null;
+}
 window.setBookingIdentityRequired = required => {
-    const ids = ['booking-license','booking-license-place','booking-license-date','booking-cin','booking-cin-type','booking-cin-place','booking-cin-date'];
-    ids.forEach(id => { const field = document.getElementById(id); if (field) field.required = !!required; });
+    const driverVehicle = selectedBookingVehicle()?.driver_mode === 'with_driver';
+    const licenseRequired = Boolean(required) && !driverVehicle;
+    ['booking-license','booking-license-place','booking-license-date'].forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.required = licenseRequired;
+    });
+    ['booking-cin','booking-cin-type','booking-cin-place','booking-cin-date'].forEach(id => {
+        const field = document.getElementById(id);
+        if (field) field.required = Boolean(required);
+    });
+    document.getElementById('booking-license-fields')?.classList.toggle('hidden', driverVehicle);
     document.querySelectorAll('[data-identity-document="true"]').forEach(label => {
-        label.dataset.clientRequired = String(!!required);
-        label.classList.toggle('optional-owner-field', !required);
+        const requiredDocument = Boolean(required) && (label.dataset.documentType !== 'license' || !driverVehicle);
+        label.dataset.clientRequired = String(requiredDocument);
+        label.classList.toggle('optional-owner-field', !requiredDocument);
     });
     syncClientRequiredMarks(document.getElementById('booking-form') || document);
 };
@@ -666,6 +680,7 @@ function tripRateLabel(rate) { return rate?.label || [rate?.from, rate?.to].filt
 function syncBookingTripRates() {
     const fleetGroup = getBookingFleet(document.getElementById('booking-vehicle')?.value);
     const vehicle = fleetGroup?.vehicle;
+    globalThis.window?.setBookingIdentityRequired?.(!globalThis.window?.bookingOwnerMode);
     const wrap = document.getElementById('booking-trip-rate-wrap');
     const select = document.getElementById('booking-trip-rate');
     if (!wrap || !select) return;
@@ -891,12 +906,13 @@ async function verifyInvoiceOtp(event) {
     const vehicle = `${vehicleData.make || ''} ${vehicleData.model || vehicleData.name || ''}`.trim();
     const withDriverContract = Boolean(data.with_driver || vehicleData.driver_mode === 'with_driver');
     const routeDetails = [data.trip_from, data.trip_to].filter(Boolean).join(' → ') || data.trip_rate_label || '';
+    const contractIdentityDocuments = withDriverContract ? identityDocuments.filter(doc => doc.kind !== 'permis_recto') : identityDocuments;
     const shared = `<p>Référence : ${escapeFunHtml(data.reference)}<br>Client : ${escapeFunHtml(data.customer_name)}<br>Téléphone : ${escapeFunHtml(data.customer_phone)}<br>Adresse : ${escapeFunHtml(data.customer_address || '—')}<br>Véhicule : ${escapeFunHtml(vehicle)}<br>Immatriculation : ${escapeFunHtml(vehicleData.registration_number || '—')}${withDriverContract && routeDetails ? `<br>Itinéraire : ${escapeFunHtml(routeDetails)}` : ''}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Durée de location (jours) : ${Number(data.days || 1)}<br>Formule : ${escapeFunHtml(typeLabel)}</p>`;
     const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Chauffeur : ${formatMGA(data.chauffeur_fee)} (30 000 Ar / jour × ${data.days || 1})<br>Acompte enregistré : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> les tarifs n’incluent pas le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à la charge du client.</p>`;
     const contractArticles = window.RentCarContractTerms.buildContractTerms(withDriverContract);
-    const identityDocumentsHtml = identityDocuments.length
-        ? `<div class="page-break"><h2>Annexes — pièces d’identité</h2><p>Les copies suivantes sont jointes au présent contrat.</p><div class="identity-document-gallery">${identityDocuments.map(doc => `<figure><figcaption>${escapeFunHtml(doc.label)}</figcaption><img src="${escapeFunHtml(doc.url)}" alt="${escapeFunHtml(doc.label)}" referrerpolicy="no-referrer"></figure>`).join('')}</div></div>`
-        : `<div class="page-break"><h2>Annexes — pièces d’identité</h2><p>Aucune photo de CIN ou de permis n’a été transmise pour cette réservation.</p></div>`;
+    const identityDocumentsHtml = contractIdentityDocuments.length
+        ? `<div class="page-break"><h2>Annexes — pièces d’identité</h2><p>Les copies suivantes sont jointes au présent contrat.</p><div class="identity-document-gallery">${contractIdentityDocuments.map(doc => `<figure><figcaption>${escapeFunHtml(doc.label)}</figcaption><img src="${escapeFunHtml(doc.url)}" alt="${escapeFunHtml(doc.label)}" referrerpolicy="no-referrer"></figure>`).join('')}</div></div>`
+        : `<div class="page-break"><h2>Annexes — pièces d’identité</h2><p>Aucune photo de CIN n’a été transmise pour cette réservation.</p></div>`;
     const html = `<html><head><title>Facture et contrat ${escapeFunHtml(data.reference)}</title><style>body{font:15px Arial;padding:35px;color:#0b1f33;max-width:820px;margin:auto;line-height:1.45}h1{color:#0d5c8f}h2{border-bottom:1px solid #ddd;padding-bottom:8px}.total{font-size:22px;font-weight:bold}.page-break{page-break-before:always}.sign{display:flex;justify-content:space-between;margin-top:55px}.identity-document-gallery{display:grid;gap:24px}.identity-document-gallery figure{margin:0;break-inside:avoid;page-break-inside:avoid}.identity-document-gallery figcaption{font-weight:bold;margin-bottom:8px}.identity-document-gallery img{display:block;width:100%;max-height:245mm;object-fit:contain}</style></head><body><h1>${escapeFunHtml(owner.name || 'Rent Car Service')}</h1><p>${escapeFunHtml(owner.address || '')}<br>${escapeFunHtml(owner.phone || '')}${owner.email ? `<br>${escapeFunHtml(owner.email)}` : ''}${owner.legal_id ? `<br>${escapeFunHtml(owner.legal_id)}` : ''}</p><h2>FACTURE</h2>${shared}${finance}<div class="page-break"><h1>${escapeFunHtml(owner.name || 'Rent Car Service')}</h1><h2>CONTRAT DE LOCATION</h2>${shared}<p>Le présent contrat concerne la location du véhicule indiqué ci-dessus. Le locataire reconnaît avoir fourni les informations nécessaires et accepte les conditions correspondant au mode de location choisi.</p>${finance}${contractArticles}<div class="sign"><span>LOCATAIRE<br>Mention manuscrite : « Bon pour acceptation »<br><br>Signature :</span><span>LOUEUR<br><br><br>Signature :</span></div>${identityDocumentsHtml}</div><script>window.addEventListener('load', async () => { await Promise.all([...document.images].map(image => image.decode().catch(() => {}))); const brokenImages = [...document.images].filter(image => !image.complete || image.naturalWidth === 0); if (brokenImages.length) { document.body.insertAdjacentHTML('afterbegin', '<p style="padding:12px;color:#b42318;border:1px solid #b42318">Une ou plusieurs photos d’identité n’ont pas pu être chargées. Fermez cette fenêtre, vérifiez votre connexion et relancez la génération du contrat.</p>'); return; } setTimeout(() => window.print(), 150); });<\/script></body></html>`;
     win.document.open(); win.document.write(html); win.document.close();
 }
