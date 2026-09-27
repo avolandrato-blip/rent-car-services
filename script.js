@@ -178,6 +178,8 @@ async function loadCards() {
 // Galerie des véhicules
 let publicCars = [];
 let publicRentalCounts = {};
+let bookingAvailabilityLoaded = false;
+let bookingAvailabilityUpdatedAt = null;
 function contractVisible(car) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     if (car.status === 'contract_ended') return false;
@@ -186,19 +188,50 @@ function contractVisible(car) {
     return true;
 }
 function vehicleClientStatus(car) {
+    if (!bookingAvailabilityLoaded) return { key: 'unknown', label: 'Disponibilité à vérifier' };
     const units = Array.isArray(car?.units) ? car.units : [car];
     const now = new Date();
-    const result = window.RentCarFleet.countAvailability(car, now.toISOString(), new Date(now.getTime() + 1).toISOString(), bookingReservations, bookingMaintenance);
+    const result = window.RentCarFleet.countAvailability(car, now.toISOString(), new Date(now.getTime() + 1).toISOString(), bookingCurrentReservations, bookingCurrentMaintenance);
     if (result.availableCount) return { key: 'available', label: 'Disponible' };
     if (!result.totalCount) {
         const upcoming = units.map(unit => unit.contract_start_date).filter(Boolean).sort()[0];
         if (upcoming && new Date(`${upcoming}T00:00:00`) > now) return { key: 'upcoming', label: `Disponible à partir du ${new Date(`${upcoming}T00:00:00`).toLocaleDateString('fr-FR')}` };
     }
-    const underMaintenance = units.some(unit => unit.status === 'maintenance' || bookingMaintenance.some(item => item.vehicle_id === unit.id && new Date(item.start_at) <= now && new Date(item.end_at) > now));
+    const underMaintenance = units.some(unit => unit.status === 'maintenance' || bookingCurrentMaintenance.some(item => item.vehicle_id === unit.id && new Date(item.start_at) <= now && new Date(item.end_at) > now));
     const inactive = units.some(unit => unit.status === 'inactive');
     if (underMaintenance || inactive) return { key: 'maintenance', label: 'Indisponible — maintenance ou indisponibilité' };
-    if (result.totalCount && result.availableCount === 0) return { key: 'full', label: 'Complet actuellement' };
+    if (result.totalCount && result.availableCount === 0) {
+        const currentReservation = bookingCurrentReservations.find(item => units.some(unit => unit.id === item.vehicle_id));
+        const label = currentReservation?.status === 'pre_reserved' ? 'Pré-réservée actuellement' : 'Réservée actuellement';
+        return { key: 'full', label };
+    }
     return { key: 'inactive', label: 'Indisponible — contactez-nous' };
+}
+
+function renderLiveFleetButtons() {
+    const target = document.getElementById('live-fleet-buttons');
+    const updated = document.getElementById('live-fleet-updated');
+    if (!target) return;
+    if (!bookingAvailabilityLoaded) {
+        target.innerHTML = '<p class="live-fleet-empty">La disponibilité ne peut pas être vérifiée pour le moment. Vous pourrez tout de même consulter les dates dans le formulaire de réservation.</p>';
+        if (updated) updated.textContent = 'État indisponible — réessayez dans quelques instants.';
+        return;
+    }
+    const groups = window.RentCarFleet?.groupFleetVehicles(publicCars.filter(car => car.status !== 'contract_ended')) || [];
+    if (!groups.length) {
+        target.innerHTML = '<p class="live-fleet-empty">Aucun véhicule n’est actuellement affiché.</p>';
+        if (updated) updated.textContent = '';
+        return;
+    }
+    const classForStatus = { available: 'available', upcoming: 'upcoming', full: 'reserved', maintenance: 'maintenance', inactive: 'inactive', unknown: 'unknown' };
+    target.innerHTML = groups.map(group => {
+        const state = vehicleClientStatus(group);
+        const name = escapeFunHtml(group.displayName || group.vehicle?.name || 'Véhicule');
+        const fleetId = escapeFunHtml(group.id);
+        const statusText = state.key === 'available' ? 'Disponible maintenant' : state.label;
+        return `<button type="button" class="fleet-status-button fleet-status-${classForStatus[state.key] || 'unknown'}" data-live-fleet-id="${fleetId}" data-live-fleet-name="${name}" aria-label="${name} : ${escapeFunHtml(statusText)}. Ouvrir la réservation"><strong>${name}</strong><span>${escapeFunHtml(statusText)}</span></button>`;
+    }).join('');
+    if (updated) updated.textContent = bookingAvailabilityUpdatedAt ? `Statut vérifié à ${bookingAvailabilityUpdatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}. Vérifiez toujours les dates avant de confirmer.` : '';
 }
 
 function renderPublicCars() {
@@ -220,6 +253,7 @@ function renderPublicCars() {
     cars.sort((a,b) => sort === 'popular' ? popularity(b)-popularity(a) : sort === 'price-asc' ? Number(a.vehicle.price_per_day||0)-Number(b.vehicle.price_per_day||0) : sort === 'price-desc' ? Number(b.vehicle.price_per_day||0)-Number(a.vehicle.price_per_day||0) : String(a.displayName).localeCompare(String(b.displayName), 'fr'));
     const grid = document.getElementById('cars-grid');
     if (!grid) return;
+    renderLiveFleetButtons();
     const safeImage = value => {
         try { const url = new URL(String(value || ''), location.href); return ['https:', 'http:'].includes(url.protocol) ? url.href : ''; }
         catch (_) { return ''; }
@@ -272,6 +306,26 @@ function bindPublicCarFilters() {
             if (publicAction === 'owner') openOwnerRequest(fleetId || vehicleId);
             else if (publicAction === 'reserve') openBookingForFleet(fleetId || vehicleId, vehicleName);
             else if (publicAction === 'quote') openLongTermQuote(vehicleName);
+        });
+    }
+    const liveButtons = document.getElementById('live-fleet-buttons');
+    if (liveButtons && !liveButtons.dataset.actionsBound) {
+        liveButtons.dataset.actionsBound = '1';
+        liveButtons.addEventListener('click', event => {
+            const button = event.target.closest('[data-live-fleet-id]');
+            if (!button) return;
+            openBookingForFleet(button.dataset.liveFleetId, button.dataset.liveFleetName);
+        });
+    }
+    const refreshButton = document.getElementById('refresh-fleet-status');
+    if (refreshButton && !refreshButton.dataset.actionsBound) {
+        refreshButton.dataset.actionsBound = '1';
+        refreshButton.addEventListener('click', async () => {
+            refreshButton.disabled = true;
+            const updated = document.getElementById('live-fleet-updated');
+            if (updated) updated.textContent = 'Actualisation des disponibilités…';
+            try { await loadBookingData(); }
+            finally { refreshButton.disabled = false; }
         });
     }
 }
@@ -473,6 +527,8 @@ function openBookingForFleet(fleetId, fleetName) {
     const select = document.getElementById('booking-vehicle');
     const group = getBookingFleet(fleetId);
     if (select && group) select.value = group.id;
+    const availabilitySelect = document.getElementById('availability-vehicle');
+    if (availabilitySelect && group) availabilitySelect.value = group.id;
     syncBookingTripRates();
     updateBookingQuote();
     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
@@ -506,6 +562,8 @@ let bookingVehicles = [];
 let bookingFleets = [];
 let bookingReservations = [];
 let bookingMaintenance = [];
+let bookingCurrentReservations = [];
+let bookingCurrentMaintenance = [];
 window.bookingOwnerMode = false;
 function openOwnerRequest(vehicleId) {
     const group = getBookingFleet(vehicleId) || window.RentCarFleet.groupFleetVehicles(publicCars).find(item => item.units.some(unit => unit.id === vehicleId));
@@ -523,18 +581,28 @@ function openOwnerRequest(vehicleId) {
 async function loadBookingData() {
     if (!window.rentCarSupabase) return;
     const db = window.rentCarSupabase;
-    const [{ data: vehicles, error: vehicleError }, { data: busySlots, error: busyError }] = await Promise.all([
+    const now = new Date();
+    const [{ data: vehicles, error: vehicleError }, { data: busySlots, error: busyError }, { data: currentSlots, error: currentSlotsError }] = await Promise.all([
         db.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,owner_phone,owner_whatsapp_enabled,contract_start_date,contract_end_date,fleet_group').order('name'),
-        db.from('public_fleet_busy_slots').select('vehicle_id,start_at,end_at,slot_type')
+        db.from('public_fleet_busy_slots').select('vehicle_id,start_at,end_at,slot_type'),
+        db.from('public_fleet_busy_slots').select('vehicle_id,start_at,end_at,slot_type').lt('start_at', new Date(now.getTime() + 1).toISOString()).gt('end_at', now.toISOString())
     ]);
-    if (vehicleError) { console.warn('Supabase booking data unavailable:', vehicleError.message); return; }
-    if (busyError) console.warn('Supabase availability slots unavailable:', busyError.message);
+    if (vehicleError) { bookingAvailabilityLoaded = false; renderLiveFleetButtons(); console.warn('Supabase booking data unavailable:', vehicleError.message); return; }
+    if (busyError || currentSlotsError) console.warn('Supabase availability slots unavailable:', busyError?.message || currentSlotsError?.message);
     bookingVehicles = (vehicles || []).filter(vehicle => vehicle.status !== 'contract_ended');
     bookingFleets = window.RentCarFleet.groupFleetVehicles(bookingVehicles);
     window.bookingVehicles = bookingVehicles;
     window.bookingFleets = bookingFleets;
-    bookingReservations = (busySlots || []).filter(slot => slot.slot_type !== 'maintenance').map(({slot_type, ...reservation}) => ({...reservation, status:slot_type}));
-    bookingMaintenance = (busySlots || []).filter(slot => slot.slot_type === 'maintenance');
+    if (busyError || currentSlotsError) {
+        bookingAvailabilityLoaded = false;
+    } else {
+        bookingReservations = (busySlots || []).filter(slot => slot.slot_type !== 'maintenance').map(({slot_type, ...reservation}) => ({...reservation, status:slot_type}));
+        bookingMaintenance = (busySlots || []).filter(slot => slot.slot_type === 'maintenance');
+        bookingCurrentReservations = (currentSlots || []).filter(slot => slot.slot_type !== 'maintenance').map(({slot_type, ...reservation}) => ({...reservation, status:slot_type}));
+        bookingCurrentMaintenance = (currentSlots || []).filter(slot => slot.slot_type === 'maintenance');
+        bookingAvailabilityLoaded = true;
+        bookingAvailabilityUpdatedAt = new Date();
+    }
     const fleetLabel = group => group.displayName;
     const select = document.getElementById('booking-vehicle');
     if (select) select.innerHTML = bookingFleets.map(group => `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(fleetLabel(group))} — ${group.vehicle.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</option>`).join('');
@@ -542,6 +610,7 @@ async function loadBookingData() {
     window.updateClientDriverLabel?.();
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les flottes</option>${bookingFleets.map(group => `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(fleetLabel(group))}</option>`).join('')}`;
+    renderLiveFleetButtons();
     if (typeof renderPublicCars === 'function') renderPublicCars();
 }
 

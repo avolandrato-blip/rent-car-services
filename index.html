@@ -6,7 +6,7 @@
     <title>Rent Car Service | Location de voitures à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20260926-1535">
+    <link rel="stylesheet" href="style.css?v=20260927-live-fleet-buttons">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -52,6 +52,14 @@
     <section id="cars" class="tab">
         <div class="container">
             <h2 class="section-title">Notre flotte de véhicules</h2>
+            <section class="live-fleet-panel" aria-labelledby="live-fleet-title">
+                <div class="live-fleet-heading">
+                    <div><h3 id="live-fleet-title">Disponibilité actuelle</h3><p class="muted">Cliquez sur un véhicule pour ouvrir la réservation. La disponibilité sera revérifiée pour les dates choisies.</p></div>
+                    <button id="refresh-fleet-status" class="btn btn-outline" type="button"><i class="fas fa-rotate"></i> Actualiser</button>
+                </div>
+                <p id="live-fleet-updated" class="live-fleet-updated" aria-live="polite">Chargement des disponibilités…</p>
+                <div id="live-fleet-buttons" class="live-fleet-buttons" aria-label="Sélectionner une voiture pour réserver"></div>
+            </section>
             <div class="fleet-controls" aria-label="Filtrer et trier les véhicules">
                 <label>Rechercher un véhicule<input id="fleet-search" type="search" placeholder="Nom, marque ou modèle"></label>
                 <label>Type de transmission<select id="fleet-transmission"><option value="all">Toutes</option></select></label>
@@ -199,7 +207,7 @@
     <script src="pricing-utils.js?v=20260926-0659"></script>
     <script src="fleet-utils.js?v=20260926-0659"></script>
     <script src="contract-terms.js?v=20260926-1545"></script>
-    <script src="script.js?v=20260926-identity-fix"></script>
+    <script src="script.js?v=20260927-live-fleet-buttons-v3"></script>
     <script src="enhancements.js?v=20260926-1535"></script>
     <script src="morning-changes.js?v=20260926-0659"></script>
 </body>

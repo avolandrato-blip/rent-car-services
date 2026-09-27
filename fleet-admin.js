@@ -9,6 +9,20 @@
     return fleet.groupFleetVehicles(units);
   }
 
+  function activeVehicles() {
+    return (typeof vehicles !== 'undefined' ? vehicles : []).filter(vehicle => vehicle.status !== 'contract_ended');
+  }
+
+  function vehicleBaseName(vehicle) {
+    return vehicle.name || [vehicle.make, vehicle.model].filter(Boolean).join(' ') || 'Véhicule';
+  }
+
+  function vehicleLabel(vehicle, duplicate = false) {
+    const name = vehicleBaseName(vehicle);
+    const distinguisher = vehicle.registration_number || String(vehicle.id || '').slice(0, 8).toUpperCase();
+    return duplicate && distinguisher ? `${name} — ${distinguisher}` : name;
+  }
+
   function localSlot(date, startHour, endHour, nextDay = false) {
     const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour);
     const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (nextDay ? 1 : 0), endHour);
@@ -38,9 +52,14 @@
     const select = $('calendar-vehicle');
     if (!select) return;
     const previous = select.value;
-    const groups = activeGroups();
-    select.innerHTML = '<option value="all">Toutes les flottes</option>' + groups.map(group => `<option value="${esc(group.id)}">${esc(group.displayName)} (${group.capacity})</option>`).join('');
-    select.value = groups.some(group => group.id === previous) ? previous : 'all';
+    const units = activeVehicles();
+    const counts = new Map();
+    units.forEach(unit => {
+      const name = vehicleBaseName(unit);
+      counts.set(name, (counts.get(name) || 0) + 1);
+    });
+    select.innerHTML = '<option value="all">Toutes les voitures</option>' + units.map(unit => `<option value="${esc(unit.id)}">${esc(vehicleLabel(unit, counts.get(vehicleBaseName(unit)) > 1))}</option>`).join('');
+    select.value = units.some(unit => unit.id === previous) ? previous : 'all';
   }
 
   function renderCalendar() {
@@ -51,7 +70,14 @@
     const first = new Date(`${month}-01T00:00:00`);
     if (!Number.isFinite(first.getTime())) return;
     const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
-    const groups = activeGroups().filter(group => selected === 'all' || group.id === selected);
+    let groups;
+    if (selected === 'all') {
+      groups = activeGroups();
+    } else {
+      const unit = activeVehicles().find(vehicle => vehicle.id === selected);
+      const sameNameCount = unit ? activeVehicles().filter(vehicle => vehicleBaseName(vehicle) === vehicleBaseName(unit)).length : 0;
+      groups = unit ? fleet.groupFleetVehicles([unit]).map(group => ({ ...group, displayName: vehicleLabel(unit, sameNameCount > 1), selectedVehicle: true })) : [];
+    }
     target.innerHTML = groups.map(group => {
       const dayCards = Array.from({ length: days }, (_, index) => {
         const date = new Date(first.getFullYear(), first.getMonth(), index + 1);
@@ -59,7 +85,8 @@
         const night = localSlot(date, 19, 7, true);
         return `<div class="calendar-day"><strong>${index + 1}</strong>${slotMarkup('07h–19h', availability(group, day.start, day.end))}${slotMarkup('19h–07h', availability(group, night.start, night.end))}</div>`;
       }).join('');
-      return `<div class="card" style="margin-bottom:14px"><strong>${esc(group.displayName)}</strong><small style="display:block;margin:4px 0 10px">${group.capacity} voiture(s) dans cette flotte${group.profileMismatch ? ' · fiches aux conditions différentes séparées' : ''}</small><div class="calendar-grid">${dayCards}</div></div>`;
+      const subtitle = group.selectedVehicle ? 'Voiture sélectionnée' : `${group.capacity} voiture(s) dans cette flotte${group.profileMismatch ? ' · fiches aux conditions différentes séparées' : ''}`;
+      return `<div class="card" style="margin-bottom:14px"><strong>${esc(group.displayName)}</strong><small style="display:block;margin:4px 0 10px">${esc(subtitle)}</small><div class="calendar-grid">${dayCards}</div></div>`;
     }).join('') || '<div class="empty">Aucune flotte à afficher.</div>';
   }
 
