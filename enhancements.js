@@ -123,7 +123,9 @@
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
     if (quote.requiresQuote) return showBookingError('Cette durée est sur devis, car aucun tarif 24 h n’est renseigné. Contactez-nous pour recevoir une proposition.');
     const promoCode = $('booking-promo')?.value.trim().toUpperCase() || null;
-    const promoDiscount = activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0;
+    const promoState = typeof promoEligibility === 'function' ? promoEligibility(quote) : { valid: true, discount: 0 };
+    if (!promoState.valid) return showBookingError(promoState.message);
+    const promoDiscount = promoState.discount;
     const finalTotal = Math.max(0, quote.total - Math.min(quote.total, promoDiscount));
     const deposit = Math.max(0, Number($('booking-deposit').value || 0));
     if (deposit > finalTotal) return showBookingError('L’acompte ne peut pas dépasser le montant total après remise.');
