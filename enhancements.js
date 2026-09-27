@@ -51,7 +51,8 @@
       if (slot?.available) window.clearStaleBookingAvailabilityError?.();
     }
     if (step === 2 && !window.bookingOwnerMode) {
-      const requiredDocs = [['booking-cin-recto-camera','booking-cin-recto-gallery','CIN recto'],['booking-cin-verso-camera','booking-cin-verso-gallery','CIN verso'],['booking-license-recto-camera','booking-license-recto-gallery','permis recto']];
+      const driverVehicle = window.bookingFleets?.find(group => group.id === $('booking-vehicle')?.value)?.vehicle?.driver_mode === 'with_driver';
+      const requiredDocs = [['booking-cin-recto-camera','booking-cin-recto-gallery','CIN recto'],['booking-cin-verso-camera','booking-cin-verso-gallery','CIN verso'],...(driverVehicle ? [] : [['booking-license-recto-camera','booking-license-recto-gallery','permis recto']])];
       for (const [camera,gallery,label] of requiredDocs) if (!$(camera)?.files?.[0] && !$(gallery)?.files?.[0]) { showBookingError(`Veuillez ajouter la photo : ${label}. Vous pouvez utiliser la caméra ou la galerie.`); return false; }
     }
     if (step === 3) {
@@ -88,7 +89,8 @@
     const quote = $('booking-quote')?.textContent || '—';
     const balance = $('booking-balance-note')?.textContent || '—';
     const services = [$('booking-delivery')?.checked ? 'Livraison' : '', $('booking-recovery')?.checked ? 'Récupération' : '', $('booking-driver')?.checked ? 'Chauffeur' : ''].filter(Boolean).join(' · ') || 'Aucun';
-    const rows = [['Véhicule', vehicle], ['Départ', start], ['Retour', end], ['Client', $('booking-name')?.value || '—'], ['Téléphone', $('booking-phone')?.value || '—'], ['WhatsApp', $('booking-whatsapp')?.value || '—'], ['CIN', $('booking-cin')?.value || '—'], ['Permis', $('booking-license')?.value || '—'], ['Itinéraire', `${$('booking-trip-from')?.value || '—'} → ${$('booking-trip-to')?.value || '—'}`], ['Services', services], ['Tarification', quote], ['Acompte', `${deposit.toLocaleString('fr-FR')} Ar`], ['Solde', balance], ['Mode de paiement', method], ['Preuve Mobile Money', proof]];
+    const selectedVehicle = window.bookingFleets?.find(group => group.id === $('booking-vehicle')?.value)?.vehicle;
+    const rows = [['Véhicule', vehicle], ['Départ', start], ['Retour', end], ['Client', $('booking-name')?.value || '—'], ['Téléphone', $('booking-phone')?.value || '—'], ['WhatsApp', $('booking-whatsapp')?.value || '—'], ['CIN', $('booking-cin')?.value || '—'], ...(selectedVehicle?.driver_mode === 'with_driver' ? [] : [['Permis', $('booking-license')?.value || '—']]), ['Itinéraire', `${$('booking-trip-from')?.value || '—'} → ${$('booking-trip-to')?.value || '—'}`], ['Services', services], ['Tarification', quote], ['Acompte', `${deposit.toLocaleString('fr-FR')} Ar`], ['Solde', balance], ['Mode de paiement', method], ['Preuve Mobile Money', proof]];
     $('booking-summary').innerHTML = `<dl>${rows.map(([label,value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`;
   }
 
@@ -128,10 +130,11 @@
     const paymentMethod = $('booking-payment-method').value || null;
     if (deposit > 0 && !paymentMethod) return showBookingError('Sélectionnez le mode de paiement de l’acompte.');
     if (deposit > 0 && paymentMethod === 'mobile_money' && !$('booking-payment-proof')?.files?.[0]) return showBookingError('Veuillez joindre le justificatif de paiement Mobile Money.');
+    const vehicleNeedsLicense = vehicle.driver_mode !== 'with_driver';
     const customer = {
       customer_name: $('booking-name').value.trim(), customer_phone: $('booking-phone').value.trim(), whatsapp_phone: $('booking-whatsapp').value.trim(),
-      customer_email: $('booking-email').value.trim() || null, customer_address: $('booking-address').value.trim(), customer_license: $('booking-license').value.trim(), customer_cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
-      license_acquired_at: $('booking-license-date').value || null, license_acquired_place: $('booking-license-place').value.trim(),
+      customer_email: $('booking-email').value.trim() || null, customer_address: $('booking-address').value.trim(), customer_license: vehicleNeedsLicense ? ($('booking-license').value.trim() || null) : null, customer_cin: $('booking-cin').value.trim(), cin_is_duplicate: $('booking-cin-type').value === 'true',
+      license_acquired_at: vehicleNeedsLicense ? ($('booking-license-date').value || null) : null, license_acquired_place: vehicleNeedsLicense ? ($('booking-license-place').value.trim() || null) : null,
       cin_acquired_at: $('booking-cin-date').value || null, cin_acquired_place: $('booking-cin-place').value.trim()
     };
     const db = window.rentCarSupabase;
@@ -165,7 +168,7 @@
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
     const docs = new FormData(); docs.append('reservation_id', r.id); docs.append('customer_phone', customer.phone);
-    const identityFiles = [['cinRecto',['booking-cin-recto-camera','booking-cin-recto-gallery']],['cinVerso',['booking-cin-verso-camera','booking-cin-verso-gallery']],['permisRecto',['booking-license-recto-camera','booking-license-recto-gallery']]];
+    const identityFiles = [['cinRecto',['booking-cin-recto-camera','booking-cin-recto-gallery']],['cinVerso',['booking-cin-verso-camera','booking-cin-verso-gallery']],...(vehicleNeedsLicense ? [['permisRecto',['booking-license-recto-camera','booking-license-recto-gallery']]] : [])];
     [...identityFiles,['proofOfAddress',['booking-proof-of-address']],['paymentProof',['booking-payment-proof']]].forEach(([name, ids]) => { const file = ids.map(id => $(id)?.files?.[0]).find(Boolean); if (file) docs.append(name, file, file.name); });
     let identityUploadFailed = false;
     if ([...docs.keys()].length > 2) {

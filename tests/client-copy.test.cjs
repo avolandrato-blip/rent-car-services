@@ -31,6 +31,20 @@ test('les astérisques suivent les champs requis y compris ceux activés selon l
   assert.match(enhancement, /setBookingIdentityRequired\?\.\(!window\.bookingOwnerMode\)/);
 });
 
+test('le formulaire ne demande ni ne transmet de permis pour une voiture avec chauffeur', () => {
+  const script = read('script.js');
+  const enhancement = read('enhancements.js');
+  const html = read('index.html');
+  assert.match(script, /const licenseRequired = Boolean\(required\) && !driverVehicle/);
+  assert.match(script, /label\.dataset\.documentType !== 'license' \|\| !driverVehicle/);
+  assert.match(script, /booking-license-fields/);
+  assert.match(enhancement, /driverVehicle \? \[\] : \[\['booking-license-recto-camera'/);
+  assert.match(enhancement, /customer_license: vehicleNeedsLicense \?/);
+  assert.match(enhancement, /license_acquired_at: vehicleNeedsLicense \?/);
+  assert.match(enhancement, /vehicleNeedsLicense \? \[\['permisRecto'/);
+  assert.match(html, /data-document-type="license"/);
+});
+
 test('les libellés français révisés apparaissent dans le parcours client', () => {
   const html = read('index.html');
   const script = read('script.js');
@@ -60,6 +74,7 @@ test('le contrat avec chauffeur conserve l’essentiel sans clauses de dommages 
   assert.match(source, /data\.with_driver \|\| vehicleData\.driver_mode === 'with_driver'/);
   assert.match(source, /RentCarContractTerms\.buildContractTerms/);
   assert.match(source, /\$\{contractArticles\}/);
+  assert.match(source, /contractIdentityDocuments = withDriverContract \? identityDocuments\.filter\(doc => doc\.kind !== 'permis_recto'\)/);
   assert.match(source, /withDriverContract && routeDetails/);
   assert.match(source, /Itinéraire : \$\{escapeFunHtml\(routeDetails\)\}/);
 });

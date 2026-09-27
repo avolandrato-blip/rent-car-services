@@ -43,10 +43,12 @@ Deno.serve(async (req: Request) => {
     const invoice = await invoiceResponse.json();
     const reservationId = String(invoice?.reservation?.id || "");
     if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(reservationId)) return response({ error: "Référence, téléphone ou code incorrect." }, 403);
+    const withDriver = Boolean(invoice?.reservation?.with_driver || invoice?.vehicle?.driver_mode === "with_driver");
+    const documentKinds = withDriver ? ["cin_recto", "cin_verso"] : ["cin_recto", "cin_verso", "permis_recto"];
 
     const query = new URLSearchParams({
       reservation_id: `eq.${reservationId}`,
-      document_kind: "in.(cin_recto,cin_verso,permis_recto)",
+      document_kind: `in.(${documentKinds.join(",")})`,
       storage_bucket: "eq.contract-documents",
       select: "document_kind,storage_bucket,storage_path,mime_type,uploaded_at",
       order: "uploaded_at.desc",
@@ -67,7 +69,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const documents: Array<{ kind: string; label: string; url: string; mimeType: string }> = [];
-    for (const kind of ["cin_recto", "cin_verso", "permis_recto"]) {
+    for (const kind of documentKinds) {
       const item = latestByKind.get(kind);
       if (!item) continue;
       const bucket = "contract-documents";
