@@ -101,6 +101,24 @@ body {
 .car-price span { white-space: nowrap; }
 .car-tags { display: flex; gap: 10px; margin-bottom: 15px; font-size: 0.85rem; color: #666; flex-wrap: wrap; }
 .car-tags span { background: #f0f2f5; padding: 5px 10px; border-radius: 5px; }
+.live-fleet-panel { margin: 0 0 24px; padding: 18px; border-radius: 16px; background: #fff; box-shadow: var(--card-shadow); }
+.live-fleet-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.live-fleet-heading h3 { margin: 0 0 4px; }
+.live-fleet-heading p { margin: 0; }
+.live-fleet-updated { margin: 12px 0 8px; color: #667085; font-size: .82rem; }
+.live-fleet-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.fleet-status-button { display: flex; min-height: 58px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; padding: 10px 14px; border: 1px solid transparent; border-radius: 11px; text-align: left; cursor: pointer; transition: transform .16s ease-out, box-shadow .16s ease-out; }
+.fleet-status-button:hover { transform: translateY(-1px); box-shadow: 0 5px 14px #0b1f331c; }
+.fleet-status-button:active { transform: scale(.98); }
+.fleet-status-button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.fleet-status-button strong { font-size: .96rem; }
+.fleet-status-button span { font-size: .8rem; }
+.fleet-status-available { background: #dff7e8; color: #166534; border-color: #b8e6c9; }
+.fleet-status-reserved { background: #ffe2df; color: #8b1e18; border-color: #ffc4be; }
+.fleet-status-maintenance { background: #fff4cc; color: #805c00; border-color: #f0dfa0; }
+.fleet-status-upcoming { background: #e8f2ff; color: #1d4e89; border-color: #c8dcf5; }
+.fleet-status-unknown, .fleet-status-inactive { background: #eef1f4; color: #52606d; border-color: #d8dee5; }
+.live-fleet-empty { grid-column: 1 / -1; margin: 0; color: #667085; }
 
 /* Actions dans les cartes (espace & alignement) */
 .car-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
@@ -236,3 +254,18 @@ body[data-theme="royal-night"] footer .social-footer a { color: #e6b85c !importa
 
 /* Indicateur accessible des champs obligatoires côté client */
 .required-asterisk{color:#b42318;font-weight:700;white-space:nowrap}.required-fields-note{margin:0 0 12px;color:#66788a;font-size:.82rem}.required-fields-note .required-asterisk{font-size:1rem}
+
+
+/* Disponibilité actuelle : cohérence avec le thème sombre et les petits écrans */
+body[data-theme="royal-night"] .live-fleet-panel { background: #12182d; color: #f5f7ff; }
+body[data-theme="royal-night"] .live-fleet-updated,
+body[data-theme="royal-night"] .live-fleet-heading .muted { color: #bac4d4; }
+@media (max-width: 600px) {
+  .live-fleet-heading { align-items: stretch; flex-direction: column; }
+  .live-fleet-heading .btn { width: 100%; }
+  .live-fleet-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fleet-status-button { min-height: 64px; padding: 9px 10px; }
+}
+@media (max-width: 360px) {
+  .live-fleet-buttons { grid-template-columns: 1fr; }
+}

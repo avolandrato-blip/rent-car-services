@@ -129,3 +129,106 @@ test('database migration exposes a minimal view and prevents overlapping active 
   assert.match(migration, /status IN \('pre_reserved', 'reserved'\)/);
   assert.doesNotMatch(migration, /registration_number|owner_name/);
 });
+
+
+test('current-availability buttons show available green and reserved red states without claiming data before loading', () => {
+  const api = require('../fleet-utils.js');
+  const target = { innerHTML: '' };
+  const updated = { textContent: '' };
+  const fixedNow = new Date('2026-09-27T10:00:00.000Z');
+  const fixedStart = '2026-09-27T09:00:00.000Z';
+  const fixedEnd = '2026-09-27T11:00:00.000Z';
+  const cars = [
+    { id: 'i30-1', name: 'i30', status: 'available', fleet_group: null },
+    { id: 'pride-1', name: 'Pride', status: 'available', fleet_group: null },
+  ];
+  const nodes = { 'live-fleet-buttons': target, 'live-fleet-updated': updated };
+  const context = {
+    window: { RentCarFleet: api },
+    document: { getElementById: id => nodes[id] || null },
+    publicCars: cars,
+    bookingAvailabilityLoaded: false,
+    bookingAvailabilityUpdatedAt: null,
+    bookingReservations: [{ vehicle_id: 'pride-1', start_at: fixedStart, end_at: fixedEnd, status: 'reserved' }],
+    bookingMaintenance: [],
+    bookingCurrentReservations: [{ vehicle_id: 'pride-1', start_at: fixedStart, end_at: fixedEnd, status: 'reserved' }],
+    bookingCurrentMaintenance: [],
+    escapeFunHtml: value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])),
+    Date: class extends Date { constructor(...args) { super(...(args.length ? args : [fixedNow])); } static now() { return fixedNow.getTime(); } },
+  };
+  const renderHelpersStart = publicScript.indexOf('function vehicleClientStatus(');
+  const renderHelpersEnd = publicScript.indexOf('\nfunction renderPublicCars', renderHelpersStart);
+  const renderHelpers = publicScript.slice(renderHelpersStart, renderHelpersEnd);
+  vm.runInNewContext(`${renderHelpers}\nrenderLiveFleetButtons();`, context);
+  assert.match(target.innerHTML, /live-fleet-empty/);
+  context.bookingAvailabilityLoaded = true;
+  context.bookingAvailabilityUpdatedAt = fixedNow;
+  vm.runInNewContext(`${renderHelpers}\nrenderLiveFleetButtons();`, context);
+  assert.match(target.innerHTML, /fleet-status-available[\s\S]*i30[\s\S]*Disponible maintenant/);
+  assert.match(target.innerHTML, /fleet-status-reserved[\s\S]*Pride[\s\S]*Réservée actuellement/);
+  assert.match(updated.textContent, /Statut vérifié à/);
+  const stylesheet = read('style.css');
+  assert.match(stylesheet, /\.fleet-status-available\s*\{\s*background:\s*#dff7e8/);
+  assert.match(stylesheet, /\.fleet-status-reserved\s*\{\s*background:\s*#ffe2df/);
+  assert.doesNotMatch(target.innerHTML, /[0-9]+\s*véhicule/);
+});
+
+test('current-availability status uses only slots overlapping now and fails closed on a query error', () => {
+  assert.match(publicScript, /\.lt\('start_at', new Date\(now\.getTime\(\) \+ 1\)\.toISOString\(\)\)\.gt\('end_at', now\.toISOString\(\)\)/);
+  assert.match(publicScript, /if \(busyError \|\| currentSlotsError\)\s*\{\s*bookingAvailabilityLoaded = false;/);
+});
+
+test('clicking a current-availability vehicle selects it and opens the reservation tab', () => {
+  const selected = { value: '' };
+  const availability = { value: '' };
+  let openedTab = '';
+  let identityRequired = false;
+  const group = { id: 'fleet:i30', vehicle: { driver_mode: 'without_driver' } };
+  const nodes = { 'booking-vehicle': selected, 'availability-vehicle': availability, 'booking-form': null };
+  const start = publicScript.indexOf('function openBookingForFleet(');
+  const end = publicScript.indexOf('\nfunction openBookingForVehicle', start);
+  const context = {
+    window: { setBookingIdentityRequired: value => { identityRequired = value; } },
+    document: { getElementById: id => nodes[id] || null },
+    getBookingFleet: id => id === group.id ? group : null,
+    openTab: id => { openedTab = id; },
+    syncBookingTripRates() {},
+    updateBookingQuote() {},
+  };
+  vm.runInNewContext(publicScript.slice(start, end), context);
+  context.openBookingForFleet(group.id, 'i30');
+  assert.equal(openedTab, 'booking');
+  assert.equal(selected.value, group.id);
+  assert.equal(availability.value, group.id);
+  assert.equal(identityRequired, true);
+});
+
+test('admin calendar filter lists each car and narrows the calendar to the selected physical vehicle', () => {
+  const api = require('../fleet-utils.js');
+  const select = { value: 'all', innerHTML: '' };
+  const month = { value: '2026-09' };
+  const target = { innerHTML: '' };
+  const vehicles = [
+    { id: 'unit-i30-a', name: 'i30', fleet_group: 'Hyundai i30', registration_number: 'ABC-123', status: 'available' },
+    { id: 'unit-i30-b', name: 'i30', fleet_group: 'Hyundai i30', registration_number: 'DEF-456', status: 'available' },
+    { id: 'unit-pride', name: 'Pride', fleet_group: null, registration_number: 'XYZ-789', status: 'available' },
+  ];
+  const context = {
+    window: { RentCarFleet: api },
+    document: { getElementById: id => ({ 'calendar-vehicle': select, 'calendar-month': month, calendar: target }[id] || null), addEventListener() {} },
+    vehicles,
+    reservations: [{ vehicle_id: 'unit-i30-b', start_at: '2026-09-10T07:00:00.000Z', end_at: '2026-09-10T19:00:00.000Z', status: 'reserved' }],
+    maintenances: [],
+  };
+  vm.runInNewContext(adminScript, context);
+  context.window.updateFleetCalendarFilter();
+  assert.match(select.innerHTML, /Toutes les voitures/);
+  assert.match(select.innerHTML, /i30 — ABC-123/);
+  assert.match(select.innerHTML, /i30 — DEF-456/);
+  assert.match(select.innerHTML, /Pride/);
+  select.value = 'unit-i30-b';
+  context.window.renderCalendar();
+  assert.match(target.innerHTML, /i30 — DEF-456/);
+  assert.doesNotMatch(target.innerHTML, /Pride/);
+  assert.doesNotMatch(target.innerHTML, /ABC-123/);
+});
