@@ -1,0 +1,4 @@
+const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const root=path.resolve(__dirname,'..');const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+test('admin expose l’ajout d’une voiture à vendre',()=>{const html=read('admin.html');assert.match(html,/id="sale-add"/);assert.match(html,/id="admin-sale-form"/);assert.match(read('sales-admin.js'),/admin-sale-form/);});
+test('admin expose et sauvegarde le groupe de flotte',()=>{assert.match(read('admin.html'),/id="v-fleet-group"/);assert.match(read('morning-changes.js'),/fleet_group:\$\('v-fleet-group'\)/);});
+test('plusieurs trajets sont conservés via la fusion',()=>{assert.match(read('morning-changes.js'),/RentCarTripRates\.merge/);assert.match(read('trip-rates-utils.js'),/savedRates.*editedRates/);assert.doesNotMatch(read('admin.html'),/\$\('add-trip-rate'\)\.addEventListener/);});
