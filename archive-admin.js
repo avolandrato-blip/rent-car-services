@@ -1,0 +1,5 @@
+(() => {
+  const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function renderEndedVehicles(){const target=$('archive-table');if(!target)return;const rows=(window.vehicles||[]).filter(v=>v.status==='contract_ended');target.innerHTML=rows.map(v=>`<div class="card archive-vehicle-card"><div class="section-head"><div><strong>${esc(v.name)}</strong><br><small>${esc(v.make||'')} ${esc(v.model||'')} · ${esc(v.registration_number||'—')}</small></div><div class="actions"><span class="pill contract_ended">Fin de contrat</span><button class="btn outline" onclick="window.editVehicle('${v.id}')">Modifier</button></div></div><p>${esc(v.description||'')}<br><small>Fin de contrat : ${esc(v.contract_end_date||'non renseignée')} · Propriétaire : ${esc(v.owner_name||'—')} · ${esc(v.owner_phone||'—')}</small></p></div>`).join('')||'<div class="empty">Aucun véhicule en fin de contrat.</div>';}
+  window.renderEndedVehicles=renderEndedVehicles; document.addEventListener('DOMContentLoaded',()=>setTimeout(renderEndedVehicles,700));
+})();

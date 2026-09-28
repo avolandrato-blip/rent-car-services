@@ -181,6 +181,7 @@ async function loadCars() {
             .from('vehicles')
             .select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates')
             .neq('status', 'inactive')
+            .neq('status', 'contract_ended')
             .order('price_per_day',{ascending:true}).order('name',{ascending:true});
         publicCars = !vehicleError && remoteCars?.length ? remoteCars.map(car => ({
             ...car,
@@ -194,7 +195,7 @@ async function loadCars() {
         const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
         publicRentalCounts = (booked || []).reduce((acc, row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
     } else {
-        publicCars = localCars;
+        publicCars = localCars.filter(car => car.status !== 'contract_ended');
     }
     const transmissions = [...new Set(publicCars.map(c => c.transmission).filter(v => v && v !== '—'))].sort();
     const seats = [...new Set(publicCars.map(c => c.places).filter(v => v && v !== '—'))].sort((a,b) => Number(a)-Number(b));
