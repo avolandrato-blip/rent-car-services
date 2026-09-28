@@ -269,3 +269,5 @@ body[data-theme="royal-night"] .live-fleet-heading .muted { color: #bac4d4; }
 @media (max-width: 360px) {
   .live-fleet-buttons { grid-template-columns: 1fr; }
 }
+
+.drivers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:24px}.driver-card{overflow:hidden;background:var(--surface,#fff);border:1px solid rgba(20,40,60,.12);border-radius:16px;box-shadow:0 8px 22px rgba(11,31,51,.08)}.driver-card>img,.driver-photo-placeholder{display:block;width:100%;height:220px;object-fit:cover;background:#e9f0f5}.driver-photo-placeholder{display:flex;align-items:center;justify-content:center;font-size:70px;color:#8aa0b2}.driver-card-body{padding:18px}.driver-card h3{margin:0 0 6px}.driver-card dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.driver-card dl div{padding:8px;background:rgba(13,92,143,.06);border-radius:8px}.driver-card dt{font-size:11px;color:#66788a}.driver-card dd{margin:3px 0 0;font-weight:700;font-size:13px}.driver-conditions{font-size:13px}.driver-admin-card{margin:12px 0}.driver-admin-rates{font-size:13px;line-height:1.7;color:var(--muted)}

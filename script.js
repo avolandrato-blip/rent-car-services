@@ -168,8 +168,13 @@ function bindPublicCarFilters() {
 }
 
 async function loadCars() {
-    const localResponse = await fetch('cars.json', { cache: 'no-store' });
-    const localData = await localResponse.json();
+    let localData = { liste: [] };
+    try {
+        const localResponse = await fetch('cars.json', { cache: 'no-store' });
+        if (localResponse.ok) localData = await localResponse.json();
+    } catch (error) {
+        console.warn('cars.json indisponible, utilisation de Supabase.', error);
+    }
     const localCars = localData.liste || [];
     if (window.rentCarSupabase) {
         const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase

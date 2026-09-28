@@ -1,0 +1,13 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const admin = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
+const script = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
+const drivers = fs.readFileSync(path.join(root, 'chauffeurs.js'), 'utf8');
+test('l’accueil contient une action Réserver', () => assert.match(index, /Réserver/));
+test('le chargement des voitures tolère l’absence de cars.json', () => assert.match(script, /localData\s*=\s*\{\s*liste:\s*\[\]\s*\}/));
+test('la page admin expose la gestion des chauffeurs', () => { assert.match(admin, /data-tab="chauffeurs"/); assert.match(admin, /id="driver-form"/); });
+test('les tarifs chauffeur sont directs et bornés', () => { assert.match(drivers, /value < 20000 \|\| value > 50000/); assert.match(drivers, /city_daily_rate/); });

@@ -19,6 +19,7 @@
             <button onclick="openTab('home')">Accueil</button>
             <button onclick="openTab('cars')">Véhicules</button>
             <button onclick="openTab('booking')">Réservation</button>
+            <button onclick="openTab('drivers')">Nos chauffeurs</button>
             <button onclick="openTab('fun')">Médias & divertissement</button>
             <button onclick="openTab('terms')">Conditions de location</button>
             <button onclick="openTab('contact')" class="nav-special">Nous contacter</button>
@@ -35,6 +36,7 @@
                 
                 <div class="hero-btns">
                     <button class="btn btn-primary" onclick="openTab('cars')"><i class="fas fa-car"></i> Voir les voitures</button>
+                    <button class="btn btn-primary" onclick="openTab('booking')"><i class="fas fa-calendar-check"></i> Réserver</button>
                     <a id="hero-whatsapp" href="#" target="_blank" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                 </div>
 
@@ -59,6 +61,14 @@
                 <label>Ordre d’affichage<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
             </div>
             <div id="cars-grid" class="cars-grid"></div>
+        </div>
+    </section>
+
+    <section id="drivers" class="tab">
+        <div class="container">
+            <h2 class="section-title">Nos chauffeurs</h2>
+            <p class="muted">Choisissez un chauffeur selon sa disponibilité, son permis et les conditions incluses.</p>
+            <div id="drivers-grid" class="drivers-grid"></div>
         </div>
     </section>
 
@@ -193,6 +203,7 @@
     <script src="supabase.js"></script>
     <script src="script.js?v=20260927-1900"></script>
     <script src="enhancements.js?v=20260927-1900"></script>
-    <script src="morning-changes.js?v=20260927-1900"></script>
+    <script src="trip-rates-utils.js?v=20260928-1"></script><script src="morning-changes.js?v=20260927-1900"></script>
+    <script src="chauffeurs.js?v=20260928-1"></script>
 </body>
 </html>
