@@ -48,6 +48,15 @@ test('same explicit group stays on one card even with different specs and prices
   assert.deepEqual(groups[0].units.map(item => item.id), ['b', 'a']);
 });
 
+test('group uses photos from another unit when the cheapest unit has no photo', () => {
+  const groups = groupFleetVehicles([
+    unit('cheap', { name: 'Tucson moins cher', model: 'Tucson', price_per_day: 120000, image_urls: [] }),
+    unit('photo', { name: 'Tucson photo', model: 'Tucson', price_per_day: 150000, image_urls: ['tucson.jpg'] }),
+  ]);
+  assert.deepEqual(groups[0].photos, ['tucson.jpg']);
+  assert.match(groups[0].displayDescription, /Tucson|véhicule/i);
+});
+
 test('vehicles without a fleet label remain separate, even with the same model and prices', () => {
   const groups = groupFleetVehicles([unit('a', { fleet_group: null }), unit('b', { fleet_group: null })]);
   assert.equal(groups.length, 2);

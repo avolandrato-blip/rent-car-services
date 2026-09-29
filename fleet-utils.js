@@ -47,6 +47,20 @@
       || String(a.id).localeCompare(String(b.id)));
   }
 
+  function vehiclePhotos(vehicle) {
+    const values = Array.isArray(vehicle?.image_urls) ? vehicle.image_urls : (Array.isArray(vehicle?.photos) ? vehicle.photos : []);
+    return values.filter(Boolean).map(String);
+  }
+
+  function catchyDescription(vehicle) {
+    if (String(vehicle?.description || '').trim()) return vehicle.description;
+    const model = vehicle?.model || vehicle?.name || 'véhicule';
+    const transmission = vehicle?.transmission ? `avec boîte ${vehicle.transmission.toLowerCase()}` : '';
+    const seats = vehicle?.seats ? `et ${vehicle.seats} places` : '';
+    const driver = vehicle?.driver_mode === 'with_driver' ? 'avec chauffeur' : 'pour vos déplacements en toute liberté';
+    return `Profitez d’un ${model} ${transmission} ${seats}, confortable et pratique ${driver}.`.replace(/\s+/g, ' ').trim();
+  }
+
   function groupFleetVehicles(vehicles) {
     const explicitGroups = new Map();
     const independentGroups = [];
@@ -67,6 +81,7 @@
     for (const [key, base] of explicitGroups) {
       const units = sortByCheapest(base.units);
       const first = units[0];
+      const photos = [...new Set(units.flatMap(vehiclePhotos))];
       groups.push({
         id: `fleet:${key}:${stableHash(key)}`,
         fleet_group: base.label,
@@ -77,6 +92,8 @@
         vehicle: first,
         capacity: units.length,
         profileMismatch: false,
+        photos,
+        displayDescription: catchyDescription(first) || units.map(catchyDescription).find(Boolean) || '',
       });
     }
 
@@ -92,6 +109,8 @@
         vehicle: first,
         capacity: 1,
         profileMismatch: false,
+        photos: vehiclePhotos(first),
+        displayDescription: catchyDescription(first),
       });
     }
 
@@ -122,7 +141,7 @@
     return { totalCount, availableCount: availableUnits.length, availableUnits, isFull: availableUnits.length === 0 };
   }
 
-  const api = { normalizeFleetLabel, fleetProfileSignature, groupFleetVehicles, countAvailability, overlaps, contractCoversInterval, comparisonPrice };
+  const api = { normalizeFleetLabel, fleetProfileSignature, groupFleetVehicles, countAvailability, overlaps, contractCoversInterval, comparisonPrice, vehiclePhotos, catchyDescription };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RentCarFleet = api;
 })(typeof window !== 'undefined' ? window : globalThis);
