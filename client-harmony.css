@@ -20,6 +20,7 @@ body { font-family: 'Poppins', sans-serif; }
 .header { height: 70px; background: rgba(255,255,255,.97); border-bottom: 1px solid var(--line); box-shadow: 0 3px 18px rgba(11,31,51,.08); }
 #brand-name, .header h1 { color: var(--primary); }
 #brand-name span { color: var(--accent); }
+.menu-burger { display: none; border: 1px solid var(--line); background: transparent; color: var(--primary); border-radius: var(--radius-control); width: 44px; height: 44px; cursor: pointer; align-items: center; justify-content: center; font-size: 1.15rem; }
 #nav-menu { display: flex; align-items: center; gap: 4px; }
 #nav-menu button, #nav-menu a, .nav-link, .nav-sale-link {
   min-height: 40px; display: inline-flex; align-items: center; justify-content: center;
@@ -31,6 +32,9 @@ body { font-family: 'Poppins', sans-serif; }
 #nav-menu .nav-special:hover { background: #163b5d; color: #fff; }
 
 .tab { background: var(--page); }
+.sale-catalog-page { min-height: 100vh; padding: 110px 0 50px; background: var(--page); }
+.sale-catalog-page .muted { max-width: 760px; margin: -20px auto 30px; text-align: center; color: var(--muted); }
+.nav-current { background: rgba(217,164,65,.16) !important; color: var(--primary) !important; }
 .section-title { color: var(--primary); font-weight: 700; }
 .section-title::after { background: var(--accent); height: 4px; border-radius: 99px; }
 
@@ -94,6 +98,8 @@ body[data-theme="royal-night"] #brand-name, body[data-theme="royal-night"] .head
 body[data-theme="royal-night"] #nav-menu button, body[data-theme="royal-night"] #nav-menu a,
 body[data-theme="royal-night"] .nav-link, body[data-theme="royal-night"] .nav-sale-link { color: #f5f7fa; }
 body[data-theme="royal-night"] #nav-menu button:hover, body[data-theme="royal-night"] #nav-menu a:hover { background: #1b344d; }
+body[data-theme="royal-night"] .menu-burger { color: #f5f7fa; border-color: var(--accent); }
+body[data-theme="royal-night"] .nav-current { background: rgba(217,164,65,.2) !important; color: #f5f7fa !important; }
 body[data-theme="royal-night"] .tab { background: var(--page); }
 body[data-theme="royal-night"] .btn-outline { color: #f5f7fa; border-color: var(--accent); }
 body[data-theme="royal-night"] .btn-outline:hover { background: var(--accent); color: var(--primary); }
@@ -112,6 +118,10 @@ body[data-theme="royal-night"] .entertainment-panel-heading p, body[data-theme="
 body[data-theme="royal-night"] footer { background: #0d1b2b !important; border-color: var(--line); }
 
 @media (max-width: 768px) {
+  .menu-burger { display: inline-flex; }
+  .nav-container { position: relative; }
+  #nav-menu { display: none; position: absolute; z-index: 1100; top: 70px; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 6px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 0 0 var(--radius-card) var(--radius-card); box-shadow: 0 12px 26px rgba(0,0,0,.18); }
+  #nav-menu.active { display: flex; }
   #nav-menu { gap: 6px; padding: 18px; }
   #nav-menu button, #nav-menu a { width: 100%; justify-content: flex-start; }
   .hero-btns { flex-direction: column; align-items: stretch; }

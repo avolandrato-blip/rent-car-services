@@ -1,4 +1,44 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Voitures à vendre — Rent Car Service</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="client-harmony.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script></head>
-<body><header class="header"><div class="nav-container"><h1>Rent Car Service</h1><nav><a class="nav-link" href="index.html">Accueil</a><a class="nav-link" href="index.html#cars">Véhicules à louer</a><a class="nav-link" href="index.html#drivers">Nos chauffeurs</a></nav></div></header>
-<main><section class="sale-catalog-page"><div class="container"><p class="eyebrow">Vente automobile</p><h2 class="section-title">Voitures à vendre</h2><p class="muted">Découvrez les véhicules proposés à la vente par Rent Car Service. Contactez-nous pour obtenir plus d’informations ou organiser une visite.</p><div id="sale-catalog" class="sale-catalog-grid"><p class="empty">Chargement des voitures à vendre…</p></div></div></section></main><script src="sale.js?v=20260928-2"></script></body></html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voitures à vendre — Rent Car Service</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="client-harmony.css?v=20260929-4">
+  <script>document.documentElement.classList.add('sale-page');</script>
+</head>
+<body data-theme="royal-night">
+  <header class="header">
+    <div class="nav-container">
+      <h1 id="brand-name">Rent Car <span>Service</span></h1>
+      <button class="menu-burger" type="button" aria-label="Ouvrir le menu" aria-controls="nav-menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
+      <nav id="nav-menu" aria-label="Navigation principale">
+        <a class="nav-link" href="index.html#home">Accueil</a>
+        <a class="nav-link" href="index.html#cars">Véhicules</a>
+        <a class="nav-link" href="index.html#booking">Réservation</a>
+        <a class="nav-link" href="index.html#drivers">Nos chauffeurs</a>
+        <a class="nav-sale-link nav-current" href="sell.html" aria-current="page">Vendre une voiture</a>
+        <a class="nav-link" href="index.html#fun">Médias & divertissement</a>
+        <a class="nav-link" href="index.html#terms">Conditions de location</a>
+        <a class="nav-link nav-special" href="index.html#contact">Nous contacter</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="sale-catalog-page">
+      <div class="container">
+        <p class="eyebrow">Vente automobile</p>
+        <h2 class="section-title">Voitures à vendre</h2>
+        <p class="muted">Découvrez les véhicules proposés à la vente par Rent Car Service. Contactez-nous pour obtenir plus d’informations ou organiser une visite.</p>
+        <div id="sale-catalog" class="sale-catalog-grid"><p class="empty">Chargement des voitures à vendre…</p></div>
+      </div>
+    </section>
+  </main>
+  <script src="navigation.js?v=20260929-1"></script>
+  <script src="supabase.js"></script>
+  <script src="sale.js?v=20260928-2"></script>
+</body>
+</html>

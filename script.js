@@ -336,7 +336,14 @@ function openTab(id) {
 }
 
 function toggleMenu() {
-    document.getElementById('nav-menu').classList.toggle('active');
+    const menu = document.getElementById('nav-menu');
+    const burger = document.querySelector('.menu-burger');
+    if (!menu) return;
+    const open = !menu.classList.contains('active');
+    menu.classList.toggle('active', open);
+    burger?.setAttribute('aria-expanded', String(open));
+    burger?.querySelector('i')?.classList.toggle('fa-bars', !open);
+    burger?.querySelector('i')?.classList.toggle('fa-xmark', open);
 }
 
 function prefill(car) {

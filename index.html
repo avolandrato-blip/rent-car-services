@@ -14,7 +14,7 @@
 <header class="header">
     <div class="nav-container">
         <h1 id="brand-name">Rent Car Service</h1>
-        <div class="menu-burger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+        <button class="menu-burger" type="button" aria-label="Ouvrir le menu" aria-controls="nav-menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
         <nav id="nav-menu">
             <button onclick="openTab('home')">Accueil</button>
             <button onclick="openTab('cars')">Véhicules</button>
@@ -204,6 +204,7 @@
 
     <script src="supabase.js"></script>
     <script src="fleet-utils.js?v=20260929-1"></script>
+    <script src="navigation.js?v=20260929-1"></script>
     <script src="script.js?v=20260929-3"></script>
     <script src="enhancements.js?v=20260927-1900"></script>
     <script src="trip-rates-utils.js?v=20260929-1"></script><script src="morning-changes.js?v=20260929-1"></script>
