@@ -78,6 +78,8 @@ async function initSite() {
         await loadFun();
         await loadContact();
         await loadBookingData();
+        const initialTab = location.hash.slice(1);
+        if (initialTab && document.getElementById(initialTab)?.classList.contains('tab')) openTab(initialTab);
 
     } catch (e) { 
         console.error("Erreur lors de l'initialisation du site:", e); 

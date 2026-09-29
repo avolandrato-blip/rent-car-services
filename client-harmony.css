@@ -108,7 +108,9 @@ body[data-theme="royal-night"] .entertainment-panel-heading p, body[data-theme="
 body[data-theme="royal-night"] footer { background: #0d1b2b !important; border-color: var(--line); }
 
 @media (max-width: 768px) {
-  #nav-menu { gap: 6px; padding: 18px; }
+  .menu-burger { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; color: var(--primary); cursor: pointer; }
+  #nav-menu { display: none; position: absolute; top: 70px; left: 0; width: 100%; flex-direction: column; align-items: stretch; gap: 6px; padding: 18px; background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 12px 25px rgba(11,31,51,.12); }
+  #nav-menu.active { display: flex; }
   #nav-menu button, #nav-menu a { width: 100%; justify-content: flex-start; }
   .hero-btns { flex-direction: column; align-items: stretch; }
   .hero-btns > .btn { width: 100%; }
