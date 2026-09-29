@@ -24,12 +24,6 @@
       description: normalizeFleetLabel(vehicle.description),
       seats: normalizedNumber(vehicle.seats),
       driver_mode: vehicle.driver_mode || 'without_driver',
-      price_12h: normalizedNumber(vehicle.price_12h),
-      price_24h: normalizedNumber(vehicle.price_24h),
-      price_per_day: normalizedNumber(vehicle.price_per_day),
-      driver_fee: normalizedNumber(vehicle.driver_fee),
-      extra_driver_fee: normalizedNumber(vehicle.extra_driver_fee),
-      trip_rates: routes,
       owner_whatsapp_enabled: Boolean(vehicle.owner_whatsapp_enabled),
       owner_phone: String(vehicle.owner_phone || '').replace(/\D/g, ''),
     });
@@ -63,7 +57,11 @@
     for (const [baseKey, base] of byBase) {
       const profileMismatch = base.profiles.size > 1;
       for (const [signature, units] of base.profiles) {
-        units.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'fr'));
+        units.sort((a, b) => {
+          const priceA = Number(a.price_per_day || a.price_12h || Infinity);
+          const priceB = Number(b.price_per_day || b.price_12h || Infinity);
+          return priceA - priceB || String(a.name || '').localeCompare(String(b.name || ''), 'fr');
+        });
         const first = units[0];
         const groupLabel = base.label || first.name || 'Véhicule';
         const profileHash = stableHash(signature);

@@ -453,7 +453,8 @@ function syncBookingTripRates() {
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
-    const rate24 = Number(vehicle.price_24h || rate12 * 2 || 0);
+    const hasRate24 = Number(vehicle.price_24h) > 0;
+    const rate24 = hasRate24 ? Number(vehicle.price_24h) : 0;
     const billedHours = Math.max(1, Math.ceil(hours));
     const days = Math.max(1, Math.ceil(hours / 24));
     let rentalAmount;
@@ -471,7 +472,8 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     const isWithDriver = vehicle.driver_mode === 'with_driver';
     const driverRate = Number(isWithDriver ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000));
     const chauffeur = wantsDriver ? driverRate * days : 0;
-    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur: tripRate ? 0 : chauffeur, tripRate, total: rentalAmount + delivery + recovery + (tripRate ? 0 : chauffeur) };
+    const requiresQuote = !hasRate24 && billedHours > 12 && !tripRate;
+    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur: tripRate ? 0 : chauffeur, tripRate, requiresQuote, total: rentalAmount + delivery + recovery + (tripRate ? 0 : chauffeur) };
 }
 
 function updateBookingQuote() {
@@ -482,7 +484,7 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) { if (quote) quote.textContent = ''; return; }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    const promoState = promoEligibility(q); const promoDiscount = promoState.discount; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const promoState = promoEligibility(q); const promoDiscount = promoState.discount; const finalTotal = Math.max(0, q.total - promoDiscount); if (quote) quote.textContent = `${q.requiresQuote ? 'Location 24 h et plus : Sur devis' : q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
 }
 
 function checkAvailability() {

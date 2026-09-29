@@ -75,8 +75,28 @@
     if ($('m-start') && !$('m-start').value) $('m-start').value = isoLocal(now); if ($('m-end') && !$('m-end').value) $('m-end').value = isoLocal(end); if ($('m-date') && !$('m-date').value) $('m-date').value = now.toISOString().slice(0,10);
     document.getElementById('maintenance')?.scrollIntoView({behavior:'smooth'});
   }
+
+  function openFleetGroupForm() {
+    const existing = $('fleet-group-form'); if (existing) { existing.classList.remove('hidden'); existing.scrollIntoView({behavior:'smooth'}); return; }
+    const list = (window.vehicles || []).filter(v => v.status !== 'contract_ended');
+    const host = $('vehicles-table')?.parentElement;
+    if (!host) return alert('Interface des véhicules introuvable.');
+    const form = document.createElement('form'); form.id='fleet-group-form'; form.className='card'; form.style='margin:16px 0;border:2px solid var(--gold,#d9a441)';
+    form.innerHTML = `<div class="section-head"><h3>Créer un groupe de voitures</h3><button type="button" class="btn outline" data-close-group>Fermer</button></div><p class="muted">Donnez un nom au groupe puis cochez les voitures à regrouper. Elles apparaîtront comme une seule voiture côté client.</p><div class="field"><label>Nom du groupe</label><input id="fleet-group-name" required placeholder="Ex. Kia Morning automatique"></div><div class="fleet-group-choices">${list.map(v=>`<label class="checkbox-line"><input type="checkbox" value="${esc(v.id)}"> ${esc(v.name)}${v.registration_number?` — ${esc(v.registration_number)}`:''}</label>`).join('') || '<p class="empty">Aucune voiture disponible.</p>'}</div><div class="actions" style="margin-top:14px"><button class="btn primary" type="submit">Enregistrer le groupe</button><button class="btn outline" type="button" data-close-group>Annuler</button></div>`;
+    host.insertBefore(form, $('vehicles-table'));
+    form.querySelectorAll('[data-close-group]').forEach(btn=>btn.addEventListener('click',()=>form.remove()));
+    form.addEventListener('submit', async e=>{
+      e.preventDefault(); const name=$('fleet-group-name').value.trim(); const ids=[...form.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value);
+      if (!name) return alert('Saisissez le nom du groupe.'); if (ids.length < 1) return alert('Sélectionnez au moins une voiture.');
+      const result=await window.rentCarSupabase.from('vehicles').update({fleet_group:name}).in('id',ids);
+      if (result.error) return alert(`Impossible de créer le groupe : ${result.error.message}`);
+      form.remove(); if (typeof refreshAll==='function') await refreshAll();
+    });
+  }
+
   function installAdmin() {
     ensureVehicleFields(); addRequiredStars(document);
+    $('create-fleet-group')?.addEventListener('click', openFleetGroupForm);
     const urlBox = $('v-photo-url'); urlBox?.addEventListener('input', photoControls);
     $('add-trip-rate')?.addEventListener('click', () => { const rates = readTripRateRows(); rates.push({id: `destination-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, label:'', rate:0}); renderTripRates(rates); $('v-trip-rates .trip-rate-row:last-child [data-trip-label]')?.focus(); });
     $('v-trip-rates')?.addEventListener('click', e => { const button = e.target.closest('[data-remove-trip]'); if (!button) return; const row = button.closest('.trip-rate-row'); const id = row?.dataset.tripId; if (id && savedTripRates.some(rate => rate.id === id)) removedTripRateIds.add(id); row?.remove(); });
