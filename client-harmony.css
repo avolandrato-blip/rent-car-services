@@ -1,0 +1,121 @@
+/* Couche d’harmonisation client — bleu marine, or et surfaces cohérentes */
+:root {
+  --primary: #0b1f33;
+  --accent: #d9a441;
+  --dark: #172536;
+  --page: #f4f7fa;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --ink: #172536;
+  --muted: #64748b;
+  --line: #dbe3ea;
+  --radius-card: 18px;
+  --radius-control: 10px;
+  --card-shadow: 0 10px 28px rgba(11,31,51,.09);
+}
+
+html, body { background: var(--page); color: var(--ink); }
+body { font-family: 'Poppins', sans-serif; }
+
+.header { height: 70px; background: rgba(255,255,255,.97); border-bottom: 1px solid var(--line); box-shadow: 0 3px 18px rgba(11,31,51,.08); }
+#brand-name, .header h1 { color: var(--primary); }
+#brand-name span { color: var(--accent); }
+#nav-menu { display: flex; align-items: center; gap: 4px; }
+#nav-menu button, #nav-menu a, .nav-link, .nav-sale-link {
+  min-height: 40px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 12px; border-radius: 8px; color: var(--primary); background: transparent;
+  text-decoration: none; font-size: .86rem; font-weight: 700; transition: .2s ease;
+}
+#nav-menu button:hover, #nav-menu a:hover, .nav-link:hover, .nav-sale-link:hover { background: #eef3f7; color: var(--primary); }
+#nav-menu .nav-special { background: var(--primary); color: #fff; }
+#nav-menu .nav-special:hover { background: #163b5d; color: #fff; }
+
+.tab { background: var(--page); }
+.section-title { color: var(--primary); font-weight: 700; }
+.section-title::after { background: var(--accent); height: 4px; border-radius: 99px; }
+
+.btn, .btn-submit {
+  box-sizing: border-box; min-height: 44px; height: 44px; padding: 0 18px;
+  border: 1px solid transparent; border-radius: var(--radius-control);
+  font: inherit; font-size: .88rem; font-weight: 700; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: none; transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.btn:hover, .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(11,31,51,.16); }
+.btn:active, .btn-submit:active { transform: translateY(0); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: #163b5d; color: #fff; }
+.btn-whatsapp, .btn-submit { background: var(--accent); color: var(--primary); border-color: var(--accent); }
+.btn-whatsapp:hover, .btn-submit:hover { background: #e8b95a; color: var(--primary); }
+.btn-outline { background: transparent; color: var(--primary); border-color: var(--primary); }
+.btn-outline:hover { background: var(--primary); color: #fff; }
+.btn-icon { width: 44px; min-width: 44px; padding: 0; border-radius: var(--radius-control); }
+.btn:disabled { opacity: .48; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.hero-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.hero-btns > .btn { width: 190px; }
+.car-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 44px 44px; gap: 8px; align-items: stretch; margin-top: auto; padding-top: 14px; }
+.car-actions > .btn { width: 100%; min-width: 0; }
+
+.flip-front, .flip-back, .car-card, .driver-card, .radio-card, .entertainment-panel, .booking-panel, .contact-wrapper, .live-fleet-panel, .sale-card, .sale-form {
+  border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--card-shadow);
+}
+.flip-front, .car-card, .driver-card, .radio-card, .entertainment-panel, .booking-panel, .contact-wrapper, .live-fleet-panel, .sale-card, .sale-form { background: var(--surface); }
+.flip-back { background: var(--primary); }
+.car-card, .driver-card, .sale-card { overflow: hidden; }
+.car-info, .driver-card-body, .sale-card-body { padding: 20px; }
+.car-card h3, .driver-card h3, .sale-card h3, .booking-panel h3, .entertainment-panel h3 { color: var(--primary); }
+.car-price, .sale-price, .booking-mode-label { color: #a87308; }
+.car-tags span, .sale-specs span, .sale-doc { background: #f0f4f7; border: 1px solid #e0e7ed; border-radius: 8px; color: #435466; }
+
+.fleet-controls, .booking-panel input, .booking-panel select, .booking-panel textarea, .fleet-controls input, .fleet-controls select, .form-group input, .form-group select, .form-group textarea, .entertainment-select {
+  border-color: var(--line); border-radius: var(--radius-control); background: var(--surface-soft); color: var(--ink);
+}
+.fleet-controls { background: var(--surface); border-radius: var(--radius-card); }
+.booking-panel label, .fleet-controls label { color: var(--ink); }
+.booking-step-actions { align-items: center; }
+.booking-step-actions .btn { min-width: 150px; }
+.booking-step-actions .btn-submit { width: auto; }
+
+.fleet-status-button { border-radius: var(--radius-control); }
+.availability-row, .booking-summary, .booking-mini-summary { border-radius: var(--radius-control); }
+
+body[data-theme="royal-night"] {
+  --primary: #0b1f33; --accent: #d9a441; --page: #08111d; --surface: #122337;
+  --surface-soft: #0d1b2b; --ink: #f5f7fa; --muted: #b9c7d6; --line: #29435b;
+  background: var(--page); color: var(--ink);
+}
+body[data-theme="royal-night"] .header { background: rgba(8,17,29,.97); border-color: var(--line); }
+body[data-theme="royal-night"] #brand-name, body[data-theme="royal-night"] .header h1,
+body[data-theme="royal-night"] #nav-menu button, body[data-theme="royal-night"] #nav-menu a,
+body[data-theme="royal-night"] .nav-link, body[data-theme="royal-night"] .nav-sale-link { color: #f5f7fa; }
+body[data-theme="royal-night"] #nav-menu button:hover, body[data-theme="royal-night"] #nav-menu a:hover { background: #1b344d; }
+body[data-theme="royal-night"] .tab { background: var(--page); }
+body[data-theme="royal-night"] .btn-outline { color: #f5f7fa; border-color: var(--accent); }
+body[data-theme="royal-night"] .btn-outline:hover { background: var(--accent); color: var(--primary); }
+body[data-theme="royal-night"] .section-title, body[data-theme="royal-night"] .car-card h3,
+body[data-theme="royal-night"] .driver-card h3, body[data-theme="royal-night"] .sale-card h3,
+body[data-theme="royal-night"] .booking-panel h3, body[data-theme="royal-night"] .entertainment-panel h3 { color: #f5f7fa; }
+body[data-theme="royal-night"] .car-tags span, body[data-theme="royal-night"] .sale-specs span,
+body[data-theme="royal-night"] .sale-doc { background: #1b344d; border-color: #31516b; color: #dce7f2; }
+body[data-theme="royal-night"] .booking-panel label, body[data-theme="royal-night"] .fleet-controls label { color: #e8eef5; }
+body[data-theme="royal-night"] .booking-panel input, body[data-theme="royal-night"] .booking-panel select,
+body[data-theme="royal-night"] .booking-panel textarea, body[data-theme="royal-night"] .fleet-controls,
+body[data-theme="royal-night"] .fleet-controls input, body[data-theme="royal-night"] .fleet-controls select,
+body[data-theme="royal-night"] .entertainment-select { background: var(--surface-soft); color: #fff; border-color: var(--line); }
+body[data-theme="royal-night"] .muted, body[data-theme="royal-night"] .live-fleet-updated,
+body[data-theme="royal-night"] .entertainment-panel-heading p, body[data-theme="royal-night"] .radio-now-playing span { color: var(--muted); }
+body[data-theme="royal-night"] footer { background: #0d1b2b !important; border-color: var(--line); }
+
+@media (max-width: 768px) {
+  #nav-menu { gap: 6px; padding: 18px; }
+  #nav-menu button, #nav-menu a { width: 100%; justify-content: flex-start; }
+  .hero-btns { flex-direction: column; align-items: stretch; }
+  .hero-btns > .btn { width: 100%; }
+  .car-actions { grid-template-columns: 1fr 1fr 44px 44px; }
+  .booking-step-actions .btn, .booking-step-actions .btn-submit { width: 100%; }
+}
+@media (max-width: 420px) {
+  .car-actions { grid-template-columns: 1fr 1fr; }
+  .car-actions > .btn-icon { width: 100%; }
+}
