@@ -35,11 +35,16 @@ test('same explicit fleet label and identical terms group units without losing t
   assert.deepEqual(groups[0].units.map(item => item.id).sort(), ['a', 'b', 'c']);
 });
 
-test('vehicles with different terms never share one public capacity count', () => {
-  const groups = groupFleetVehicles([unit('a'), unit('b', { price_24h: 200000 })]);
-  assert.equal(groups.length, 2);
-  assert.ok(groups.every(group => group.capacity === 1));
-  assert.ok(groups.every(group => group.profileMismatch));
+test('same explicit group stays on one card even with different specs and prices', () => {
+  const groups = groupFleetVehicles([
+    unit('a', { model: 'Tucson', driver_mode: 'with_driver', transmission: 'Automatique', price_per_day: 250000 }),
+    unit('b', { model: 'Getz', driver_mode: 'without_driver', transmission: 'Manuelle', price_per_day: 120000, price_24h: 140000 }),
+  ]);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].capacity, 2);
+  assert.equal(groups[0].vehicle.id, 'b');
+  assert.equal(groups[0].vehicle.price_per_day, 120000);
+  assert.deepEqual(groups[0].units.map(item => item.id), ['b', 'a']);
 });
 
 test('vehicles without a fleet label remain separate, even with the same model and prices', () => {
