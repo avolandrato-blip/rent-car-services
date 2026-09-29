@@ -49,13 +49,17 @@ body { font-family: 'Poppins', sans-serif; }
 .btn-whatsapp:hover, .btn-submit:hover { background: #e8b95a; color: var(--primary); }
 .btn-outline { background: transparent; color: var(--primary); border-color: var(--primary); }
 .btn-outline:hover { background: var(--primary); color: #fff; }
+.btn-share { background: var(--accent); color: var(--primary); border-color: #b8872b; }
+.btn-share:hover { background: #e8b95a; color: var(--primary); }
+.btn-call { background: var(--surface); color: var(--primary); border-color: var(--primary); text-decoration: none; }
+.btn-call:hover { background: var(--primary); color: #fff; }
 .btn-icon { width: 44px; min-width: 44px; padding: 0; border-radius: var(--radius-control); }
 .btn:disabled { opacity: .48; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .hero-btns { display: flex; flex-wrap: wrap; gap: 12px; }
 .hero-btns > .btn { width: 190px; }
-.car-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 44px 44px; gap: 8px; align-items: stretch; margin-top: auto; padding-top: 14px; }
-.car-actions > .btn { width: 100%; min-width: 0; }
+.car-actions { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; align-items: stretch; margin-top: auto; padding-top: 14px; }
+.car-actions > .btn { width: 100%; min-width: 0; min-height: 46px; height: 46px; padding: 0 10px; border-width: 1px; white-space: nowrap; }
 
 .flip-front, .flip-back, .car-card, .driver-card, .radio-card, .entertainment-panel, .booking-panel, .contact-wrapper, .live-fleet-panel, .sale-card, .sale-form {
   border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--card-shadow);
@@ -112,10 +116,10 @@ body[data-theme="royal-night"] footer { background: #0d1b2b !important; border-c
   #nav-menu button, #nav-menu a { width: 100%; justify-content: flex-start; }
   .hero-btns { flex-direction: column; align-items: stretch; }
   .hero-btns > .btn { width: 100%; }
-  .car-actions { grid-template-columns: 1fr 1fr 44px 44px; }
+  .car-actions { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .booking-step-actions .btn, .booking-step-actions .btn-submit { width: 100%; }
 }
 @media (max-width: 420px) {
-  .car-actions { grid-template-columns: 1fr 1fr; }
-  .car-actions > .btn-icon { width: 100%; }
+  .car-actions { grid-template-columns: 1fr; }
+  .car-actions > .btn { width: 100%; }
 }

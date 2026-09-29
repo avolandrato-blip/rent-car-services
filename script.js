@@ -171,7 +171,7 @@ function renderPublicCars() {
         const photos = Array.isArray(group.photos) && group.photos.length ? group.photos : (Array.isArray(car.photos) ? car.photos : (Array.isArray(car.image_urls) ? car.image_urls : []));
         const name = group.displayName || car.nom || car.name;
         const description = group.displayDescription || car.description || (window.RentCarFleet?.catchyDescription?.(car) || 'Un véhicule confortable et prêt à vous accompagner.');
-        return `<div class="car-card" data-fleet-id="${group.id || car.id}"><div class="car-gallery">${photos.map(photo => `<img src="${photo}" loading="lazy" alt="${name}">`).join('')}</div><div class="car-info"><h3>${name}</h3><p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p><div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : (car.prix || 'Sur devis')}</div><div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission || '—'}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant || car.fuel || '—'}</span><span><i class="fas fa-users"></i> ${car.places || car.seats || '—'}</span></div><p class="car-desc">${description}</p><p class="fleet-unit-count">${state.label}</p><div class="car-actions"><button class="btn btn-primary btn-reserve" ${state.available ? '' : 'disabled'} onclick="openBookingForVehicle('${group.id || car.id}','${name.replace(/'/g, "\\'")}')">Réserver</button><button class="btn btn-outline" onclick="openLongTermQuote('${name.replace(/'/g, "\\'")}')">Contactez-nous</button><a href="https://wa.me/${siteConfig.footer.whatsapp}" target="_blank" class="btn btn-whatsapp btn-icon" aria-label="WhatsApp ${name}"><i class="fab fa-whatsapp"></i></a><a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-primary btn-icon" aria-label="Appeler ${name}"><i class="fas fa-phone"></i></a></div></div></div>`;
+        return `<div class="car-card" data-fleet-id="${group.id || car.id}"><div class="car-gallery">${photos.map(photo => `<img src="${photo}" loading="lazy" alt="${name}">`).join('')}</div><div class="car-info"><h3>${name}</h3><p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p><div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : (car.prix || 'Sur devis')}</div><div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission || '—'}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant || car.fuel || '—'}</span><span><i class="fas fa-users"></i> ${car.places || car.seats || '—'}</span></div><p class="car-desc">${description}</p><p class="fleet-unit-count">${state.label}</p><div class="car-actions"><button class="btn btn-primary btn-reserve" ${state.available ? '' : 'disabled'} onclick="openBookingForVehicle('${group.id || car.id}','${name.replace(/'/g, "\\'")}')"><i class="fas fa-calendar-check"></i> Réserver</button><button class="btn btn-outline" onclick="openLongTermQuote('${name.replace(/'/g, "\\'")}')"><i class="fas fa-envelope"></i> Contactez-nous</button><button class="btn btn-share" onclick="shareVehicle('${group.id || car.id}','${name.replace(/'/g, "\\'")}')"><i class="fas fa-share-nodes"></i> Partager</button><a href="tel:${siteConfig.footer.telephone.replace(/\s/g,'')}" class="btn btn-call" aria-label="Appeler ${name}"><i class="fas fa-phone"></i> Appeler-nous</a></div></div></div>`;
     }).join('') || '<p class="fleet-empty">Aucune voiture ne correspond à vos critères.</p>';
 }
 
@@ -366,6 +366,25 @@ function openLongTermQuote(vehicleName) {
         if (message) message.value = `Bonjour, je souhaite demander un devis pour une location longue durée${vehicleName ? ` de la ${vehicleName}` : ''}.`;
         document.getElementById('dynamic-form')?.scrollIntoView({ behavior: 'smooth' });
     }, 300);
+}
+
+async function shareVehicle(vehicleId, vehicleName) {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?vehicle=${encodeURIComponent(vehicleId)}#cars`;
+    const shareData = {
+        title: `${vehicleName} — Rent Car Service`,
+        text: `Découvrez ${vehicleName} et demandez une réservation auprès de Rent Car Service.`,
+        url: shareUrl,
+    };
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+            return;
+        }
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Lien de la voiture copié. Vous pouvez maintenant le coller sur Facebook ou WhatsApp.');
+    } catch (error) {
+        if (error?.name !== 'AbortError') window.prompt('Copiez le lien de partage :', shareUrl);
+    }
 }
 
 function sendWhatsApp(e) {
