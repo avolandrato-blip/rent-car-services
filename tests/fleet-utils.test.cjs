@@ -43,6 +43,7 @@ test('same explicit group stays on one card even with different specs and prices
   assert.equal(groups.length, 1);
   assert.equal(groups[0].capacity, 2);
   assert.equal(groups[0].vehicle.id, 'b');
+  assert.equal(groups[0].displayName, 'Kia Morning b');
   assert.equal(groups[0].vehicle.price_per_day, 120000);
   assert.deepEqual(groups[0].units.map(item => item.id), ['b', 'a']);
 });

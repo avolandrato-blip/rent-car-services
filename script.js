@@ -11,6 +11,11 @@ function setClientTheme(theme) { document.body.dataset.theme = theme; localStora
 function initClientTheme() { setClientTheme(localStorage.getItem("rentcar-theme") || "royal-night"); }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Toujours démarrer sur l’accueil lorsqu’aucune section n’est demandée dans l’URL.
+    if (!location.hash) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.getElementById('home')?.classList.add('active');
+    }
     await initSite();
 });
 
@@ -80,6 +85,7 @@ async function initSite() {
         await loadBookingData();
         const initialTab = location.hash.slice(1);
         if (initialTab && document.getElementById(initialTab)?.classList.contains('tab')) openTab(initialTab);
+        else if (!initialTab) openTab('home');
 
     } catch (e) { 
         console.error("Erreur lors de l'initialisation du site:", e); 

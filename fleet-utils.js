@@ -71,7 +71,8 @@
         id: `fleet:${key}:${stableHash(key)}`,
         fleet_group: base.label,
         label: base.label,
-        displayName: base.label,
+        // Le groupe sert uniquement à fusionner les unités ; le client voit le nom choisi dans le véhicule le moins cher.
+        displayName: first.name || base.label || 'Véhicule',
         units,
         vehicle: first,
         capacity: units.length,
