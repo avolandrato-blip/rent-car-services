@@ -50,7 +50,7 @@
 
   function refreshEnhancements() { setupSearch(); renderAlerts(); }
   window.previewDocument = previewDocument;
-  document.addEventListener('DOMContentLoaded', () => { addStyles(); setTimeout(refreshEnhancements, 300); });
+  document.addEventListener('DOMContentLoaded', () => { addStyles(); setTimeout(refreshEnhancements, 300); setInterval(() => window.refreshAll?.(), 30000); });
   const originalRefreshAll = window.refreshAll;
   if (typeof originalRefreshAll === 'function' && !originalRefreshAll.__operationsWrapped) {
     const wrapped = async function (...args) { const result = await originalRefreshAll.apply(this, args); refreshEnhancements(); return result; };

@@ -109,6 +109,13 @@
     updatePaymentProofVisibility(); setBookingStep(1);
   }
 
+  function withReservationTimeout(promise, timeoutMs = 20000) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT_RESERVATION')), timeoutMs))
+    ]);
+  }
+
   async function submitReservationEnhanced(event) {
     event.preventDefault();
     const result = $('booking-result');
@@ -160,7 +167,7 @@
     let reservationResult = null;
     let reservedUnit = null;
     for (const unit of candidateUnits) {
-      const attempt = await db.rpc('create_public_reservation', { p_payload: { ...payload, vehicle_id: unit.id } });
+      const attempt = await withReservationTimeout(db.rpc('create_public_reservation', { p_payload: { ...payload, vehicle_id: unit.id } }));
       if (!attempt.error) {
         const row = Array.isArray(attempt.data) ? attempt.data[0] : attempt.data;
         if (row?.id && row?.reference) { reservationResult = { data: row }; reservedUnit = unit; break; }
@@ -203,6 +210,25 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     autoTheme(); setInterval(autoTheme, 60000); addBookingFields(); setupBookingSteps(); window.syncClientRequiredMarks?.(document);
-    window.submitReservation = submitReservationEnhanced;
+    window.submitReservation = async (event) => {
+      const form = $('booking-form');
+      const result = $('booking-result');
+      const submitButton = form?.querySelector('button[type=submit]');
+      if (submitButton) { submitButton.disabled = true; submitButton.dataset.originalText = submitButton.textContent; submitButton.textContent = 'Enregistrement…'; }
+      if (result) { result.className = 'booking-result'; result.textContent = 'Enregistrement de votre demande…'; }
+      try {
+        await submitReservationEnhanced(event);
+      } catch (error) {
+        console.error('Reservation submission failed:', error);
+        if (result) {
+          result.className = 'booking-result booking-error';
+          result.textContent = error?.message === 'TIMEOUT_RESERVATION'
+            ? 'Le serveur met trop de temps à répondre. Vérifiez votre référence avant de recommencer, afin d’éviter une double réservation.'
+            : 'La réservation n’a pas pu être enregistrée. Vérifiez les informations puis réessayez.';
+        }
+      } finally {
+        if (submitButton) { submitButton.disabled = false; submitButton.textContent = submitButton.dataset.originalText || 'Confirmer la réservation'; }
+      }
+    };
   });
 })();
