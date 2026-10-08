@@ -15,11 +15,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initSite();
 });
 
+async function loadDynamicSiteSettings() {
+    if (!window.rentCarSupabase) return;
+    const { data } = await window.rentCarSupabase.from('site_settings').select('settings').eq('id', true).maybeSingle();
+    if (!data?.settings) return;
+    const merge = (a, b) => Object.keys(b || {}).reduce((out, key) => { out[key] = b[key] && typeof b[key] === 'object' && !Array.isArray(b[key]) ? merge(out[key] || {}, b[key]) : b[key]; return out; }, { ...a });
+    siteConfig = merge(siteConfig, data.settings);
+    const seo = siteConfig.seo || {};
+    if (seo.title) document.title = seo.title;
+    let description = document.querySelector('meta[name="description"]');
+    if (!description) { description = document.createElement('meta'); description.name = 'description'; document.head.appendChild(description); }
+    if (seo.description) description.content = seo.description;
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (seo.canonical) { if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); } canonical.href = seo.canonical; }
+    let structured = document.getElementById('dynamic-business-schema');
+    if (!structured) { structured = document.createElement('script'); structured.id = 'dynamic-business-schema'; structured.type = 'application/ld+json'; document.head.appendChild(structured); }
+    structured.textContent = JSON.stringify({ '@context':'https://schema.org', '@type':'LocalBusiness', name:siteConfig.header?.nom || 'Rent Car Service', description:seo.description || '', telephone:siteConfig.footer?.telephone || '', url:seo.canonical || location.href, address:{'@type':'PostalAddress',streetAddress:siteConfig.footer?.adresse || '',addressLocality:'Antananarivo',addressCountry:'MG'}, areaServed:['Antananarivo','Madagascar'] });
+}
+
 async function initSite() {
         initClientTheme();
     try {
         const resConfig = await fetch('config.json');
         siteConfig = await resConfig.json();
+        await loadDynamicSiteSettings();
 
         // 1. Thème et Fond Global (Correction forcée pour soarano.png)
         document.documentElement.style.setProperty('--primary', siteConfig.theme.primary);

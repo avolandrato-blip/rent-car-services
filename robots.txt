@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin.html?
+
+Sitemap: https://avolandrato-blip.github.io/rent-car-services/sitemap.xml
