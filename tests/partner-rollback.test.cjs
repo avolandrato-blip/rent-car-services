@@ -34,9 +34,9 @@ test('admin source is restored while public booking safeguards stay enabled', ()
   assert.equal(accountJsExists, false);
   assert.doesNotMatch(admin, /data-superadmin-only|data-partner-hidden|account-access\.js|partner-account-form/);
   assert.match(admin, /data-tab="overview">Tableau de bord/);
-  assert.match(booking, /rpc\('create_public_reservation'/);
-  assert.match(publicScript, /public_fleet_busy_slots/);
-  assert.match(publicScript, /functions\.invoke\('get-invoice-contract-package'/);
+  assert.match(booking, /rpc\('create_public_distance_reservation'/);
+  assert.doesNotMatch(booking, /trip_rate/);
+  assert.match(publicScript, /bookingSlotAvailability/);
   assert.match(contractPackageFunction, /rest\/v1\/rpc\/get_public_invoice_by_otp/);
   assert.match(contractPackageFunction, /reservationId/);
 });

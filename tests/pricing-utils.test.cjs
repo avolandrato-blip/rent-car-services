@@ -28,12 +28,6 @@ test('entered 24-hour rate drives long-rental calculations and discounts', () =>
   assert.equal(calculateRental(80000, 140000, 120).rentalAmount, 679000);
 });
 
-test('a configured route rate remains calculable without a vehicle 24-hour rate', () => {
-  const quote = calculateRental(80000, null, 48, 90000);
-  assert.equal(quote.requiresQuote, false);
-  assert.equal(quote.rentalAmount, 180000);
-});
-
 test('invalid duration and missing 12-hour rate fail closed to a quote', () => {
   assert.equal(calculateRental(0, 150000, 24).requiresQuote, true);
   assert.equal(calculateRental(80000, 150000, 0).requiresQuote, true);

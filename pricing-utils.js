@@ -1,5 +1,5 @@
 (function (root) {
-  function calculateRental(rate12h, rate24h, hours, tripRatePerDay = null) {
+  function calculateRental(rate12h, rate24h, hours) {
     const rate12 = Number(rate12h || 0);
     const parsedRate24 = rate24h === null || rate24h === undefined || rate24h === ''
       ? null
@@ -8,18 +8,8 @@
     const durationHours = Number(hours);
     const days = Math.max(1, Math.ceil(durationHours / 24));
     const billedHours = Math.max(1, Math.ceil(durationHours));
-    const routeRate = Number(tripRatePerDay || 0);
-    const hasTripRate = Number.isFinite(routeRate) && routeRate > 0;
-
     if (!Number.isFinite(durationHours) || durationHours <= 0 || rate12 <= 0) {
       return { requiresQuote: true, rate12, rate24, days, billedHours, rentalAmount: null };
-    }
-
-    if (hasTripRate) {
-      let rentalAmount = routeRate * days;
-      const discountRate = billedHours > 48 ? (days >= 10 ? 0.10 : days >= 5 ? 0.03 : 0) : 0;
-      rentalAmount = Math.round(rentalAmount * (1 - discountRate));
-      return { requiresQuote: false, rate12, rate24, days, billedHours, rentalAmount };
     }
 
     if (billedHours <= 12) {

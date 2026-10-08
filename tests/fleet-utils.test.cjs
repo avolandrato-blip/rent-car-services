@@ -17,7 +17,6 @@ function unit(id, overrides = {}) {
     price_per_day: 150000,
     driver_fee: 30000,
     extra_driver_fee: 30000,
-    trip_rates: [],
     fleet_group: 'Kia Morning automatique',
     status: 'available',
     ...overrides,

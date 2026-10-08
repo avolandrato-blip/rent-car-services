@@ -43,7 +43,7 @@ async function initSite() {
         // 1. Thème et Fond Global (Correction forcée pour soarano.png)
         document.documentElement.style.setProperty('--primary', siteConfig.theme.primary);
         document.documentElement.style.setProperty('--accent', siteConfig.theme.accent);
-        
+
         if (siteConfig.theme.site_bg) {
             // Application du fond sur l'élément racine pour garantir la visibilité
             document.documentElement.style.backgroundImage = `url('${siteConfig.theme.site_bg}')`;
@@ -87,7 +87,7 @@ async function initSite() {
         // 5. Liens d'action directs (Bouton d'appel et WhatsApp)
         const fabCall = document.getElementById('fab-call');
         if(fabCall) fabCall.href = `tel:${siteConfig.footer.telephone.replace(/\s/g, '')}`;
-        
+
         const heroWhatsapp = document.getElementById('hero-whatsapp');
         if(heroWhatsapp) heroWhatsapp.href = `https://wa.me/${siteConfig.footer.whatsapp}`;
 
@@ -105,8 +105,8 @@ async function initSite() {
             else if (!initialTab) openTab('home', { silent: true });
         }
 
-    } catch (e) { 
-        console.error("Erreur lors de l'initialisation du site:", e); 
+    } catch (e) {
+        console.error("Erreur lors de l'initialisation du site:", e);
     }
 }
 
@@ -115,7 +115,7 @@ async function loadHome() {
     const data = await res.json();
     const banner = document.getElementById('hero-banner');
     if(banner) banner.style.backgroundImage = `url('${data.hero.image}')`;
-    
+
     document.getElementById('hero-title').innerText = data.hero.titre;
     document.getElementById('hero-slogan').innerText = data.hero.slogan;
     document.getElementById('hero-desc').innerText = data.hero.description;
@@ -125,7 +125,7 @@ async function loadHome() {
 async function loadCards() {
     const res = await fetch('data_cards.json');
     const data = await res.json();
-    
+
     // Grille "Pourquoi nous choisir" avec effet rotation
     document.getElementById('features-grid').innerHTML = data.features.map(f => `
         <div class="flip-card" onclick="this.classList.toggle('flipped')">
@@ -204,7 +204,7 @@ async function loadCars() {
     let normalized = localCars.filter(car => car.status !== 'contract_ended');
     if (window.rentCarSupabase) {
         try {
-            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,trip_rates,fleet_group,contract_start_date,contract_end_date').neq('status','inactive').neq('status','contract_ended').order('price_per_day',{ascending:true}).order('name',{ascending:true});
+            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date').neq('status','inactive').neq('status','contract_ended').order('price_per_day',{ascending:true}).order('name',{ascending:true});
             if (!vehicleError && remoteCars?.length) normalized = remoteCars.map(car => ({...car,nom:car.name,prix:car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',pricing:{half_day:car.price_12h ? formatMGA(car.price_12h) : 'Sur devis',full_day:car.price_24h ? formatMGA(car.price_24h) : 'Sur devis'},places:car.seats,carburant:car.fuel || '—',photos:car.image_urls || []}));
             const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
             publicRentalCounts = (booked || []).reduce((acc,row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
@@ -332,7 +332,7 @@ async function loadContact() {
     const res = await fetch('contact.json');
     const data = await res.json();
     const form = document.getElementById('dynamic-form');
-    
+
     form.innerHTML = data.formulaire.map(f => {
         let inputHtml = '';
         if(f.type === 'select') {
@@ -389,7 +389,7 @@ function openBookingForFleet(fleetId, fleetName) {
     if (select && fleetId && [...select.options].some(option => option.value === fleetId)) select.value = fleetId;
     const availability = document.getElementById('availability-vehicle');
     if (availability) availability.value = fleetId;
-    syncBookingTripRates();
+
     updateBookingQuote();
     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -399,7 +399,7 @@ function openBookingForVehicle(vehicleId, vehicleName) {
     openTab('booking');
     const select = document.getElementById('booking-vehicle');
     if (select && vehicleId && [...select.options].some(option => option.value === vehicleId)) select.value = vehicleId;
-    syncBookingTripRates();
+
     updateBookingQuote();
     document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -469,7 +469,7 @@ function usePublicCarsAsBookingFallback() {
         select.innerHTML = window.bookingFleets.map(group => `<option value="${group.id}">${publicBookingVehicleLabel(group)}</option>`).join('');
         if (pendingBookingFleetId && [...select.options].some(option => option.value === pendingBookingFleetId)) select.value = pendingBookingFleetId;
     }
-    syncBookingTripRates();
+
     updateBookingQuote();
 }
 
@@ -479,7 +479,7 @@ async function loadBookingData() {
     let result;
     try {
         result = await Promise.all([
-            db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,trip_rates,fleet_group,contract_start_date,contract_end_date').eq('status','available').order('name'),
+            db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date').eq('status','available').order('name'),
             db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status',['pre_reserved','reserved']),
             db.from('maintenance').select('vehicle_id,start_at,end_at')
         ]);
@@ -519,7 +519,7 @@ async function loadBookingData() {
     }
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${window.bookingFleets.map(group => `<option value="${group.id}">${group.displayName}</option>`).join('')}`;
-    syncBookingTripRates(); window.updateClientDriverLabel?.(); window.bookingSlotAvailability = bookingSlotAvailability; window.getBookingFleet = id => (window.bookingFleets || []).find(group => group.id === id); ['booking-start-date','booking-end-date','booking-start-time','booking-end-time'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars)); updateBookingQuote(); renderLiveFleetButtons(); renderPublicCars();
+     window.updateClientDriverLabel?.(); window.bookingSlotAvailability = bookingSlotAvailability; window.getBookingFleet = id => (window.bookingFleets || []).find(group => group.id === id); ['booking-start-date','booking-end-date','booking-start-time','booking-end-time'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars)); updateBookingQuote(); renderLiveFleetButtons(); renderPublicCars();
 }
 
 function vehicleClientStatus(vehicleOrGroup) {
@@ -598,8 +598,6 @@ function availabilityLabel(status) {
     return { available: 'Disponible', pre_reserved: 'Pré-réservée', reserved: 'Réservée', maintenance: 'En maintenance', unknown: 'Dates à choisir' }[status] || status;
 }
 
-function tripRateAmount(rate) { return Number(rate?.price_per_day ?? rate?.rate ?? 0); }
-function tripRateLabel(rate) { return rate?.label || [rate?.from, rate?.to].filter(Boolean).join(' → ') || 'Destination spéciale'; }
 const distanceBandConfig = {
     '0_30': { label: 'rayon de 0 à 30 km autour de Tana', minDays: 1, minHours: 12, priceKey: null },
     '30_100': { label: 'rayon de plus de 30 à 100 km autour de Tana', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
@@ -607,16 +605,6 @@ const distanceBandConfig = {
     'over_200': { label: 'rayon de plus de 200 km autour de Tana', minDays: 5, minHours: 120, priceKey: 'price_over_200_per_day' }
 };
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
-function syncBookingTripRates() {
-    const selectedGroup = (window.bookingFleets || []).find(item => item.id === document.getElementById('booking-vehicle')?.value);
-    const vehicle = selectedGroup?.vehicle || bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
-    const oldWrap = document.getElementById('booking-trip-rate-wrap');
-    if (oldWrap) oldWrap.classList.add('hidden');
-    const select = document.getElementById('booking-trip-rate');
-    if (select) { select.innerHTML = '<option value="">Aucun tarif par destination</option>'; select.disabled = true; }
-    const band = document.getElementById('booking-distance-band');
-    if (band) band.disabled = !vehicle;
-}
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
@@ -756,8 +744,6 @@ async function submitReservation(event) {
         days,
         trip_from: document.getElementById('booking-trip-from').value.trim(),
         trip_to: document.getElementById('booking-trip-to').value.trim(),
-        trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null,
-        trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null,
         province_zone: quote.provinceZone,
         delivery_fee: quote.delivery,
         recovery_fee: quote.recovery,
@@ -807,7 +793,7 @@ async function verifyInvoiceOtp(event) {
 }
 
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-distance-band'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
-document.getElementById('booking-vehicle')?.addEventListener('change', () => { syncBookingTripRates(); updateBookingQuote(); });
+document.getElementById('booking-vehicle')?.addEventListener('change', updateBookingQuote);
 
 
 function syncRentalTimes() {
