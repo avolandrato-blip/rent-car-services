@@ -185,7 +185,7 @@ async function loadCars() {
     let normalized = localCars.filter(car => car.status !== 'contract_ended');
     if (window.rentCarSupabase) {
         try {
-            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,fleet_group,contract_start_date,contract_end_date').neq('status','inactive').neq('status','contract_ended').order('price_per_day',{ascending:true}).order('name',{ascending:true});
+            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,trip_rates,fleet_group,contract_start_date,contract_end_date').neq('status','inactive').neq('status','contract_ended').order('price_per_day',{ascending:true}).order('name',{ascending:true});
             if (!vehicleError && remoteCars?.length) normalized = remoteCars.map(car => ({...car,nom:car.name,prix:car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',pricing:{half_day:car.price_12h ? formatMGA(car.price_12h) : 'Sur devis',full_day:car.price_24h ? formatMGA(car.price_24h) : 'Sur devis'},places:car.seats,carburant:car.fuel || '—',photos:car.image_urls || []}));
             const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
             publicRentalCounts = (booked || []).reduce((acc,row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
@@ -460,7 +460,7 @@ async function loadBookingData() {
     let result;
     try {
         result = await Promise.all([
-            db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,trip_rates,fleet_group,contract_start_date,contract_end_date').eq('status','available').order('name'),
+            db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,trip_rates,fleet_group,contract_start_date,contract_end_date').eq('status','available').order('name'),
             db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status',['pre_reserved','reserved']),
             db.from('maintenance').select('vehicle_id,start_at,end_at')
         ]);
@@ -586,6 +586,8 @@ function syncBookingTripRates() {
     const vehicle = selectedGroup?.vehicle || bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
     const wrap = document.getElementById('booking-trip-rate-wrap');
     const select = document.getElementById('booking-trip-rate');
+    const provinceWrap = document.getElementById('booking-province-zone-wrap');
+    if (provinceWrap) provinceWrap.classList.toggle('hidden', vehicle?.driver_mode === 'with_driver');
     if (!wrap || !select) return;
     const rates = vehicle?.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).filter(rate => tripRateAmount(rate) > 0) : [];
     wrap.classList.toggle('hidden', !rates.length);
@@ -606,6 +608,13 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else rentalAmount = rate12 * days;
     const selectedTrip = document.getElementById('booking-trip-rate')?.value;
     const tripRate = vehicle.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).find(item => item.id === selectedTrip) : null;
+    const provinceZone = vehicle.driver_mode === 'without_driver' ? (document.getElementById('booking-province-zone')?.value || 'city') : null;
+    const provinceKey = provinceZone === 'under_150' ? 'under_150' : provinceZone === 'over_150' ? 'over_150' : null;
+    const provinceMode = provinceKey ? vehicle[`province_${provinceKey}_mode`] || 'quote' : null;
+    const provincePrice = provinceKey ? Number(vehicle[`province_${provinceKey}_price`] || 0) : 0;
+    const provinceUnavailable = provinceKey && provinceMode === 'unavailable';
+    const provinceQuote = provinceKey && (provinceMode !== 'price' || provincePrice <= 0);
+    if (provinceKey && provinceMode === 'price' && provincePrice > 0) rentalAmount = provincePrice * days;
     if (tripRate) rentalAmount = tripRateAmount(tripRate) * days;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
@@ -613,8 +622,9 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     const isWithDriver = vehicle.driver_mode === 'with_driver';
     const driverRate = Number(isWithDriver ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000));
     const chauffeur = wantsDriver ? driverRate * days : 0;
-    const requiresQuote = !hasRate24 && billedHours > 12 && !tripRate;
-    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur: tripRate ? 0 : chauffeur, tripRate, requiresQuote, total: rentalAmount + delivery + recovery + (tripRate ? 0 : chauffeur) };
+    const requiresQuote = !!provinceQuote || (!hasRate24 && billedHours > 12 && !tripRate);
+    const unavailable = !!provinceUnavailable;
+    return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur: tripRate ? 0 : chauffeur, tripRate, provinceZone, provinceKey, provinceMode, provincePrice, unavailable, requiresQuote, total: rentalAmount + delivery + recovery + (tripRate ? 0 : chauffeur) };
 }
 
 function updateBookingQuote() {
@@ -630,7 +640,7 @@ function updateBookingQuote() {
         return;
     }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    const promoState = promoEligibility(q); const promoDiscount = promoState.discount; const finalTotal = Math.max(0, q.total - promoDiscount); const quoteText = `${q.requiresQuote ? 'Location 24 h et plus : Sur devis' : q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; if (quote) quote.textContent = quoteText; if (mini) mini.innerHTML = `<strong>${q.requiresQuote ? 'Tarif sur devis' : `Total estimatif : ${formatMGA(finalTotal)}`}</strong><span>${q.requiresQuote ? 'Pour cette durée, contactez-nous pour recevoir une proposition.' : `${q.days} jour(s) · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}`}</span>`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    if (q.unavailable) { if (quote) quote.textContent = 'Tarif province non disponible pour cette zone.'; if (mini) mini.innerHTML = '<strong>Non disponible</strong><span>Cette zone n’est pas proposée pour ce véhicule.</span>'; return; } const promoState = promoEligibility(q); const promoDiscount = promoState.discount; const finalTotal = Math.max(0, q.total - promoDiscount); const quoteText = `${q.requiresQuote ? 'Location 24 h et plus : Sur devis' : q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; if (quote) quote.textContent = quoteText; if (mini) mini.innerHTML = `<strong>${q.requiresQuote ? 'Tarif sur devis' : `Total estimatif : ${formatMGA(finalTotal)}`}</strong><span>${q.requiresQuote ? 'Pour cette durée, contactez-nous pour recevoir une proposition.' : `${q.days} jour(s) · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}`}</span>`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
 }
 
 function checkAvailability() {
@@ -705,6 +715,7 @@ async function submitReservation(event) {
         trip_to: document.getElementById('booking-trip-to').value.trim(),
         trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null,
         trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null,
+        province_zone: quote.provinceZone,
         delivery_fee: quote.delivery,
         recovery_fee: quote.recovery,
         chauffeur_fee: quote.chauffeur,
@@ -752,7 +763,7 @@ async function verifyInvoiceOtp(event) {
     const win = window.open('', '_blank'); win.document.write(html); win.document.close();
 }
 
-['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-trip-rate'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-trip-rate','booking-province-zone'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 document.getElementById('booking-vehicle')?.addEventListener('change', () => { syncBookingTripRates(); updateBookingQuote(); });
 
 

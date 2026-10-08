@@ -134,7 +134,8 @@
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
-    if (quote.requiresQuote) return showBookingError('Cette durée est sur devis, car aucun tarif 24 h n’est renseigné. Contactez-nous pour recevoir une proposition.');
+    if (quote.unavailable) return showBookingError('Ce véhicule n’est pas disponible dans la zone province sélectionnée.');
+    if (quote.requiresQuote) return showBookingError('Cette zone ou cette durée est sur devis. Contactez-nous pour recevoir une proposition.');
     const promoCode = $('booking-promo')?.value.trim().toUpperCase() || null;
     const promoState = typeof promoEligibility === 'function' ? promoEligibility(quote) : { valid: true, discount: 0 };
     if (!promoState.valid) return showBookingError(promoState.message);
@@ -162,6 +163,7 @@
       trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(),
       trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null,
       trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null,
+      province_zone: quote.provinceZone,
       promo_code: promoCode, notes: $('booking-notes').value.trim() || null,
       terms_accepted_at: nowLocal()
     };
