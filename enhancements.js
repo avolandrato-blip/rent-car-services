@@ -29,15 +29,6 @@
   function validateBookingStep(step) {
     const section = document.querySelector(`[data-booking-step="${step}"]`);
     if (!section) return true;
-    if (step === 1) {
-      const fleet = window.bookingFleets?.find(group => group.id === $('booking-vehicle')?.value);
-      const destination = $('booking-trip-rate');
-      if (fleet?.vehicle?.driver_mode === 'with_driver' && destination && !destination.disabled && !destination.value) {
-        showBookingError('Veuillez sélectionner un itinéraire pour ce véhicule avec chauffeur avant de continuer.');
-        destination.focus();
-        return false;
-      }
-    }
     const fields = [...section.querySelectorAll('input, select, textarea')].filter(field => !field.disabled && field.type !== 'hidden');
     for (const field of fields) { if (!field.checkValidity()) { field.reportValidity(); return false; } }
     if (step === 1) {
@@ -130,18 +121,17 @@
     if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
     const candidateUnits = window.RentCarFleet.availableUnitsForGroup(fleetGroup, new Date(start).toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance);
     if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
-    if (vehicle.driver_mode === 'with_driver' && (vehicle.trip_rates || []).length && !$('booking-trip-rate')?.value) return showBookingError('Veuillez sélectionner l’itinéraire avec chauffeur.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);
-    if (quote.unavailable) return showBookingError('Ce véhicule n’est pas disponible dans la zone province sélectionnée.');
-    if (quote.requiresQuote) return showBookingError('Cette zone ou cette durée est sur devis. Contactez-nous pour recevoir une proposition.');
+    if (quote.unavailable) return showBookingError('Ce véhicule n’est pas disponible dans ce palier kilométrique.');
     const promoCode = $('booking-promo')?.value.trim().toUpperCase() || null;
     const promoState = typeof promoEligibility === 'function' ? promoEligibility(quote) : { valid: true, discount: 0 };
     if (!promoState.valid) return showBookingError(promoState.message);
     const promoDiscount = promoState.discount;
     const finalTotal = Math.max(0, quote.total - Math.min(quote.total, promoDiscount));
     const deposit = Math.max(0, Number($('booking-deposit').value || 0));
+    if (quote.requiresQuote && deposit > 0) return showBookingError('Pour une demande de devis, laissez l’acompte à 0 Ar.');
     if (deposit > finalTotal) return showBookingError('L’acompte ne peut pas dépasser le montant total après remise.');
     const paymentMethod = $('booking-payment-method').value || null;
     if (deposit > 0 && !paymentMethod) return showBookingError('Sélectionnez le mode de paiement de l’acompte.');
@@ -155,22 +145,22 @@
       start_at: new Date(start).toISOString(), end_at: new Date(end).toISOString(),
       with_driver: vehicle.driver_mode === 'with_driver' || $('booking-driver').checked, rental_type: $('booking-rental-type').value,
       delivery_requested: $('booking-delivery').checked, recovery_requested: $('booking-recovery').checked,
-      total_amount: finalTotal, deposit_amount: deposit, payment_method: paymentMethod,
-      mobile_reference: $('booking-mobile-reference')?.value.trim() || null,
-      mobile_number: $('booking-mobile-number')?.value.trim() || null,
+      total_amount: quote.requiresQuote ? 0 : finalTotal, deposit_amount: quote.requiresQuote ? 0 : deposit, payment_method: quote.requiresQuote ? null : paymentMethod,
+      mobile_reference: quote.requiresQuote ? null : ($('booking-mobile-reference')?.value.trim() || null),
+      mobile_number: quote.requiresQuote ? null : ($('booking-mobile-number')?.value.trim() || null),
       mobile_provider: $('booking-mobile-provider')?.value || null,
-      trip_rate_id: $('booking-trip-rate')?.value || null,
+      trip_rate_id: null,
       trip_from: $('booking-trip-from').value.trim(), trip_to: $('booking-trip-to').value.trim(),
-      trip_rate_label: quote.tripRate ? tripRateLabel(quote.tripRate) : null,
-      trip_rate_per_day: quote.tripRate ? tripRateAmount(quote.tripRate) : null,
-      province_zone: quote.provinceZone,
+      trip_rate_label: null, trip_rate_per_day: null, province_zone: null,
+      distance_band: quote.distanceBand, distance_km: quote.distanceBand === '0_30' ? 30 : quote.distanceBand === '30_100' ? 100 : quote.distanceBand === '100_200' ? 200 : 201,
+      minimum_days: quote.band.minDays, quote_requested: quote.requiresQuote, quote_reason: quote.quoteReason || null,
       promo_code: promoCode, notes: $('booking-notes').value.trim() || null,
       terms_accepted_at: nowLocal()
     };
     let reservationResult = null;
     let reservedUnit = null;
     for (const unit of candidateUnits) {
-      const attempt = await withReservationTimeout(db.rpc('create_public_reservation', { p_payload: { ...payload, vehicle_id: unit.id } }));
+      const attempt = await withReservationTimeout(db.rpc('create_public_distance_reservation', { p_payload: { ...payload, vehicle_id: unit.id } }));
       if (!attempt.error) {
         const row = Array.isArray(attempt.data) ? attempt.data[0] : attempt.data;
         if (row?.id && row?.reference) { reservationResult = { data: row }; reservedUnit = unit; break; }
@@ -182,10 +172,10 @@
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
     const recipient = ownerMode && reservedUnit.owner_phone ? String(reservedUnit.owner_phone).replace(/\D/g, '') : String(siteConfig.footer.whatsapp).replace(/\D/g, '');
-    const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.customer_name)}%0ATéléphone : ${encodeURIComponent(customer.customer_phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(reservedUnit.name || reservedUnit.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0ATotal estimé : ${encodeURIComponent(formatMGA(finalTotal))}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
+    const message = `${ownerMode ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.customer_name)}%0ATéléphone : ${encodeURIComponent(customer.customer_phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(reservedUnit.name || reservedUnit.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0A${quote.requiresQuote ? `Montant : demande de devis (${encodeURIComponent(quote.quoteReason || 'à confirmer')})` : `Total estimé : ${encodeURIComponent(formatMGA(finalTotal))}`}%0A${ownerMode ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
     window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';
-    const reservationMessage = deposit > 0 ? `Votre demande de réservation (${r.reference}) a bien été enregistrée avec l’acompte indiqué. La période est bloquée sous réserve de validation de l’acompte.` : `Votre demande de réservation (${r.reference}) a bien été enregistrée. La période reste disponible jusqu’au versement et à la validation de l’acompte.`;
+    const reservationMessage = quote.requiresQuote ? `Votre demande de devis (${r.reference}) a bien été enregistrée. Nous allons vous confirmer le tarif et la disponibilité.` : deposit > 0 ? `Votre demande de réservation (${r.reference}) a bien été enregistrée avec l’acompte indiqué. La période est bloquée sous réserve de validation de l’acompte.` : `Votre demande de réservation (${r.reference}) a bien été enregistrée. La période reste disponible jusqu’au versement et à la validation de l’acompte.`;
     result.textContent = reservationMessage;
     $('booking-form').reset();
     $('invoice-access-panel')?.classList.toggle('hidden', deposit <= 0);
