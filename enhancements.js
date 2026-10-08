@@ -176,7 +176,7 @@
         if (row?.id && row?.reference) { reservationResult = { data: row }; reservedUnit = unit; break; }
         return showBookingError('La réservation n’a pas pu être confirmée. Actualisez la page puis réessayez.');
       }
-      if (attempt.error.code !== '23P01') { console.error(attempt.error); return showBookingError('Impossible d’enregistrer la réservation pour le moment.'); }
+      if (attempt.error.code !== '23P01') { console.error(attempt.error); return showBookingError(reservationErrorMessage(attempt.error)); }
     }
     if (!reservationResult) return showBookingError('Les dernières voitures disponibles viennent d’être réservées. Actualisez le calendrier puis réessayez.');
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
@@ -193,6 +193,7 @@
     if (typeof loadBookingData === 'function') await loadBookingData();
   }
 
+  function reservationErrorMessage(error) { const raw = String(error?.message || ''); const known = raw.includes('Price changed') ? 'Le tarif a changé depuis l’ouverture du formulaire. Actualisez la page puis vérifiez le total.' : raw.includes('Duration requires a quote') ? 'Cette durée est disponible uniquement sur devis.' : raw.includes('Province pricing requires a quote') ? 'Cette zone est disponible uniquement sur devis.' : raw.includes('Province zone unavailable') ? 'Cette zone n’est pas disponible pour ce véhicule.' : raw.includes('Vehicle unavailable') ? 'Ce véhicule n’est plus disponible pour cette période.' : raw.includes('Invalid booking dates') ? 'Les dates de réservation sont invalides ou déjà passées.' : raw.includes('Terms acceptance required') ? 'Veuillez cocher l’acceptation des conditions.' : raw.includes('Payment method required') ? 'Veuillez sélectionner le mode de paiement de l’acompte.' : raw.includes('Invalid deposit amount') ? 'Le montant de l’acompte est invalide.' : 'Impossible d’enregistrer la réservation. Actualisez la page puis réessayez.'; return known; }
   function showBookingError(message) { const result = $('booking-result'); result.className = 'booking-result booking-error'; result.textContent = message; }
 
   function enhanceReturnPanel() {
