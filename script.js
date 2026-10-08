@@ -601,12 +601,12 @@ function availabilityLabel(status) {
 function tripRateAmount(rate) { return Number(rate?.price_per_day ?? rate?.rate ?? 0); }
 function tripRateLabel(rate) { return rate?.label || [rate?.from, rate?.to].filter(Boolean).join(' → ') || 'Destination spéciale'; }
 const distanceBandConfig = {
-    '0_30': { label: '[0–30 km]', minDays: 1, minHours: 12, priceKey: null },
-    '30_100': { label: ']30–100 km]', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
-    '100_200': { label: ']100–200 km]', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
-    'over_200': { label: ']+200 km[', minDays: 5, minHours: 120, priceKey: 'price_over_200_per_day' }
+    '0_30': { label: 'rayon de 0 à 30 km autour de Tana', minDays: 1, minHours: 12, priceKey: null },
+    '30_100': { label: 'rayon de plus de 30 à 100 km autour de Tana', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
+    '100_200': { label: 'rayon de plus de 100 à 200 km autour de Tana', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
+    'over_200': { label: 'rayon de plus de 200 km autour de Tana', minDays: 5, minHours: 120, priceKey: 'price_over_200_per_day' }
 };
-function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'Palier kilométrique'; }
+function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
 function syncBookingTripRates() {
     const selectedGroup = (window.bookingFleets || []).find(item => item.id === document.getElementById('booking-vehicle')?.value);
     const vehicle = selectedGroup?.vehicle || bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
@@ -664,7 +664,7 @@ function updateBookingQuote() {
     const submit = document.getElementById('booking-submit-button');
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) {
         if (quote) quote.textContent = '';
-        if (mini) mini.innerHTML = '<strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule, le palier et les dates.</span>';
+        if (mini) mini.innerHTML = '<strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule, la zone d’utilisation et les dates.</span>';
         if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
         return;
     }
@@ -680,9 +680,9 @@ function updateBookingQuote() {
         return;
     }
     const promoState = promoEligibility(q), promoDiscount = promoState.discount, finalTotal = Math.max(0, q.total - promoDiscount);
-    const quoteText = `${q.distanceBand === '0_30' ? `Zone ${q.band.label} : ${formatMGA(q.rentalAmount)}` : `Palier ${q.band.label} : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const quoteText = `${q.distanceBand === '0_30' ? `Zone d’utilisation (${q.band.label}) : ${formatMGA(q.rentalAmount)}` : `Zone d’utilisation (${q.band.label}) : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (quote) quote.textContent = quoteText;
-    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · ${q.band.label} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}</span>`;
+    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · Zone : ${q.band.label} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}</span>`;
     const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = `Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
 }
