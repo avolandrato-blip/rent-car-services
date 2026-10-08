@@ -284,3 +284,20 @@ body[data-theme="royal-night"] .live-fleet-heading .muted { color: #bac4d4; }
 .car-actions > .btn-icon { min-width: 44px; width: 44px; padding: 8px; }
 body[data-theme="royal-night"] .btn-outline { background: #fff; color: var(--primary); }
 body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce6f5; }
+
+
+/* La date de départ et de retour sélectionnée ressort nettement dans le formulaire. */
+#booking-start-date:valid,
+#booking-end-date:valid {
+    color: #b42318;
+    background-color: #fff1f0;
+    border: 2px solid #b42318;
+    accent-color: #b42318;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(180, 35, 24, 0.12);
+}
+#booking-start-date:focus,
+#booking-end-date:focus {
+    outline: 2px solid rgba(180, 35, 24, 0.28);
+    outline-offset: 2px;
+}
