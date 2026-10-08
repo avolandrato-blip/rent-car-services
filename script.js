@@ -587,7 +587,7 @@ function syncBookingTripRates() {
     const wrap = document.getElementById('booking-trip-rate-wrap');
     const select = document.getElementById('booking-trip-rate');
     const provinceWrap = document.getElementById('booking-province-zone-wrap');
-    if (provinceWrap) provinceWrap.classList.toggle('hidden', vehicle?.driver_mode === 'with_driver');
+    if (provinceWrap) provinceWrap.classList.toggle('hidden', vehicle?.driver_mode === 'with_driver' && (vehicle?.trip_rates || []).length > 0);
     if (!wrap || !select) return;
     const rates = vehicle?.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).filter(rate => tripRateAmount(rate) > 0) : [];
     wrap.classList.toggle('hidden', !rates.length);
@@ -608,13 +608,14 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     else rentalAmount = rate12 * days;
     const selectedTrip = document.getElementById('booking-trip-rate')?.value;
     const tripRate = vehicle.driver_mode === 'with_driver' ? (vehicle.trip_rates || []).find(item => item.id === selectedTrip) : null;
-    const provinceZone = vehicle.driver_mode === 'without_driver' ? (document.getElementById('booking-province-zone')?.value || 'city') : null;
+    const provinceZone = document.getElementById('booking-province-zone')?.value || 'city';
     const provinceKey = provinceZone === 'under_150' ? 'under_150' : provinceZone === 'over_150' ? 'over_150' : null;
-    const provinceMode = provinceKey ? vehicle[`province_${provinceKey}_mode`] || 'quote' : null;
-    const provincePrice = provinceKey ? Number(vehicle[`province_${provinceKey}_price`] || 0) : 0;
-    const provinceUnavailable = provinceKey && provinceMode === 'unavailable';
-    const provinceQuote = provinceKey && (provinceMode !== 'price' || provincePrice <= 0);
-    if (provinceKey && provinceMode === 'price' && provincePrice > 0) rentalAmount = provincePrice * days;
+    const provinceApplies = !tripRate;
+    const provinceMode = provinceApplies && provinceKey ? vehicle[`province_${provinceKey}_mode`] || 'quote' : null;
+    const provincePrice = provinceApplies && provinceKey ? Number(vehicle[`province_${provinceKey}_price`] || 0) : 0;
+    const provinceUnavailable = provinceApplies && provinceKey && provinceMode === 'unavailable';
+    const provinceQuote = provinceApplies && provinceKey && (provinceMode !== 'price' || provincePrice <= 0);
+    if (provinceApplies && provinceKey && provinceMode === 'price' && provincePrice > 0) rentalAmount = provincePrice * days;
     if (tripRate) rentalAmount = tripRateAmount(tripRate) * days;
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
@@ -640,7 +641,7 @@ function updateBookingQuote() {
         return;
     }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value), deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    if (q.unavailable) { if (quote) quote.textContent = 'Tarif province non disponible pour cette zone.'; if (mini) mini.innerHTML = '<strong>Non disponible</strong><span>Cette zone n’est pas proposée pour ce véhicule.</span>'; return; } const promoState = promoEligibility(q); const promoDiscount = promoState.discount; const finalTotal = Math.max(0, q.total - promoDiscount); const quoteText = `${q.requiresQuote ? 'Location 24 h et plus : Sur devis' : q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; if (quote) quote.textContent = quoteText; if (mini) mini.innerHTML = `<strong>${q.requiresQuote ? 'Tarif sur devis' : `Total estimatif : ${formatMGA(finalTotal)}`}</strong><span>${q.requiresQuote ? 'Pour cette durée, contactez-nous pour recevoir une proposition.' : `${q.days} jour(s) · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}`}</span>`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    if (q.unavailable) { if (quote) quote.textContent = 'Tarif province non disponible pour cette zone.'; if (mini) mini.innerHTML = '<strong>Non disponible</strong><span>Cette zone n’est pas proposée pour ce véhicule.</span>'; return; } const promoState = promoEligibility(q); const promoDiscount = promoState.discount; const finalTotal = Math.max(0, q.total - promoDiscount); const quoteText = `${q.requiresQuote ? (q.provinceKey ? `Tarif province ${q.provinceKey === 'under_150' ? '≤ 150 km' : '> 150 km'} : Sur devis` : 'Location 24 h et plus : Sur devis') : q.tripRate ? `Trajet ${tripRateLabel(q.tripRate)} : ${formatMGA(tripRateAmount(q.tripRate))} / jour × ${q.days} jour(s)` : `Location ${formatMGA(q.rentalAmount)}`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`; if (quote) quote.textContent = quoteText; if (mini) mini.innerHTML = `<strong>${q.requiresQuote ? (q.provinceKey ? 'Tarif province sur devis' : 'Tarif sur devis') : `Total estimatif : ${formatMGA(finalTotal)}`}</strong><span>${q.requiresQuote ? 'Pour cette durée, contactez-nous pour recevoir une proposition.' : `${q.days} jour(s) · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}`}</span>`; const balanceNote=document.getElementById('booking-balance-note'); if(balanceNote) balanceNote.textContent=`Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
 }
 
 function checkAvailability() {
