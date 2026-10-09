@@ -180,6 +180,21 @@ body[data-theme="royal-night"] .youtube-playlist-empty { background: #0b1021; co
 .booking-mini-summary { display: grid; gap: 4px; margin: 16px 0 4px; padding: 13px 15px; border: 1px solid #d9e4ec; border-left: 4px solid var(--accent); border-radius: 10px; background: #f7fbfd; color: var(--primary); font-size: .92rem; }
 .booking-mini-summary strong { font-size: 1rem; }
 .booking-mini-summary span { color: #5f7180; }
+.booking-distance-prices { margin: 12px 0 16px; padding: 14px; border: 1px solid #d9e4ec; border-radius: 12px; background: #fbfdff; color: var(--primary); }
+.booking-distance-prices[hidden] { display: none; }
+.booking-distance-prices-title { display: grid; gap: 3px; margin-bottom: 10px; }
+.booking-distance-prices-title > strong { font-size: .98rem; }
+.booking-distance-prices-title > span, .booking-distance-price-note { color: #5f7180; font-size: .8rem; line-height: 1.45; }
+.booking-distance-price-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; list-style: none; }
+.booking-distance-price { min-width: 0; padding: 10px; border: 1px solid #d9e4ec; border-radius: 9px; background: #fff; }
+.booking-distance-price.is-selected { border: 2px solid var(--accent); background: #f0fff6; box-shadow: 0 0 0 2px rgba(37,211,102,.12); }
+.booking-distance-price-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; font-size: .84rem; }
+.booking-distance-selected { flex: 0 0 auto; padding: 2px 6px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: .64rem; font-weight: 700; }
+.booking-distance-price-values { display: grid; gap: 2px; margin: 7px 0 4px; color: #203040; font-size: .84rem; }
+.booking-distance-price-values strong { color: #122c43; font-size: .92rem; }
+.booking-distance-price > small { color: #5f7180; font-size: .75rem; }
+.booking-distance-price-note { display: block; margin-top: 9px; }
+@media (max-width: 480px) { .booking-distance-price-list { grid-template-columns: 1fr; } }
 .booking-success { color: #15803d; }
 .booking-error { color: #b91c1c; }
 .muted { color: #777; }

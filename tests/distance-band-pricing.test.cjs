@@ -76,3 +76,33 @@ test('le palier >200 km calcule sur quatre jours et demande un devis en dessous 
   assert.equal(short.requiresQuote, true);
   assert.match(short.quoteReason, /4 jour/);
 });
+
+test('le choix d’une voiture affiche les quatre tarifs et met en évidence le palier retenu', () => {
+  const vm = require('node:vm');
+  const script = read('script.js');
+  const start = script.indexOf('const distanceBandConfig =');
+  const end = script.indexOf('function updateBookingQuote()', start);
+  const panel = { hidden: false, innerHTML: '' };
+  const controls = {
+    'booking-distance-band': { value: '30_100' },
+    'booking-distance-prices': panel
+  };
+  const context = {
+    document: { getElementById: id => controls[id] || null },
+    escapeFunHtml: value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
+  };
+  vm.runInNewContext(`${script.slice(start, end)}; globalThis.renderPrices = renderBookingDistancePrices;`, context);
+  context.renderPrices({
+    name: 'Hyundai i30',
+    price_12h: 150000,
+    price_24h: 180000,
+    price_30_100_per_day: 200000,
+    price_100_200_per_day: 250000,
+    price_over_200_per_day: 300000
+  });
+  assert.equal(panel.hidden, false);
+  for (const price of ['150 000 Ar', '180 000 Ar', '200 000 Ar', '250 000 Ar', '300 000 Ar']) assert.ok(panel.innerHTML.includes(price), price);
+  assert.match(panel.innerHTML, /30–100 km/);
+  assert.match(panel.innerHTML, /Palier choisi/);
+  assert.match(panel.innerHTML, /Minimum 2 jours/);
+});

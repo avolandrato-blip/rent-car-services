@@ -605,6 +605,31 @@ const distanceBandConfig = {
     'over_200': { label: 'palier >200 km — ouvert, sans plafond supérieur', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
 };
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
+function formatBookingRate(value) {
+    const amount = Number(value || 0);
+    return amount > 0 ? `${amount.toLocaleString('fr-FR')} Ar` : 'Sur devis';
+}
+function renderBookingDistancePrices(vehicle) {
+    const panel = document.getElementById('booking-distance-prices');
+    if (!panel) return;
+    if (!vehicle) { panel.innerHTML = ''; panel.hidden = true; return; }
+    const selectedBand = document.getElementById('booking-distance-band')?.value || '0_30';
+    const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
+    const rate24 = Number(vehicle.price_24h || 0);
+    const rows = Object.entries(distanceBandConfig).map(([key, band]) => {
+        let pricing;
+        if (key === '0_30') {
+            pricing = `<span>12 h : <strong>${formatBookingRate(rate12)}</strong></span><span>24 h : <strong>${formatBookingRate(rate24)}</strong></span>`;
+        } else {
+            pricing = `<span><strong>${formatBookingRate(vehicle[band.priceKey])}</strong> / jour</span>`;
+        }
+        const minimum = key === '0_30' ? 'Formules 12 h ou 24 h' : `Minimum ${band.minDays} jours`;
+        const title = key === 'over_200' ? 'Plus de 200 km' : key.replace('_', '–') + ' km';
+        return `<li class="booking-distance-price${key === selectedBand ? ' is-selected' : ''}"${key === selectedBand ? ' aria-current="true"' : ''}><div class="booking-distance-price-head"><strong>${title}</strong>${key === selectedBand ? '<span class="booking-distance-selected">Palier choisi</span>' : ''}</div><div class="booking-distance-price-values">${pricing}</div><small>${minimum}</small></li>`;
+    }).join('');
+    panel.hidden = false;
+    panel.innerHTML = `<div class="booking-distance-prices-title"><strong>Tarifs de ${escapeFunHtml(vehicle.name || vehicle.nom || 'la voiture choisie')}</strong><span>Choisissez un palier pour voir le prix correspondant.</span></div><ul class="booking-distance-price-list">${rows}</ul><small class="booking-distance-price-note">Prix de location hors options et autres frais éventuels. Le palier sélectionné est encadré.</small>`;
+}
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
@@ -650,6 +675,7 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     const mini = document.getElementById('booking-quote-mini');
     const submit = document.getElementById('booking-submit-button');
+    renderBookingDistancePrices(vehicle);
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) {
         if (quote) quote.textContent = '';
         if (mini) mini.innerHTML = '<strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule, la zone d’utilisation et les dates.</span>';
