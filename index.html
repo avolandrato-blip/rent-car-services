@@ -12,7 +12,7 @@
     <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261009-distance-prices"><link rel="stylesheet" href="client-harmony.css?v=20260930-1">
+    <link rel="stylesheet" href="style.css?v=20261009-band-daily-rates"><link rel="stylesheet" href="client-harmony.css?v=20260930-1">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -101,7 +101,7 @@
                             <h4>1. Véhicule, zone d’utilisation et période</h4>
                             <p class="muted">Sélectionnez le véhicule, sa zone d’utilisation autour de Tana et la période souhaitée pour consulter le tarif estimatif.</p>
                             <label>Véhicule<select id="booking-vehicle" required></select></label>
-                            <label>Zone d’utilisation du véhicule autour de Tana<select id="booking-distance-band" required><option value="0_30">0–30 km — trajet aller limité à 30 km; au-delà +1 000 Ar/km</option><option value="30_100">30–100 km — trajet aller limité à 100 km; au-delà +1 000 Ar/km</option><option value="100_200">100–200 km — trajet aller limité à 200 km; au-delà +1 000 Ar/km</option><option value="over_200">Plus de 200 km — palier ouvert, sans plafond supérieur</option></select><small id="booking-distance-note" class="field-note">La limite porte sur la distance du trajet aller vers la destination; le retour n’est pas compté une seconde fois.</small></label>
+                            <label>Zone d’utilisation du véhicule autour de Tana<select id="booking-distance-band" required><option value="0_30">0–30 km — tarif journalier selon le véhicule</option><option value="30_100">30–100 km — tarif journalier selon le véhicule</option><option value="100_200">100–200 km — tarif journalier selon le véhicule</option><option value="over_200">Plus de 200 km — tarif journalier selon le véhicule</option></select><small id="booking-distance-note" class="field-note">La limite porte sur la distance du trajet aller vers la destination; le retour n’est pas compté une seconde fois.</small></label><div id="booking-distance-prices" class="booking-distance-prices" aria-live="polite" aria-label="Tarifs par palier"></div>
                             <div class="date-range">
                                 <label>Date de départ<input id="booking-start-date" type="date" required></label>
                                 <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
@@ -205,11 +205,10 @@
     <script src="fleet-utils.js?v=20260929-1"></script>
     <script src="navigation.js?v=20260929-1"></script>
     <script src="contract-terms.js?v=20261009-min4"></script>
-    <script src="script.js?v=20261009-price-transparency"></script><script src="quote.js?v=20261008-1"></script>
+    <script src="script.js?v=20261009-band-daily-rates"></script><script src="quote.js?v=20261008-1"></script>
     <script src="enhancements.js?v=20261009-4"></script>
     <script src="client-invoice-link.js?v=20261009-1"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
     <script src="chauffeurs.js?v=20260928-1"></script>
 </body>
 </html>
-                            <div id="booking-distance-prices" class="booking-distance-prices" aria-live="polite" aria-label="Tarifs par palier"></div>

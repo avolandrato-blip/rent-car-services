@@ -83,8 +83,9 @@ test('le choix d’une voiture affiche les quatre tarifs et met en évidence le 
   const start = script.indexOf('const distanceBandConfig =');
   const end = script.indexOf('function updateBookingQuote()', start);
   const panel = { hidden: false, innerHTML: '' };
+  const options = ['0_30', '30_100', '100_200', 'over_200'].map(value => ({ value, textContent: '' }));
   const controls = {
-    'booking-distance-band': { value: '30_100' },
+    'booking-distance-band': { value: '30_100', options },
     'booking-distance-prices': panel
   };
   const context = {
@@ -94,6 +95,7 @@ test('le choix d’une voiture affiche les quatre tarifs et met en évidence le 
   vm.runInNewContext(`${script.slice(start, end)}; globalThis.renderPrices = renderBookingDistancePrices;`, context);
   context.renderPrices({
     name: 'Hyundai i30',
+    price_per_day: 150000,
     price_12h: 150000,
     price_24h: 180000,
     price_30_100_per_day: 200000,
@@ -101,8 +103,19 @@ test('le choix d’une voiture affiche les quatre tarifs et met en évidence le 
     price_over_200_per_day: 300000
   });
   assert.equal(panel.hidden, false);
-  for (const price of ['150 000 Ar', '180 000 Ar', '200 000 Ar', '250 000 Ar', '300 000 Ar']) assert.ok(panel.innerHTML.includes(price), price);
+  for (const price of ['150.000 Ar/jour', '180.000 Ar', '200.000 Ar/jour', '250.000 Ar/jour', '300.000 Ar/jour']) assert.ok(panel.innerHTML.includes(price), price);
   assert.match(panel.innerHTML, /30–100 km/);
   assert.match(panel.innerHTML, /Palier choisi/);
   assert.match(panel.innerHTML, /Minimum 2 jours/);
+  assert.deepEqual(options.map(option => option.textContent), [
+    '0–30 km — 150.000 Ar/jour',
+    '30–100 km — 200.000 Ar/jour · min. 2 j',
+    '100–200 km — 250.000 Ar/jour · min. 3 j',
+    '>200 km — 300.000 Ar/jour · min. 4 j'
+  ]);
+  assert.ok(options.every(option => !option.textContent.includes('1 000 Ar/km')));
+  const publicPage = read('index.html');
+  const bandSelect = publicPage.match(/<select id="booking-distance-band"[\s\S]*?<\/select>/)?.[0] || '';
+  assert.ok(bandSelect);
+  assert.doesNotMatch(bandSelect, /1 000 Ar\/km/);
 });

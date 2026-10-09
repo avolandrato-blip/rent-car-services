@@ -599,29 +599,48 @@ function availabilityLabel(status) {
 }
 
 const distanceBandConfig = {
-    '0_30': { label: 'palier 0–30 km — trajet aller : 30 km maximum; au-delà +1 000 Ar/km', minDays: 1, minHours: 12, priceKey: null },
-    '30_100': { label: 'palier 30–100 km — trajet aller : 100 km maximum; au-delà +1 000 Ar/km', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
-    '100_200': { label: 'palier 100–200 km — trajet aller : 200 km maximum; au-delà +1 000 Ar/km', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
+    '0_30': { label: 'palier 0–30 km — trajet aller : 30 km maximum', minDays: 1, minHours: 12, priceKey: null },
+    '30_100': { label: 'palier 30–100 km — trajet aller : 100 km maximum', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
+    '100_200': { label: 'palier 100–200 km — trajet aller : 200 km maximum', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
     'over_200': { label: 'palier >200 km — ouvert, sans plafond supérieur', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
 };
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
 function formatBookingRate(value) {
     const amount = Number(value || 0);
-    return amount > 0 ? `${amount.toLocaleString('fr-FR')} Ar` : 'Sur devis';
+    return amount > 0 ? `${amount.toLocaleString('fr-FR').replace(/[\s\u00a0\u202f]/g, '.')} Ar` : 'Sur devis';
+}
+function formatBookingDailyRate(value) {
+    const formatted = formatBookingRate(value);
+    return formatted === 'Sur devis' ? formatted : `${formatted}/jour`;
+}
+function updateBookingDistanceOptionLabels(vehicle) {
+    const select = document.getElementById('booking-distance-band');
+    if (!select || !vehicle) return;
+    const labels = {
+        '0_30': `0–30 km — ${formatBookingDailyRate(vehicle.price_per_day || vehicle.price_12h)}`,
+        '30_100': `30–100 km — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. 2 j`,
+        '100_200': `100–200 km — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. 3 j`,
+        'over_200': `>200 km — ${formatBookingDailyRate(vehicle.price_over_200_per_day)} · min. 4 j`
+    };
+    Array.from(select.options || []).forEach(option => {
+        if (labels[option.value]) option.textContent = labels[option.value];
+    });
 }
 function renderBookingDistancePrices(vehicle) {
     const panel = document.getElementById('booking-distance-prices');
     if (!panel) return;
     if (!vehicle) { panel.innerHTML = ''; panel.hidden = true; return; }
+    updateBookingDistanceOptionLabels(vehicle);
     const selectedBand = document.getElementById('booking-distance-band')?.value || '0_30';
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
     const rate24 = Number(vehicle.price_24h || 0);
     const rows = Object.entries(distanceBandConfig).map(([key, band]) => {
         let pricing;
         if (key === '0_30') {
-            pricing = `<span>12 h : <strong>${formatBookingRate(rate12)}</strong></span><span>24 h : <strong>${formatBookingRate(rate24)}</strong></span>`;
+            const dailyRate = vehicle.price_per_day || rate12;
+            pricing = `<span><strong>${formatBookingDailyRate(dailyRate)}</strong></span>${rate24 > 0 && rate24 !== Number(dailyRate) ? `<small>Formule 24 h : ${formatBookingRate(rate24)}</small>` : ''}`;
         } else {
-            pricing = `<span><strong>${formatBookingRate(vehicle[band.priceKey])}</strong> / jour</span>`;
+            pricing = `<span><strong>${formatBookingDailyRate(vehicle[band.priceKey])}</strong></span>`;
         }
         const minimum = key === '0_30' ? 'Formules 12 h ou 24 h' : `Minimum ${band.minDays} jours`;
         const title = key === 'over_200' ? 'Plus de 200 km' : key.replace('_', '–') + ' km';
