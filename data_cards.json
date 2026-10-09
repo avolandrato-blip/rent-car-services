@@ -25,7 +25,7 @@
     {
       "titre": "Zone",
       "icon": "fa-map-marker-alt",
-      "reponse": "Le palier choisi fixe le rayon maximal inclus, compté sur le trajet aller vers la destination (le retour n’est pas compté une seconde fois) : 0–30 km = 30 km maximum (formules 12 h ou 24 h); 30–100 km = 100 km maximum (minimum 2 jours); 100–200 km = 200 km maximum (minimum 3 jours). Si la distance aller dépasse le plafond du palier choisi, chaque kilomètre au-delà de ce plafond est majoré de 1 000 Ar. Le palier >200 km (minimum 5 jours) reste ouvert, sans plafond supérieur ni seuil supplémentaire de dépassement. Tout changement de destination ou sortie de la zone convenue requiert l’accord préalable du loueur."
+      "reponse": "Le palier choisi fixe le rayon maximal inclus, compté sur le trajet aller vers la destination (le retour n’est pas compté une seconde fois) : 0–30 km = 30 km maximum (formules 12 h ou 24 h); 30–100 km = 100 km maximum (minimum 2 jours); 100–200 km = 200 km maximum (minimum 3 jours). Si la distance aller dépasse le plafond du palier choisi, chaque kilomètre au-delà de ce plafond est majoré de 1 000 Ar. Le palier >200 km (minimum 4 jours) reste ouvert, sans plafond supérieur ni seuil supplémentaire de dépassement. Tout changement de destination ou sortie de la zone convenue requiert l’accord préalable du loueur."
     },
     {
       "titre": "Usages interdits",

@@ -602,7 +602,7 @@ const distanceBandConfig = {
     '0_30': { label: 'palier 0–30 km — trajet aller : 30 km maximum; au-delà +1 000 Ar/km', minDays: 1, minHours: 12, priceKey: null },
     '30_100': { label: 'palier 30–100 km — trajet aller : 100 km maximum; au-delà +1 000 Ar/km', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
     '100_200': { label: 'palier 100–200 km — trajet aller : 200 km maximum; au-delà +1 000 Ar/km', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
-    'over_200': { label: 'palier >200 km — ouvert, sans plafond supérieur', minDays: 5, minHours: 120, priceKey: 'price_over_200_per_day' }
+    'over_200': { label: 'palier >200 km — ouvert, sans plafond supérieur', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
 };
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
 function calculateBookingQuote(vehicle, start, end, rentalType) {
@@ -630,7 +630,7 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
         }
     } else {
         const bandRate = Number(vehicle[band.priceKey] || 0);
-        if (hours < band.minHours) { requiresQuote = true; quoteReason = `Durée minimale : ${band.minDays} jour(s) (${band.minHours} heures)`; }
+        if (days < band.minDays) { requiresQuote = true; quoteReason = `Durée minimale : ${band.minDays} jour(s)`; }
         else if (bandRate <= 0) { requiresQuote = true; quoteReason = 'Tarif de ce palier non renseigné'; }
         else rentalAmount = bandRate * days;
     }
@@ -828,7 +828,9 @@ async function verifyInvoiceOtp(event, credentials) {
 }
 
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-distance-band'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 document.getElementById('booking-vehicle')?.addEventListener('change', updateBookingQuote);
+document.getElementById('booking-distance-band')?.addEventListener('change', updateBookingQuote);
 
 
 function syncRentalTimes() {

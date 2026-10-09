@@ -33,8 +33,8 @@ test('article 6 encadre les frais de panne hors zone sans mentionner une panne a
   assert.match(article6, /ne rend pas le locataire responsable d’une panne mécanique indépendante de son comportement/);
   assert.match(article6, /sauf urgence de sécurité/);
   assert.doesNotMatch(article6, /aggrav(?:er|é|ée|ation)/i);
-  assert.match(publicPage, /contract-terms\.js\?v=20261009-breakdown/);
-  assert.match(adminHtml, /contract-terms\.js\?v=20261009-breakdown/);
+  assert.match(publicPage, /contract-terms\.js\?v=20261009-min4/);
+  assert.match(adminHtml, /contract-terms\.js\?v=20261009-min4/);
 });
 
 test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond et le palier >200 km reste ouvert', () => {
@@ -47,7 +47,7 @@ test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond e
   }
   const open = contractTerms.getDistanceTerms('over_200');
   assert.match(open.limit, /sans plafond supérieur/);
-  assert.equal(open.minimumLabel, 'Minimum 5 jours');
+  assert.equal(open.minimumLabel, 'Minimum 4 jours');
   assert.doesNotMatch(open.surcharge, /1 000 Ariary par kilomètre/);
   const zoneCondition = rentalConditions.conditions.find(item => item.titre === 'Zone')?.reponse || '';
   for (const limit of ['30 km maximum', '100 km maximum', '200 km maximum', '1 000 Ar', 'sans plafond supérieur']) assert.ok(zoneCondition.includes(limit), limit);

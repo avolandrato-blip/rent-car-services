@@ -21,7 +21,7 @@
     'over_200': {
       label: 'Plus de 200 km — palier ouvert',
       limit: 'Palier ouvert, sans plafond supérieur',
-      minimumLabel: 'Minimum 5 jours',
+      minimumLabel: 'Minimum 4 jours',
       surcharge: 'Le palier supérieur à 200 km est ouvert et ne comporte pas de plafond supérieur. Il n’existe donc pas de seuil kilométrique supplémentaire au-delà duquel la majoration de dépassement serait calculée. La distance de référence reste le trajet aller contractuel.'
     }
   };

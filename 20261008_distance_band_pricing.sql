@@ -117,13 +117,13 @@ begin
       end if;
     end if;
   else
-    v_minimum_days := case v_band when '30_100' then 2 when '100_200' then 3 else 5 end;
+    v_minimum_days := case v_band when '30_100' then 2 when '100_200' then 3 else 4 end;
     v_band_rate := case v_band
       when '30_100' then coalesce(v_vehicle.price_30_100_per_day, 0)
       when '100_200' then coalesce(v_vehicle.price_100_200_per_day, 0)
       else coalesce(v_vehicle.price_over_200_per_day, 0)
     end;
-    if v_hours < (v_minimum_days * 24) then
+    if v_days < v_minimum_days then
       v_quote_requested := true;
       v_quote_reason := format('Durée minimale : %s jour(s)', v_minimum_days);
     elsif v_band_rate <= 0 then
