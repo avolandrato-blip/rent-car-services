@@ -25,6 +25,18 @@ test('contrat public imprimé inclut les articles complets et le palier kilomét
   assert.match(contractTerms.buildContractTerms(true, '0_30'), /le locataire n’est pas autorisé à le conduire/);
 });
 
+test('article 6 encadre les frais de panne hors zone sans mentionner une panne aggravée', () => {
+  const article6 = contractTerms.buildContractTerms(false, '0_30').split('<h2>Article 7 :')[0];
+  assert.match(article6, /panne ou d’immobilisation survenant en dehors de la zone d’utilisation inscrite à l’article 1/);
+  assert.match(article6, /après un déplacement effectué sans l’autorisation écrite préalable du loueur/);
+  assert.match(article6, /frais supplémentaires liés à cette situation/);
+  assert.match(article6, /ne rend pas le locataire responsable d’une panne mécanique indépendante de son comportement/);
+  assert.match(article6, /sauf urgence de sécurité/);
+  assert.doesNotMatch(article6, /aggrav(?:er|é|ée|ation)/i);
+  assert.match(publicPage, /contract-terms\.js\?v=20261009-breakdown/);
+  assert.match(adminHtml, /contract-terms\.js\?v=20261009-breakdown/);
+});
+
 test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond et le palier >200 km reste ouvert', () => {
   for (const [band, limit, minimum] of [['0_30', '30 km maximum', 'Formules 12 h ou 24 h'], ['30_100', '100 km maximum', 'Minimum 2 jours'], ['100_200', '200 km maximum', 'Minimum 3 jours']]) {
     const terms = contractTerms.getDistanceTerms(band);
@@ -57,7 +69,7 @@ test('contrat chauffeur admin accepte CIN recto-verso sans exiger ou afficher le
   assert.match(contractTerms.buildContractTerms(true, 'over_200'), /Les repas et l’hébergement du chauffeur sont à la charge du client/);
   assert.match(adminRecovery, /vehicles\(driver_mode\)/);
   assert.match(adminRecovery, /requiredDocuments\.filter\(item => item\.kind !== 'permis_recto'\)/);
-  assert.match(adminHtml, /contract-terms\.js\?v=20261009-1/);
+  assert.match(adminHtml, /contract-terms\.js\?v=20261009-breakdown/);
 });
 
 test('la fonction OTP ne signe pas les pièces de permis pour les contrats avec chauffeur', () => {
