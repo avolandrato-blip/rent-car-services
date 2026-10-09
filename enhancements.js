@@ -119,7 +119,7 @@
     const endDate = $('booking-end-date')?.value, endTime = $('booking-end-time')?.value;
     const start = startDate && startTime ? `${startDate}T${startTime}` : '', end = endDate && endTime ? `${endDate}T${endTime}` : '';
     if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    const candidateUnits = window.RentCarFleet.availableUnitsForGroup(fleetGroup, new Date(start).toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance);
+    const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, new Date(start).toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
     if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;

@@ -58,8 +58,14 @@ test('admin vehicle form persists the shared fleet label', () => {
   assert.match(read('morning-changes.js'), /fleet_group:\$\('v-fleet-group'\)/);
 });
 
+test('reservation submission obtains available units from the fleet availability API', () => {
+  assert.match(bookingScript, /RentCarFleet\.countAvailability\(fleetGroup/);
+  assert.match(read('fleet-utils.js'), /function countAvailability\(/);
+  assert.doesNotMatch(bookingScript, /availableUnitsForGroup/);
+});
+
 test('client reservation chooses a free physical unit and reports database conflicts', () => {
-  assert.match(bookingScript, /availableUnitsForGroup\(fleetGroup/);
+  assert.match(bookingScript, /countAvailability\(fleetGroup[\s\S]*?\)\.availableUnits/);
   assert.match(bookingScript, /vehicle_id: unit\.id/);
   assert.match(bookingScript, /attempt\.error\.code !== '23P01'/);
 });
