@@ -79,9 +79,9 @@ async function initSite() {
             instagram: 'fab fa-instagram',
             maps: 'fas fa-map-marker-alt'
         };
-        document.getElementById('social-links').innerHTML = Object.entries(siteConfig.social_links)
-            .filter(([_, url]) => url)
-            .map(([name, url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer" aria-label="${name}"><i class="${socialIcons[name]}"></i></a>`)
+        document.getElementById('social-links').innerHTML = Object.entries(siteConfig.social_links || {})
+            .filter(([name, url]) => socialIcons[name] && safePublicUrl(url))
+            .map(([name, url]) => `<a href="${escapePublicHtml(safePublicUrl(url))}" target="_blank" rel="noopener noreferrer" aria-label="${name}" title="${name === 'maps' ? 'Google Maps' : name}"><i class="${socialIcons[name]}"></i></a>`)
             .join('');
 
         // 5. Liens d'action directs (Bouton d'appel et WhatsApp)
@@ -94,6 +94,7 @@ async function initSite() {
         // 6. Chargement des modules de données
         const safeLoad = async (loader, label) => { try { await loader(); } catch (error) { console.warn(`Chargement ${label} impossible, le reste du site continue.`, error); } };
         await safeLoad(loadHome, 'accueil');
+        await safeLoad(loadAds, 'publicités');
         await safeLoad(loadCards, 'cartes');
         await safeLoad(loadCars, 'voitures');
         await safeLoad(loadFun, 'divertissement');
@@ -110,6 +111,27 @@ async function initSite() {
     }
 }
 
+function escapePublicHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+}
+function safePublicUrl(value) {
+    try { const url = new URL(String(value || ''), window.location.href); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch (_) { return ''; }
+}
+async function loadAds() {
+    const slot = document.getElementById('ads-slot');
+    if (!slot || !window.rentCarSupabase) return;
+    const { data, error } = await window.rentCarSupabase.from('site_ads').select('id,title,image_url,target_url,alt_text,starts_at,ends_at').eq('active', true).order('created_at', { ascending: false });
+    if (error) { slot.innerHTML = ''; slot.classList.add('hidden'); return; }
+    const now = Date.now();
+    const ads = (data || []).filter(ad => (!ad.starts_at || new Date(ad.starts_at).getTime() <= now) && (!ad.ends_at || new Date(ad.ends_at).getTime() >= now) && safePublicUrl(ad.image_url));
+    slot.innerHTML = ads.map(ad => {
+        const image = safePublicUrl(ad.image_url);
+        const target = safePublicUrl(ad.target_url);
+        const content = `<img src="${escapePublicHtml(image)}" alt="${escapePublicHtml(ad.alt_text || ad.title || 'Publicité')}" loading="lazy"><span class="ad-slot-caption">${escapePublicHtml(ad.title || 'Publicité')}</span>`;
+        return target ? `<a href="${escapePublicHtml(target)}" target="_blank" rel="sponsored noopener noreferrer">${content}</a>` : `<div>${content}</div>`;
+    }).join('');
+    slot.classList.toggle('hidden', !ads.length);
+}
 async function loadHome() {
     const res = await fetch('home.json');
     const data = await res.json();
