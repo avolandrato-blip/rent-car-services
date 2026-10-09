@@ -95,12 +95,17 @@
       title: card.querySelector('.flip-front h3, .flip-front h4')?.textContent?.trim() || 'Condition de location',
       text: card.querySelector('.flip-back p')?.textContent?.trim() || ''
     })).filter(item => item.text);
-    if (rendered.length) return rendered;
-    const response = await fetch('data_cards.json', { cache: 'no-cache' });
-    if (!response.ok) throw new Error('Impossible de charger les conditions de location.');
-    const data = await response.json();
-    if (!Array.isArray(data.conditions) || !data.conditions.length) throw new Error('Les conditions de location sont indisponibles.');
-    return data.conditions.map(item => ({ title: String(item.titre || 'Condition de location'), text: String(item.reponse || '') })).filter(item => item.text);
+    let items = rendered;
+    if (!items.length) {
+      const response = await fetch('data_cards.json?v=20261009-1', { cache: 'no-cache' });
+      if (!response.ok) throw new Error('Impossible de charger les conditions de location.');
+      const data = await response.json();
+      if (!Array.isArray(data.conditions) || !data.conditions.length) throw new Error('Les conditions de location sont indisponibles.');
+      items = data.conditions.map(item => ({ title: String(item.titre || 'Condition de location'), text: String(item.reponse || '') })).filter(item => item.text);
+    }
+    const selectedDistance = window.RentCarContractTerms?.getDistanceTerms($('booking-distance-band')?.value);
+    const selected = selectedDistance ? [{ title: `Palier choisi : ${selectedDistance.label} — ${selectedDistance.limit}`, text: selectedDistance.surcharge }] : [];
+    return [...selected, ...items];
   }
 
   function setupBookingTermsGate() {
@@ -110,6 +115,11 @@
     if (!consent || !trigger || trigger.dataset.ready) return;
     trigger.dataset.ready = 'true';
     let previousFocus = null;
+    $('booking-distance-band')?.addEventListener('change', () => {
+      consent.checked = false;
+      consent.disabled = true;
+      if (status) status.textContent = 'Le palier a changé. Relisez les conditions applicables à ce palier avant de confirmer.';
+    });
 
     const closeModal = () => {
       $('booking-terms-modal-backdrop')?.remove();

@@ -101,7 +101,7 @@
                             <h4>1. Véhicule, zone d’utilisation et période</h4>
                             <p class="muted">Sélectionnez le véhicule, sa zone d’utilisation autour de Tana et la période souhaitée pour consulter le tarif estimatif.</p>
                             <label>Véhicule<select id="booking-vehicle" required></select></label>
-                            <label>Zone d’utilisation du véhicule autour de Tana<select id="booking-distance-band" required><option value="0_30">Dans un rayon de 0 à 30 km autour de Tana — 12 h ou 24 h</option><option value="30_100">Dans un rayon de plus de 30 à 100 km autour de Tana — minimum 48 h</option><option value="100_200">Dans un rayon de plus de 100 à 200 km autour de Tana — minimum 3 jours</option><option value="over_200">Dans un rayon de plus de 200 km autour de Tana — minimum 5 jours</option></select><small id="booking-distance-note" class="field-note">Choisissez le rayon autour de Tana dans lequel le véhicule sera utilisé. Il ne s’agit pas du nombre total de kilomètres parcourus.</small></label>
+                            <label>Zone d’utilisation du véhicule autour de Tana<select id="booking-distance-band" required><option value="0_30">0–30 km — trajet aller limité à 30 km; au-delà +1 000 Ar/km</option><option value="30_100">30–100 km — trajet aller limité à 100 km; au-delà +1 000 Ar/km</option><option value="100_200">100–200 km — trajet aller limité à 200 km; au-delà +1 000 Ar/km</option><option value="over_200">Plus de 200 km — palier ouvert, sans plafond supérieur</option></select><small id="booking-distance-note" class="field-note">La limite porte sur la distance du trajet aller vers la destination; le retour n’est pas compté une seconde fois.</small></label>
                             <div class="date-range">
                                 <label>Date de départ<input id="booking-start-date" type="date" required></label>
                                 <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
@@ -202,8 +202,9 @@
     <script src="supabase.js"></script>
     <script src="fleet-utils.js?v=20260929-1"></script>
     <script src="navigation.js?v=20260929-1"></script>
-    <script src="script.js?v=20261009-1"></script><script src="quote.js?v=20261008-1"></script>
-    <script src="enhancements.js?v=20261009-3"></script>
+    <script src="contract-terms.js?v=20261009-1"></script>
+    <script src="script.js?v=20261009-2"></script><script src="quote.js?v=20261008-1"></script>
+    <script src="enhancements.js?v=20261009-4"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
     <script src="chauffeurs.js?v=20260928-1"></script>
 </body>

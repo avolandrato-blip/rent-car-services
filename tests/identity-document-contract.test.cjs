@@ -10,6 +10,36 @@ const adminHtml = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
 const bookingFlow = fs.readFileSync(path.join(root, 'enhancements.js'), 'utf8');
 const publicContract = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
 const publicContractFunction = fs.readFileSync(path.join(root, 'supabase/functions/get-invoice-contract-package/index.ts'), 'utf8');
+const contractTerms = require(path.join(root, 'contract-terms.js'));
+const publicPage = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const rentalConditions = JSON.parse(fs.readFileSync(path.join(root, 'data_cards.json'), 'utf8'));
+
+test('contrat public imprimé inclut les articles complets et le palier kilométrique choisi', () => {
+  assert.match(publicContract, /RentCarContractTerms\.buildContractTerms/);
+  assert.match(publicContract, /\$\{contractArticles\}/);
+  assert.match(publicContract, /Article 1 : Objet et conditions financières/);
+  assert.match(publicContract, /Palier retenu/);
+  assert.ok(publicPage.indexOf('contract-terms.js') < publicPage.indexOf('script.js?v='));
+  assert.match(contractTerms.buildContractTerms(false, '0_30'), /Article 11 : Acceptation/);
+  assert.match(contractTerms.buildContractTerms(true, 'over_200'), /Article 12 : Conditions particulières de la location avec chauffeur/);
+  assert.match(contractTerms.buildContractTerms(true, '0_30'), /le locataire n’est pas autorisé à le conduire/);
+});
+
+test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond et le palier >200 km reste ouvert', () => {
+  for (const [band, limit, minimum] of [['0_30', '30 km maximum', 'Formules 12 h ou 24 h'], ['30_100', '100 km maximum', 'Minimum 2 jours'], ['100_200', '200 km maximum', 'Minimum 3 jours']]) {
+    const terms = contractTerms.getDistanceTerms(band);
+    assert.equal(terms.limit, limit);
+    assert.equal(terms.minimumLabel, minimum);
+    assert.match(terms.surcharge, /1 000 Ariary par kilomètre/);
+    assert.match(terms.surcharge, /trajet aller uniquement/);
+  }
+  const open = contractTerms.getDistanceTerms('over_200');
+  assert.match(open.limit, /sans plafond supérieur/);
+  assert.equal(open.minimumLabel, 'Minimum 5 jours');
+  assert.doesNotMatch(open.surcharge, /1 000 Ariary par kilomètre/);
+  const zoneCondition = rentalConditions.conditions.find(item => item.titre === 'Zone')?.reponse || '';
+  for (const limit of ['30 km maximum', '100 km maximum', '200 km maximum', '1 000 Ar', 'sans plafond supérieur']) assert.ok(zoneCondition.includes(limit), limit);
+});
 
 test('admin contract stops instead of silently printing absent or unreadable identity images', () => {
   assert.match(generator, /if \(found\.error\)[\s\S]*contrat n’a pas été généré/);
@@ -22,10 +52,12 @@ test('admin contract stops instead of silently printing absent or unreadable ide
 test('contrat chauffeur admin accepte CIN recto-verso sans exiger ou afficher le permis', () => {
   assert.match(generator, /requiredIdentityKinds = withDriver \? \['cin_recto','cin_verso'\]/);
   assert.match(generator, /const licenseDetails = withDriver \? ''/);
-  assert.match(generator, /Conditions de la location avec chauffeur/);
-  assert.match(generator, /Les repas et l’hébergement du chauffeur sont à la charge du client/);
+  assert.match(generator, /RentCarContractTerms\.buildContractTerms\(withDriver, r\.distance_band\)/);
+  assert.match(contractTerms.buildContractTerms(true, 'over_200'), /Conditions particulières de la location avec chauffeur/);
+  assert.match(contractTerms.buildContractTerms(true, 'over_200'), /Les repas et l’hébergement du chauffeur sont à la charge du client/);
   assert.match(adminRecovery, /vehicles\(driver_mode\)/);
   assert.match(adminRecovery, /requiredDocuments\.filter\(item => item\.kind !== 'permis_recto'\)/);
+  assert.match(adminHtml, /contract-terms\.js\?v=20261009-1/);
 });
 
 test('la fonction OTP ne signe pas les pièces de permis pour les contrats avec chauffeur', () => {
@@ -40,7 +72,7 @@ test('admin can upload missing private documents and only retries printing after
   assert.match(adminRecovery, /missing\.some\(item => !uploadedKinds\.has\(item\.kind\)\)/);
   assert.match(adminRecovery, /printOriginal\(reservationId, 'contract'\)/);
   assert.match(adminRecovery, /startsWith\(`\$\{reservationId\}\/`\)/);
-  assert.match(adminHtml, /reference-models\.js\?v=20260927-driver-license-rules/);
+  assert.match(adminHtml, /reference-models\.js\?v=20261009-distance-terms/);
   assert.match(adminHtml, /admin-identity-documents\.js\?v=20260927-driver-license-rules/);
 });
 
