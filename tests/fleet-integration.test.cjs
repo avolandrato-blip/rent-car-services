@@ -58,6 +58,15 @@ test('admin vehicle form persists the shared fleet label', () => {
   assert.match(read('morning-changes.js'), /fleet_group:\$\('v-fleet-group'\)/);
 });
 
+test('client must read rental conditions before accepting', () => {
+  assert.match(publicPage, /id="booking-terms-consent" type="checkbox" required disabled/);
+  assert.match(publicPage, /id="booking-read-terms"/);
+  assert.match(bookingScript, /function setupBookingTermsGate\(\)/);
+  assert.match(bookingScript, /scroller\.scrollTop \+ scroller\.clientHeight >= scroller\.scrollHeight/);
+  assert.match(bookingScript, /consent\.disabled = false/);
+  assert.match(bookingScript, /bookingTermsItems/);
+});
+
 test('reservation submission obtains available units from the fleet availability API', () => {
   assert.match(bookingScript, /RentCarFleet\.countAvailability\(fleetGroup/);
   assert.match(read('fleet-utils.js'), /function countAvailability\(/);

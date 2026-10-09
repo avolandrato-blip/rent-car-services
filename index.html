@@ -12,7 +12,7 @@
     <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261008-2"><link rel="stylesheet" href="client-harmony.css?v=20260930-1">
+    <link rel="stylesheet" href="style.css?v=20261009-1"><link rel="stylesheet" href="client-harmony.css?v=20260930-1">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -143,7 +143,7 @@
                             <h4>4. Résumé et confirmation</h4>
                             <p class="muted">Vérifiez attentivement les informations ci-dessous avant l’envoi définitif.</p>
                             <div id="booking-summary" class="booking-summary"></div>
-                            <label class="checkbox-line booking-confirmation"><input id="booking-terms-consent" type="checkbox" required> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label>
+                            <div class="booking-confirmation terms-gate"><label class="checkbox-line"><input id="booking-terms-consent" type="checkbox" required disabled> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label><button id="booking-read-terms" class="btn btn-outline terms-read-button" type="button">Lire les conditions (obligatoire)</button><small id="booking-terms-read-status" class="field-note" role="status">La case d’acceptation sera activée après lecture des conditions.</small></div>
                             <p class="muted booking-policy-note">Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception et validation d’un acompte.</p>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button id="booking-submit-button" class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
                         </section>
@@ -203,7 +203,7 @@
     <script src="fleet-utils.js?v=20260929-1"></script>
     <script src="navigation.js?v=20260929-1"></script>
     <script src="script.js?v=20261009-1"></script><script src="quote.js?v=20261008-1"></script>
-    <script src="enhancements.js?v=20261009-2"></script>
+    <script src="enhancements.js?v=20261009-3"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
     <script src="chauffeurs.js?v=20260928-1"></script>
 </body>

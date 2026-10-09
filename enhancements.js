@@ -90,6 +90,76 @@
     $('booking-summary').innerHTML = `<dl>${rows.map(([label,value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`;
   }
 
+  async function bookingTermsItems() {
+    const rendered = [...document.querySelectorAll('#conditions-grid .flip-card')].map(card => ({
+      title: card.querySelector('.flip-front h3, .flip-front h4')?.textContent?.trim() || 'Condition de location',
+      text: card.querySelector('.flip-back p')?.textContent?.trim() || ''
+    })).filter(item => item.text);
+    if (rendered.length) return rendered;
+    const response = await fetch('data_cards.json', { cache: 'no-cache' });
+    if (!response.ok) throw new Error('Impossible de charger les conditions de location.');
+    const data = await response.json();
+    if (!Array.isArray(data.conditions) || !data.conditions.length) throw new Error('Les conditions de location sont indisponibles.');
+    return data.conditions.map(item => ({ title: String(item.titre || 'Condition de location'), text: String(item.reponse || '') })).filter(item => item.text);
+  }
+
+  function setupBookingTermsGate() {
+    const consent = $('booking-terms-consent');
+    const trigger = $('booking-read-terms');
+    const status = $('booking-terms-read-status');
+    if (!consent || !trigger || trigger.dataset.ready) return;
+    trigger.dataset.ready = 'true';
+    let previousFocus = null;
+
+    const closeModal = () => {
+      $('booking-terms-modal-backdrop')?.remove();
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+      previousFocus?.focus();
+    };
+    const onKeyDown = event => {
+      if (event.key === 'Escape') closeModal();
+    };
+
+    trigger.addEventListener('click', async () => {
+      if ($('booking-terms-modal-backdrop')) return;
+      trigger.disabled = true;
+      try {
+        const items = await bookingTermsItems();
+        previousFocus = document.activeElement;
+        const rows = items.map(item => `<article class="terms-modal-item"><h3>${esc(item.title)}</h3><p>${esc(item.text)}</p></article>`).join('');
+        document.body.insertAdjacentHTML('beforeend', `<div id="booking-terms-modal-backdrop" class="terms-modal-backdrop"><section class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="booking-terms-modal-title"><header class="terms-modal-header"><h2 id="booking-terms-modal-title">Conditions de location</h2><button type="button" class="terms-modal-close" data-terms-close aria-label="Fermer">&times;</button></header><div id="booking-terms-modal-scroll" class="terms-modal-scroll" tabindex="0">${rows}</div><footer class="terms-modal-footer"><p id="booking-terms-modal-hint" class="terms-modal-hint">Faites défiler les conditions jusqu’en bas pour continuer.</p><button id="booking-terms-modal-confirm" type="button" class="btn btn-primary terms-modal-confirm" disabled>J’ai lu les conditions</button></footer></section></div>`);
+        const backdrop = $('booking-terms-modal-backdrop');
+        const scroller = $('booking-terms-modal-scroll');
+        const confirm = $('booking-terms-modal-confirm');
+        const hint = $('booking-terms-modal-hint');
+        const markRead = () => {
+          confirm.disabled = false;
+          hint.textContent = 'Lecture terminée. Vous pouvez continuer puis cocher votre acceptation.';
+        };
+        const checkEnd = () => {
+          if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4) markRead();
+        };
+        scroller.addEventListener('scroll', checkEnd, { passive: true });
+        requestAnimationFrame(checkEnd);
+        backdrop.addEventListener('click', event => { if (event.target === backdrop || event.target.closest('[data-terms-close]')) closeModal(); });
+        confirm.addEventListener('click', () => {
+          consent.disabled = false;
+          if (status) status.textContent = 'Conditions lues. Cochez maintenant la case pour confirmer votre acceptation.';
+          closeModal();
+          consent.focus();
+        });
+        document.addEventListener('keydown', onKeyDown);
+        document.body.style.overflow = 'hidden';
+        $('booking-terms-modal-title').focus?.();
+      } catch (error) {
+        if (status) status.textContent = error.message || 'Impossible de charger les conditions. Réessayez.';
+      } finally {
+        trigger.disabled = false;
+      }
+    });
+  }
+
   function setupBookingSteps() {
     const form = $('booking-form'); if (!form || form.dataset.stepsReady) return;
     form.dataset.stepsReady = 'true';
@@ -98,7 +168,7 @@
     ['booking-deposit','booking-payment-method','booking-mobile-provider'].forEach(id => $(id)?.addEventListener('input', updatePaymentProofVisibility));
     $('booking-payment-method')?.addEventListener('change', updatePaymentProofVisibility);
     $('booking-mobile-provider')?.addEventListener('change', updateMobileMoneyAccount);
-    updatePaymentProofVisibility(); setBookingStep(1);
+    setupBookingTermsGate(); updatePaymentProofVisibility(); setBookingStep(1);
   }
 
   function withReservationTimeout(promise, timeoutMs = 20000) {
