@@ -21,6 +21,10 @@ test('la duplication ouvre une nouvelle fiche sans réutiliser ID ou immatricula
   assert.match(body, /\$\('v-status'\)\.value='available'/);
   assert.match(body, /\(copie\)/);
   assert.match(body, /vehicle-save-button/);
+  assert.match(admin, /window\.vehicleDuplicationSource=v/);
+  assert.match(admin, /owner_user_id:source\.owner_user_id/);
+  assert.match(admin, /contract_end_date:source\.contract_end_date/);
+  assert.match(admin, /uniqueVehicleSlug\(name,id\)/);
 });
 
 test('la fiche copiée réutilise le groupe et les données tarifaires', () => {
