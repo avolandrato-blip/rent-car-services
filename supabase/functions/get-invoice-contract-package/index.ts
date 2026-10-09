@@ -43,6 +43,16 @@ Deno.serve(async (req: Request) => {
     const invoice = await invoiceResponse.json();
     const reservationId = String(invoice?.reservation?.id || "");
     if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(reservationId)) return response({ error: "Référence, téléphone ou code incorrect." }, 403);
+    const reservationQuery = new URLSearchParams({
+      id: `eq.${reservationId}`,
+      select: "distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email",
+      limit: "1",
+    });
+    const reservationResponse = await fetch(`${supabaseUrl}/rest/v1/reservations?${reservationQuery.toString()}`, { headers });
+    if (!reservationResponse.ok) return response({ error: "Impossible de préparer les détails du contrat." }, 502);
+    const reservationDetails = await reservationResponse.json();
+    if (!Array.isArray(reservationDetails) || !reservationDetails[0]) return response({ error: "Référence, téléphone ou code incorrect." }, 403);
+    invoice.reservation = { ...invoice.reservation, ...reservationDetails[0] };
     const withDriver = Boolean(invoice?.reservation?.with_driver || invoice?.vehicle?.driver_mode === "with_driver");
     const documentKinds = withDriver ? ["cin_recto", "cin_verso"] : ["cin_recto", "cin_verso", "permis_recto"];
 

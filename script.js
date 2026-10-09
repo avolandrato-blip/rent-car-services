@@ -773,32 +773,58 @@ async function submitReservation(event) {
 }
 
 
-async function verifyInvoiceOtp(event) {
-    event.preventDefault();
+async function verifyInvoiceOtp(event, credentials) {
+    event?.preventDefault?.();
     const result = document.getElementById('invoice-access-result');
-    const reference = document.getElementById('invoice-reference').value.trim();
-    const phone = document.getElementById('invoice-phone').value.trim();
-    const otp = document.getElementById('invoice-otp').value.trim();
-    const { data, error } = await window.rentCarSupabase.from('reservations').select('*,vehicles(name,make,model,registration_number)').eq('reference', reference).eq('customer_phone', phone).eq('invoice_released', true).eq('otp_code', otp).single();
-    if (error || !data) { result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
+    const reference = String(credentials?.reference ?? document.getElementById('invoice-reference').value).trim();
+    const phone = String(credentials?.phone ?? document.getElementById('invoice-phone').value).trim();
+    const otp = String(credentials?.otp ?? document.getElementById('invoice-otp').value).trim();
+    result.className = 'booking-result';
+    result.textContent = 'Vérification du code et préparation de la facture…';
+    const { data: packageData, error } = await window.rentCarSupabase.functions.invoke('get-invoice-contract-package', { body: { reference, phone, otp } });
+    document.getElementById('invoice-otp').value = '';
+    const reservation = packageData?.invoice?.reservation;
+    if (error || !reservation) { globalThis.document.getElementById('invoice-access-form').classList.remove('hidden'); result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
+    const data = { ...reservation, vehicles: packageData.invoice.vehicle || {} };
     const typeLabel = data.rental_type === 'night' ? 'Nuit — 12 h (19h00 à 06h00)' : data.rental_type === '24h' ? '24 heures' : 'Jour — 12 h (07h00 à 18h00)';
     const rentalOnly = Number(data.total_amount||0) - Number(data.delivery_fee||0) - Number(data.recovery_fee||0) - Number(data.chauffeur_fee||0);
     const reste = Math.max(0, Number(data.total_amount||0) - Number(data.deposit_amount||0));
     const vehicle = `${data.vehicles?.make || ''} ${data.vehicles?.model || data.vehicles?.name || ''}`.trim();
-    const shared = `<p>Référence : ${data.reference}<br>Client : ${data.customer_name}<br>Téléphone : ${data.customer_phone}<br>Adresse : ${data.customer_address || '—'}${data.with_driver ? '' : `<br>Permis : ${data.customer_license || '—'} — délivré à ${data.license_acquired_place || '—'} le ${data.license_acquired_at || '—'}`}<br>CIN : ${data.customer_cin || '—'} — ${data.cin_is_duplicate ? 'Duplicata' : 'Original'} — délivrée à ${data.cin_acquired_place || '—'} le ${data.cin_acquired_at || '—'}<br>Véhicule : ${vehicle}<br>Mode : ${data.with_driver ? 'Avec chauffeur' : 'Sans chauffeur'}<br>Immatriculation : ${data.vehicles?.registration_number || '—'}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Nombre de jour(s) : ${data.days || 1}<br>Formule : ${typeLabel}</p>`;
+    const escapeFunHtml = value => String(value ?? '—').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const contractEscape = escapeFunHtml;
+    const shared = `<p>Référence : ${contractEscape(data.reference)}<br>Client : ${contractEscape(data.customer_name)}<br>Téléphone : ${contractEscape(data.customer_phone)}<br>Adresse : ${contractEscape(data.customer_address || '—')}${data.with_driver ? '' : `<br>Permis : ${contractEscape(data.customer_license || '—')} — délivré à ${contractEscape(data.license_acquired_place || '—')} le ${contractEscape(data.license_acquired_at || '—')}`}<br>CIN : ${contractEscape(data.customer_cin || '—')} — ${data.cin_is_duplicate ? 'Duplicata' : 'Original'} — délivrée à ${contractEscape(data.cin_acquired_place || '—')} le ${contractEscape(data.cin_acquired_at || '—')}<br>Véhicule : ${contractEscape(vehicle)}<br>Mode : ${data.with_driver ? 'Avec chauffeur' : 'Sans chauffeur'}<br>Immatriculation : ${contractEscape(data.vehicles?.registration_number || '—')}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Nombre de jour(s) : ${data.days || 1}<br>Formule : ${contractEscape(typeLabel)}</p>`;
     const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Chauffeur : ${formatMGA(data.chauffeur_fee)} (30 000 Ar / jour × ${data.days || 1})<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p>`;
     if (!window.RentCarContractTerms) {
         result.className = 'booking-result booking-error';
         result.textContent = 'Le contrat complet n’est pas disponible. Actualisez la page et réessayez.';
         return;
     }
-    const contractEscape = value => String(value ?? '—').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const distanceTerms = window.RentCarContractTerms.getDistanceTerms(data.distance_band);
     const contractArticles = window.RentCarContractTerms.buildContractTerms(Boolean(data.with_driver), data.distance_band);
     const contractArticle1 = `<h2>Article 1 : Objet et conditions financières</h2><div class="grid"><div>Marque / Modèle : ${contractEscape(data.vehicles?.make || '')} ${contractEscape(data.vehicles?.model || data.vehicles?.name || '')}</div><div>Immatriculation : ${contractEscape(data.vehicles?.registration_number || '—')}</div><div>Départ : ${new Date(data.start_at).toLocaleString('fr-FR')}</div><div>Retour : ${new Date(data.end_at).toLocaleString('fr-FR')}</div><div>Trajet aller : ${contractEscape(data.trip_from || '—')} → ${contractEscape(data.trip_to || '—')}</div><div>Palier retenu : ${contractEscape(distanceTerms.label)} — ${contractEscape(distanceTerms.limit)}</div><div>Durée/formule du palier : ${contractEscape(distanceTerms.minimumLabel)}</div><div>Formule : ${contractEscape(typeLabel)}</div></div><p>La location concerne le véhicule identifié ci-dessus, pour les dates, les lieux de départ et la destination indiqués. Le solde doit être payé avant la remise du véhicule. L’acompte convenu doit être versé dans les 24 heures suivant la demande; sauf accord écrit contraire, il correspond à 50 % du montant total ou à au moins 30 000 Ariary. En cas d’annulation volontaire après confirmation, l’acompte reste acquis au loueur. Pour une location de plus d’une semaine, le paiement s’effectue chaque lundi.</p>${finance}`;
     const contractHeading = `CONTRAT DE LOCATION DE VÉHICULE ${data.with_driver ? 'AVEC' : 'SANS'} CHAUFFEUR`;
     const html = `<html><head><meta charset="utf-8"><title>Facture et contrat ${contractEscape(data.reference)}</title><style>body{font:15px Arial;padding:35px;color:#0b1f33;max-width:820px;margin:auto;line-height:1.45}h1{color:#0d5c8f}h2{border-bottom:1px solid #ddd;padding-bottom:8px;margin-top:22px}.total{font-size:22px;font-weight:bold}.page-break{page-break-before:always}.sign{display:flex;justify-content:space-between;gap:32px;margin-top:90px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}@media(max-width:600px){body{padding:18px}.grid{grid-template-columns:1fr}}</style></head><body><h1>Rent Car Service</h1><p>67 Ha Nord Ouest, Parking FJKM SALEMA<br>034 91 207 26</p><h2>FACTURE</h2>${shared}${finance}<div class="page-break"><h1>Rent Car Service</h1><h2>${contractHeading}</h2>${shared}<p>Le présent contrat est conclu entre le loueur et le locataire identifiés ci-dessus. Il comprend les clauses ci-après, ainsi que les éléments particuliers de véhicule, de trajet, de durée et de prix inscrits à l’article 1.</p>${contractArticle1}${contractArticles}<p>Fait à Antananarivo, le ${new Date().toLocaleDateString('fr-FR')}.</p><div class="sign"><span><b>LOCATAIRE : ${contractEscape(data.customer_name)}</b><br>Mention manuscrite : « Lu et approuvé »<br><br>Signature :</span><span><b>LOUEUR : ANDRIANASOLO Volandrato</b><br>Mention manuscrite : « Lu et approuvé »<br><br>Signature :</span></div></div><script>window.print()<\/script></body></html>`;
-    const win = window.open('', '_blank'); win.document.write(html); win.document.close();
+    const documentsHtml = (packageData.documents || []).map(doc => `<figure class="identity-annex"><img src="${escapeFunHtml(doc.url)}" alt="${escapeFunHtml(doc.label)}"><figcaption>${escapeFunHtml(doc.label)}</figcaption></figure>`).join('');
+    const htmlWithAcceptance = html.replace('LOCATAIRE<br>Mention manuscrite :', 'LOCATAIRE<br>Bon pour acceptation — mention manuscrite :');
+    const htmlWithDocuments = htmlWithAcceptance.replace('<script>window.print()', `${documentsHtml ? `<div class="page-break"><h2>Annexes — pièces d’identité</h2>${documentsHtml}</div>` : ''}<script>window.print()`);
+    {
+        const document = new DOMParser().parseFromString(htmlWithDocuments, 'text/html');
+        await Promise.all([...document.images].map(image => image.decode().catch(() => undefined)));
+        const brokenImages = [...document.images].filter(image => !image.naturalWidth);
+        if (brokenImages.length) {
+            result.className = 'booking-result booking-error';
+            result.textContent = 'Certaines pièces d’identité n’ont pas pu être chargées. Actualisez la page ou contactez Rent Car Service avant d’imprimer le contrat.';
+            return;
+        }
+        const output = globalThis.document.getElementById('invoice-access-document');
+        if (!output) { result.className = 'booking-result booking-error'; result.textContent = 'La zone d’affichage de la facture est indisponible. Actualisez la page puis réessayez.'; return; }
+        output.innerHTML = document.body.innerHTML;
+        output.classList.remove('hidden');
+        globalThis.document.getElementById('invoice-print-button')?.classList.remove('hidden');
+        globalThis.document.getElementById('invoice-access-form').classList.add('hidden');
+        result.className = 'booking-result booking-success';
+        result.textContent = 'Votre facture et votre contrat sont affichés ci-dessous. Aucune saisie supplémentaire n’est nécessaire.';
+    }
 }
 
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-distance-band'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));

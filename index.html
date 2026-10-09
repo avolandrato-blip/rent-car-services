@@ -12,7 +12,7 @@
     <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261009-1"><link rel="stylesheet" href="client-harmony.css?v=20260930-1">
+    <link rel="stylesheet" href="style.css?v=20261009-otp-link"><link rel="stylesheet" href="client-harmony.css?v=20260930-1">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -153,12 +153,14 @@
             </div>
             <div id="invoice-access-panel" class="booking-panel invoice-access-panel hidden">
                 <h3>Accéder à la facture et au contrat</h3>
-                <p class="muted">La facture et le contrat sont accessibles après validation de l’acompte par Rent Car Service. Le solde restant est payable lors de la remise du véhicule.</p>
+                <p class="muted">La facture et le contrat sont accessibles après validation de l’acompte par Rent Car Service. Les pièces d’identité fournies sont ajoutées en annexe au contrat généré après vérification de votre code. Si vous recevez un lien WhatsApp sécurisé, ouvrez-le : les documents s’affichent directement, sans saisie.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
                     <div class="date-range"><label>Référence de réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
                     <button class="btn btn-primary" type="submit">Vérifier et télécharger les documents</button>
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
+                <div id="invoice-access-document" class="invoice-access-document hidden"></div>
+                <button id="invoice-print-button" class="btn btn-outline hidden" type="button" onclick="window.print()">Imprimer / enregistrer en PDF</button>
             </div>
         </div>
     </section>
@@ -203,8 +205,9 @@
     <script src="fleet-utils.js?v=20260929-1"></script>
     <script src="navigation.js?v=20260929-1"></script>
     <script src="contract-terms.js?v=20261009-breakdown"></script>
-    <script src="script.js?v=20261009-2"></script><script src="quote.js?v=20261008-1"></script>
+    <script src="script.js?v=20261009-otp-link"></script><script src="quote.js?v=20261008-1"></script>
     <script src="enhancements.js?v=20261009-4"></script>
+    <script src="client-invoice-link.js?v=20261009-1"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
     <script src="chauffeurs.js?v=20260928-1"></script>
 </body>
