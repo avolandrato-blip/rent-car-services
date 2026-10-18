@@ -77,7 +77,7 @@ test('le palier >200 km calcule sur quatre jours et demande un devis en dessous 
   assert.match(short.quoteReason, /4 jour/);
 });
 
-test('le choix d’une voiture affiche les quatre tarifs et met en évidence le palier retenu', () => {
+test('le choix de l’i30 manuelle ou de la Pride manuelle affiche les quatre tarifs PK cumulatifs', () => {
   const vm = require('node:vm');
   const script = read('script.js');
   const start = script.indexOf('const distanceBandConfig =');
@@ -95,6 +95,9 @@ test('le choix d’une voiture affiche les quatre tarifs et met en évidence le 
   vm.runInNewContext(`${script.slice(start, end)}; globalThis.renderPrices = renderBookingDistancePrices;`, context);
   context.renderPrices({
     name: 'Hyundai i30',
+    make: 'Hyundai',
+    model: 'i30',
+    transmission: 'Manuelle',
     price_per_day: 150000,
     price_12h: 150000,
     price_24h: 180000,
@@ -103,17 +106,26 @@ test('le choix d’une voiture affiche les quatre tarifs et met en évidence le 
     price_over_200_per_day: 300000
   });
   assert.equal(panel.hidden, false);
-  for (const price of ['150.000 Ar/jour', '180.000 Ar', '200.000 Ar/jour', '250.000 Ar/jour', '300.000 Ar/jour']) assert.ok(panel.innerHTML.includes(price), price);
-  assert.match(panel.innerHTML, /30–100 km/);
+  for (const price of ['150.000 Ar / 12 h', '180.000 Ar', '200.000 Ar/jour', '250.000 Ar/jour', '300.000 Ar/jour']) assert.ok(panel.innerHTML.includes(price), price);
+  for (const label of ['Tana PK 0 → 30 km', 'Tana PK 0 → 100 km', 'Tana PK 0 → 200 km', 'Tana PK 0 → +200 km']) assert.ok(panel.innerHTML.includes(label), label);
   assert.match(panel.innerHTML, /Palier choisi/);
   assert.match(panel.innerHTML, /Minimum 2 jours/);
   assert.deepEqual(options.map(option => option.textContent), [
-    '0–30 km — 150.000 Ar/jour',
-    '30–100 km — 200.000 Ar/jour · min. 2 j',
-    '100–200 km — 250.000 Ar/jour · min. 3 j',
-    '>200 km — 300.000 Ar/jour · min. 4 j'
+    'Tana PK 0 → 30 km — 150.000 Ar / 12 h · 180.000 Ar / 24 h',
+    'Tana PK 0 → 100 km — 200.000 Ar/jour · min. 2 j',
+    'Tana PK 0 → 200 km — 250.000 Ar/jour · min. 3 j',
+    'Tana PK 0 → +200 km — 300.000 Ar/jour · min. 4 j'
   ]);
   assert.ok(options.every(option => !option.textContent.includes('1 000 Ar/km')));
+  context.renderPrices({
+    name: 'PRIDE Manuelle', make: 'Kia', model: 'Pride', transmission: 'Manuelle',
+    price_per_day: 150000, price_12h: 150000, price_24h: 180000,
+    price_30_100_per_day: 200000, price_100_200_per_day: 250000, price_over_200_per_day: 300000
+  });
+  assert.ok(panel.innerHTML.includes('Tana PK 0 → +200 km'));
+  assert.ok(options[1].textContent.startsWith('Tana PK 0 → 100 km'));
+  context.renderPrices({ name: 'PRIDE Automatique', model: 'Pride', transmission: 'Automatique', price_per_day: 140000 });
+  assert.ok(options[1].textContent.startsWith('30–100 km'));
   const publicPage = read('index.html');
   const bandSelect = publicPage.match(/<select id="booking-distance-band"[\s\S]*?<\/select>/)?.[0] || '';
   assert.ok(bandSelect);

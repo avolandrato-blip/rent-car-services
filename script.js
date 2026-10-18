@@ -627,6 +627,24 @@ const distanceBandConfig = {
     'over_200': { label: 'palier >200 km — ouvert, sans plafond supérieur', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
 };
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
+function normalizeDistanceVehicleText(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+function usesCumulativePkLabels(vehicle) {
+    if (!vehicle) return false;
+    const model = normalizeDistanceVehicleText(`${vehicle.make || ''} ${vehicle.model || ''} ${vehicle.name || ''} ${vehicle.nom || ''}`);
+    const transmission = normalizeDistanceVehicleText(`${vehicle.transmission || ''} ${vehicle.name || ''} ${vehicle.nom || ''}`);
+    return (/\bi30\b/.test(model) || /\bpride\b/.test(model)) && /\bmanuel(?:le)?\b/.test(transmission);
+}
+const cumulativePkBandLabels = {
+    '0_30': 'Tana PK 0 → 30 km',
+    '30_100': 'Tana PK 0 → 100 km',
+    '100_200': 'Tana PK 0 → 200 km',
+    'over_200': 'Tana PK 0 → +200 km'
+};
+function customerDistanceBandLabel(vehicle, band) {
+    return usesCumulativePkLabels(vehicle) ? cumulativePkBandLabels[band] : distanceBandLabel(band);
+}
 function formatBookingRate(value) {
     const amount = Number(value || 0);
     return amount > 0 ? `${amount.toLocaleString('fr-FR').replace(/[\s\u00a0\u202f]/g, '.')} Ar` : 'Sur devis';
@@ -638,7 +656,12 @@ function formatBookingDailyRate(value) {
 function updateBookingDistanceOptionLabels(vehicle) {
     const select = document.getElementById('booking-distance-band');
     if (!select || !vehicle) return;
-    const labels = {
+    const labels = usesCumulativePkLabels(vehicle) ? {
+        '0_30': `${cumulativePkBandLabels['0_30']} — ${formatBookingRate(vehicle.price_12h || vehicle.price_per_day)} / 12 h · ${formatBookingRate(vehicle.price_24h)} / 24 h`,
+        '30_100': `${cumulativePkBandLabels['30_100']} — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. 2 j`,
+        '100_200': `${cumulativePkBandLabels['100_200']} — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. 3 j`,
+        'over_200': `${cumulativePkBandLabels.over_200} — ${formatBookingDailyRate(vehicle.price_over_200_per_day)} · min. 4 j`
+    } : {
         '0_30': `0–30 km — ${formatBookingDailyRate(vehicle.price_per_day || vehicle.price_12h)}`,
         '30_100': `30–100 km — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. 2 j`,
         '100_200': `100–200 km — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. 3 j`,
@@ -656,16 +679,19 @@ function renderBookingDistancePrices(vehicle) {
     const selectedBand = document.getElementById('booking-distance-band')?.value || '0_30';
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
     const rate24 = Number(vehicle.price_24h || 0);
+    const cumulative = usesCumulativePkLabels(vehicle);
     const rows = Object.entries(distanceBandConfig).map(([key, band]) => {
         let pricing;
         if (key === '0_30') {
             const dailyRate = vehicle.price_per_day || rate12;
-            pricing = `<span><strong>${formatBookingDailyRate(dailyRate)}</strong></span>${rate24 > 0 && rate24 !== Number(dailyRate) ? `<small>Formule 24 h : ${formatBookingRate(rate24)}</small>` : ''}`;
+            pricing = cumulative
+                ? `<span><strong>${formatBookingRate(rate12)} / 12 h</strong></span><small>Formule 24 h : ${formatBookingRate(rate24)}</small>`
+                : `<span><strong>${formatBookingDailyRate(dailyRate)}</strong></span>${rate24 > 0 && rate24 !== Number(dailyRate) ? `<small>Formule 24 h : ${formatBookingRate(rate24)}</small>` : ''}`;
         } else {
             pricing = `<span><strong>${formatBookingDailyRate(vehicle[band.priceKey])}</strong></span>`;
         }
         const minimum = key === '0_30' ? 'Formules 12 h ou 24 h' : `Minimum ${band.minDays} jours`;
-        const title = key === 'over_200' ? 'Plus de 200 km' : key.replace('_', '–') + ' km';
+        const title = cumulative ? cumulativePkBandLabels[key] : key === 'over_200' ? 'Plus de 200 km' : key.replace('_', '–') + ' km';
         return `<li class="booking-distance-price${key === selectedBand ? ' is-selected' : ''}"${key === selectedBand ? ' aria-current="true"' : ''}><div class="booking-distance-price-head"><strong>${title}</strong>${key === selectedBand ? '<span class="booking-distance-selected">Palier choisi</span>' : ''}</div><div class="booking-distance-price-values">${pricing}</div><small>${minimum}</small></li>`;
     }).join('');
     panel.hidden = false;
@@ -724,20 +750,21 @@ function updateBookingQuote() {
         return;
     }
     const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value);
+    const distanceLabel = customerDistanceBandLabel(vehicle, q.distanceBand);
     const deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const bandNote = document.getElementById('booking-distance-note');
-    if (bandNote) bandNote.textContent = q.requiresQuote ? `${q.band.label} — ${q.quoteReason}. Vous pouvez envoyer une demande de devis.` : `${q.band.label} — tarif applicable, minimum ${q.band.minDays} jour(s).`;
+    if (bandNote) bandNote.textContent = q.requiresQuote ? `${distanceLabel} — ${q.quoteReason}. Vous pouvez envoyer une demande de devis.` : `${distanceLabel} — tarif applicable, minimum ${q.band.minDays} jour(s).`;
     if (q.requiresQuote) {
-        if (quote) quote.textContent = `${q.band.label} — ${q.quoteReason}. La demande sera transmise à Rent Car Service pour établir le prix.`;
+        if (quote) quote.textContent = `${distanceLabel} — ${q.quoteReason}. La demande sera transmise à Rent Car Service pour établir le prix.`;
         if (mini) mini.innerHTML = '<strong>Demande de devis</strong><span>Le bouton ci-dessous enverra quand même votre demande.</span>';
         if (submit) submit.innerHTML = '<i class="fas fa-file-invoice"></i> Demander un devis';
         const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = 'Montant : sur devis. Aucun acompte ne peut être enregistré avant validation du devis.';
         return;
     }
     const promoState = promoEligibility(q), promoDiscount = promoState.discount, finalTotal = Math.max(0, q.total - promoDiscount);
-    const quoteText = `${q.distanceBand === '0_30' ? `Zone d’utilisation (${q.band.label}) : ${formatMGA(q.rentalAmount)}` : `Zone d’utilisation (${q.band.label}) : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const quoteText = `${q.distanceBand === '0_30' ? `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.rentalAmount)}` : `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (quote) quote.textContent = quoteText;
-    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · Zone : ${q.band.label} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}</span>`;
+    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · Zone : ${distanceLabel} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}</span>`;
     const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = `Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
 }
