@@ -131,3 +131,33 @@ test('le choix de l’i30 manuelle ou de la Pride manuelle affiche les quatre ta
   assert.ok(bandSelect);
   assert.doesNotMatch(bandSelect, /1 000 Ar\/km/);
 });
+
+test('le changement de palier conserve le véhicule choisi même si le tarif est sur devis', () => {
+  const vm = require('node:vm');
+  const script = read('script.js');
+  const start = script.indexOf('function refreshBookingVehicleOptions(');
+  const end = script.indexOf('\n}', start) + 2;
+  assert.ok(start >= 0 && end > start, 'fonction de rafraîchissement présente');
+  const makeGroup = (id, name, rate) => ({ id, displayName: name, vehicle: { name, price_30_100_per_day: rate } });
+  const groups = [makeGroup('chosen', 'Voiture choisie', 0), makeGroup('other', 'Autre voiture', 200000)];
+  const select = {
+    value: 'chosen',
+    options: [],
+    set innerHTML(markup) {
+      this.options = [...markup.matchAll(/<option value="([^"]+)">([^<]*)<\/option>/g)].map(([, value, textContent]) => ({ value, textContent }));
+      if (!this.options.some(option => option.value === this.value)) this.value = this.options[0]?.value || '';
+    }
+  };
+  const context = {
+    document: { getElementById: id => id === 'booking-vehicle' ? select : id === 'booking-distance-band' ? { value: '30_100' } : null },
+    window: { bookingFleets: groups },
+    pendingBookingFleetId: '',
+    bookingVehicleRateForBand: (group, band) => band === '30_100' ? group.vehicle.price_30_100_per_day : 0,
+    formatMGA: value => `${value} Ar`,
+    escapeFunHtml: value => String(value)
+  };
+  vm.runInNewContext(`${script.slice(start, end)}; refreshBookingVehicleOptions('chosen');`, context);
+  assert.equal(select.value, 'chosen');
+  assert.deepEqual(select.options.map(option => option.value), ['chosen', 'other']);
+  assert.match(select.options[0].textContent, /Sur devis/);
+});

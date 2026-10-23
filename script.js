@@ -449,11 +449,9 @@ function refreshBookingVehicleOptions(preferredId = '') {
     if (!select) return;
     const allGroups = window.bookingFleets || [];
     const bandValue = document.getElementById('booking-distance-band')?.value || '0_30';
-    const pricedGroups = bandValue === '0_30'
-        ? allGroups
-        : allGroups.filter(group => bookingVehicleRateForBand(group, bandValue) > 0);
-    // Keep quote requests possible if no vehicle has a published price for this band.
-    const groups = pricedGroups.length ? pricedGroups : allGroups;
+    // Keep every vehicle selectable across bands. Unpriced bands remain quote-only;
+    // changing the distance band must never silently replace the customer's choice.
+    const groups = allGroups;
     const wantedId = preferredId || select.value || pendingBookingFleetId;
     select.innerHTML = groups.map(group => {
         const car = group?.vehicle || group || {};
@@ -975,15 +973,9 @@ document.getElementById('booking-vehicle')?.addEventListener('change', event => 
 });
 document.getElementById('booking-distance-band')?.addEventListener('change', () => {
     const select = document.getElementById('booking-vehicle');
-    const previousId = select?.value;
-    refreshBookingVehicleOptions();
-    if (select && previousId && select.value !== previousId) {
-        const chosen = (window.bookingFleets || []).find(group => group.id === select.value);
-        const name = chosen?.displayName || chosen?.vehicle?.name || 'un autre véhicule';
-        select.dataset.bandSwitchNotice = `Le véhicule précédent n’a pas de prix configuré pour ce palier : ${name} a été sélectionné car son tarif est renseigné.`;
-    } else if (select) {
-        delete select.dataset.bandSwitchNotice;
-    }
+    const selectedId = select?.value || '';
+    if (select) delete select.dataset.bandSwitchNotice;
+    refreshBookingVehicleOptions(selectedId);
     updateBookingQuote();
 });
 
