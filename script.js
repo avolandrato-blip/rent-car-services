@@ -13,6 +13,7 @@ function initClientTheme() { setClientTheme(localStorage.getItem("rentcar-theme"
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initSite();
+    await loadDistanceBandSettings();
 });
 
 async function loadDynamicSiteSettings() {
@@ -652,6 +653,24 @@ const distanceBandConfig = {
     '100_200': { label: 'Tana -> 200 km', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
     'over_200': { label: 'Tana -> +200 km', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
 };
+async function loadDistanceBandSettings() {
+    if (!window.rentCarSupabase) return;
+    const { data, error } = await window.rentCarSupabase.from('distance_band_settings').select('distance_band,minimum_days');
+    if (error || !Array.isArray(data)) return;
+    data.forEach(row => {
+        const value = Number(row.minimum_days);
+        if (Number.isInteger(value) && value >= 1 && distanceBandConfig[row.distance_band]) {
+            distanceBandConfig[row.distance_band].minDays = value;
+            if (row.distance_band !== '0_30') distanceBandConfig[row.distance_band].minHours = value * 24;
+        }
+    });
+    document.querySelectorAll('#booking-vehicle').forEach(select => {
+        const vehicle = (window.bookingFleets || []).find(item => item.id === select.value)?.vehicle ||
+            (window.bookingVehicles || []).find(item => item.id === select.value);
+        if (vehicle) updateBookingDistanceOptionLabels(vehicle);
+    });
+    if (typeof updateBookingQuote === 'function') updateBookingQuote();
+}
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
 function normalizeDistanceVehicleText(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -686,9 +705,9 @@ function updateBookingDistanceOptionLabels(vehicle) {
         '0_30': usesCumulativePkLabels(vehicle)
             ? `${cumulativePkBandLabels['0_30']} — 12 h : ${formatBookingRate(vehicle.price_12h || vehicle.price_per_day)} · 24 h : ${formatBookingRate(vehicle.price_24h)}`
             : `${cumulativePkBandLabels['0_30']} — ${formatBookingDailyRate(vehicle.price_per_day || vehicle.price_12h)}`,
-        '30_100': `${cumulativePkBandLabels['30_100']} — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. 2 j`,
-        '100_200': `${cumulativePkBandLabels['100_200']} — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. 3 j`,
-        'over_200': `${cumulativePkBandLabels.over_200} — ${formatBookingDailyRate(vehicle.price_over_200_per_day)} · min. 4 j`
+        '30_100': `${cumulativePkBandLabels['30_100']} — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. ${distanceBandConfig['30_100'].minDays} j`,
+        '100_200': `${cumulativePkBandLabels['100_200']} — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. ${distanceBandConfig['100_200'].minDays} j`,
+        'over_200': `${cumulativePkBandLabels.over_200} — ${formatBookingDailyRate(vehicle.price_over_200_per_day)} · min. ${distanceBandConfig.over_200.minDays} j`
     };
     Array.from(select.options || []).forEach(option => {
         if (labels[option.value]) option.textContent = labels[option.value];
