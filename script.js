@@ -465,6 +465,7 @@ function refreshBookingVehicleOptions(preferredId = '') {
     }).join('');
     if (groups.some(group => group.id === wantedId)) select.value = wantedId;
     else if (groups.length) select.value = groups[0].id;
+    return { previousId: wantedId, selectedId: select.value };
 }
 
 function openLongTermQuote(vehicleName) {
@@ -646,10 +647,10 @@ function availabilityLabel(status) {
 }
 
 const distanceBandConfig = {
-    '0_30': { label: 'palier 0–30 km — trajet aller : 30 km maximum', minDays: 1, minHours: 12, priceKey: null },
-    '30_100': { label: 'palier 30–100 km — trajet aller : 100 km maximum', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
-    '100_200': { label: 'palier 100–200 km — trajet aller : 200 km maximum', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
-    'over_200': { label: 'palier >200 km — ouvert, sans plafond supérieur', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
+    '0_30': { label: 'Tana -> 30 km', minDays: 1, minHours: 12, priceKey: null },
+    '30_100': { label: 'Tana -> 100 km', minDays: 2, minHours: 48, priceKey: 'price_30_100_per_day' },
+    '100_200': { label: 'Tana -> 200 km', minDays: 3, minHours: 72, priceKey: 'price_100_200_per_day' },
+    'over_200': { label: 'Tana -> +200 km', minDays: 4, minHours: 96, priceKey: 'price_over_200_per_day' }
 };
 function distanceBandLabel(band) { return distanceBandConfig[band]?.label || 'zone d’utilisation autour de Tana'; }
 function normalizeDistanceVehicleText(value) {
@@ -662,13 +663,13 @@ function usesCumulativePkLabels(vehicle) {
     return (/\bi30\b/.test(model) || /\bpride\b/.test(model)) && /\bmanuel(?:le)?\b/.test(transmission);
 }
 const cumulativePkBandLabels = {
-    '0_30': 'Tana PK 0 → 30 km',
-    '30_100': 'Tana PK 0 → 100 km',
-    '100_200': 'Tana PK 0 → 200 km',
-    'over_200': 'Tana PK 0 → +200 km'
+    '0_30': 'Tana -> 30 km',
+    '30_100': 'Tana -> 100 km',
+    '100_200': 'Tana -> 200 km',
+    'over_200': 'Tana -> +200 km'
 };
 function customerDistanceBandLabel(vehicle, band) {
-    return usesCumulativePkLabels(vehicle) ? cumulativePkBandLabels[band] : distanceBandLabel(band);
+    return cumulativePkBandLabels[band] || distanceBandLabel(band);
 }
 function formatBookingRate(value) {
     const amount = Number(value || 0);
@@ -681,16 +682,13 @@ function formatBookingDailyRate(value) {
 function updateBookingDistanceOptionLabels(vehicle) {
     const select = document.getElementById('booking-distance-band');
     if (!select || !vehicle) return;
-    const labels = usesCumulativePkLabels(vehicle) ? {
-        '0_30': `${cumulativePkBandLabels['0_30']} — ${formatBookingRate(vehicle.price_12h || vehicle.price_per_day)} / 12 h · ${formatBookingRate(vehicle.price_24h)} / 24 h`,
+    const labels = {
+        '0_30': usesCumulativePkLabels(vehicle)
+            ? `${cumulativePkBandLabels['0_30']} — 12 h : ${formatBookingRate(vehicle.price_12h || vehicle.price_per_day)} · 24 h : ${formatBookingRate(vehicle.price_24h)}`
+            : `${cumulativePkBandLabels['0_30']} — ${formatBookingDailyRate(vehicle.price_per_day || vehicle.price_12h)}`,
         '30_100': `${cumulativePkBandLabels['30_100']} — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. 2 j`,
         '100_200': `${cumulativePkBandLabels['100_200']} — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. 3 j`,
         'over_200': `${cumulativePkBandLabels.over_200} — ${formatBookingDailyRate(vehicle.price_over_200_per_day)} · min. 4 j`
-    } : {
-        '0_30': `0–30 km — ${formatBookingDailyRate(vehicle.price_per_day || vehicle.price_12h)}`,
-        '30_100': `30–100 km — ${formatBookingDailyRate(vehicle.price_30_100_per_day)} · min. 2 j`,
-        '100_200': `100–200 km — ${formatBookingDailyRate(vehicle.price_100_200_per_day)} · min. 3 j`,
-        'over_200': `>200 km — ${formatBookingDailyRate(vehicle.price_over_200_per_day)} · min. 4 j`
     };
     Array.from(select.options || []).forEach(option => {
         if (labels[option.value]) option.textContent = labels[option.value];
@@ -716,7 +714,7 @@ function renderBookingDistancePrices(vehicle) {
             pricing = `<span><strong>${formatBookingDailyRate(vehicle[band.priceKey])}</strong></span>`;
         }
         const minimum = key === '0_30' ? 'Formules 12 h ou 24 h' : `Minimum ${band.minDays} jours`;
-        const title = cumulative ? cumulativePkBandLabels[key] : key === 'over_200' ? 'Plus de 200 km' : key.replace('_', '–') + ' km';
+        const title = cumulativePkBandLabels[key];
         return `<li class="booking-distance-price${key === selectedBand ? ' is-selected' : ''}"${key === selectedBand ? ' aria-current="true"' : ''}><div class="booking-distance-price-head"><strong>${title}</strong>${key === selectedBand ? '<span class="booking-distance-selected">Palier choisi</span>' : ''}</div><div class="booking-distance-price-values">${pricing}</div><small>${minimum}</small></li>`;
     }).join('');
     panel.hidden = false;
@@ -771,6 +769,9 @@ function updateBookingQuote() {
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) {
         if (quote) quote.textContent = '';
         if (mini) mini.innerHTML = '<strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule, la zone d’utilisation et les dates.</span>';
+        const bandNote = document.getElementById('booking-distance-note');
+        const switchNotice = document.getElementById('booking-vehicle')?.dataset.bandSwitchNotice;
+        if (bandNote && switchNotice) bandNote.textContent = `${switchNotice} La limite porte sur le trajet aller uniquement.`;
         if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
         return;
     }
@@ -778,7 +779,8 @@ function updateBookingQuote() {
     const distanceLabel = customerDistanceBandLabel(vehicle, q.distanceBand);
     const deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const bandNote = document.getElementById('booking-distance-note');
-    if (bandNote) bandNote.textContent = q.requiresQuote ? `${distanceLabel} — ${q.quoteReason}. Vous pouvez envoyer une demande de devis.` : `${distanceLabel} — tarif applicable, minimum ${q.band.minDays} jour(s).`;
+    const switchNotice = document.getElementById('booking-vehicle')?.dataset.bandSwitchNotice;
+    if (bandNote) bandNote.textContent = `${q.requiresQuote ? `${distanceLabel} — ${q.quoteReason}. Vous pouvez envoyer une demande de devis.` : `${distanceLabel} — tarif applicable, minimum ${q.band.minDays} jour(s).`}${switchNotice ? ` ${switchNotice}` : ''}`;
     if (q.requiresQuote) {
         if (quote) quote.textContent = `${distanceLabel} — ${q.quoteReason}. La demande sera transmise à Rent Car Service pour établir le prix.`;
         if (mini) mini.innerHTML = '<strong>Demande de devis</strong><span>Le bouton ci-dessous enverra quand même votre demande.</span>';
@@ -948,9 +950,21 @@ async function verifyInvoiceOtp(event, credentials) {
 
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
-document.getElementById('booking-vehicle')?.addEventListener('change', updateBookingQuote);
+document.getElementById('booking-vehicle')?.addEventListener('change', event => {
+    delete event.currentTarget.dataset.bandSwitchNotice;
+    updateBookingQuote();
+});
 document.getElementById('booking-distance-band')?.addEventListener('change', () => {
+    const select = document.getElementById('booking-vehicle');
+    const previousId = select?.value;
     refreshBookingVehicleOptions();
+    if (select && previousId && select.value !== previousId) {
+        const chosen = (window.bookingFleets || []).find(group => group.id === select.value);
+        const name = chosen?.displayName || chosen?.vehicle?.name || 'un autre véhicule';
+        select.dataset.bandSwitchNotice = `Le véhicule précédent n’a pas de prix configuré pour ce palier : ${name} a été sélectionné car son tarif est renseigné.`;
+    } else if (select) {
+        delete select.dataset.bandSwitchNotice;
+    }
     updateBookingQuote();
 });
 
