@@ -146,7 +146,7 @@ async function loadHome() {
 
 // Gestion des Cartes Tournantes (Flip Cards)
 async function loadCards() {
-    const res = await fetch('data_cards.json?v=20261009-1', { cache: 'no-cache' });
+    const res = await fetch('data_cards.json?v=20261023-zone-short1', { cache: 'no-cache' });
     const data = await res.json();
 
     // Grille "Pourquoi nous choisir" avec effet rotation
