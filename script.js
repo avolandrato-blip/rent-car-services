@@ -434,6 +434,39 @@ function publicBookingVehicleLabel(group) {
     return `${name} — ${transmission} — ${price}`;
 }
 
+function bookingVehicleRateForBand(group, bandValue) {
+    const car = group?.vehicle || group || {};
+    const priceKey = distanceBandConfig[bandValue]?.priceKey;
+    const amount = bandValue === '0_30'
+        ? Number(car.price_per_day || car.price_12h || 0)
+        : Number(priceKey ? car[priceKey] || 0 : 0);
+    return amount > 0 ? amount : 0;
+}
+
+function refreshBookingVehicleOptions(preferredId = '') {
+    const select = document.getElementById('booking-vehicle');
+    if (!select) return;
+    const allGroups = window.bookingFleets || [];
+    const bandValue = document.getElementById('booking-distance-band')?.value || '0_30';
+    const pricedGroups = bandValue === '0_30'
+        ? allGroups
+        : allGroups.filter(group => bookingVehicleRateForBand(group, bandValue) > 0);
+    // Keep quote requests possible if no vehicle has a published price for this band.
+    const groups = pricedGroups.length ? pricedGroups : allGroups;
+    const wantedId = preferredId || select.value || pendingBookingFleetId;
+    select.innerHTML = groups.map(group => {
+        const car = group?.vehicle || group || {};
+        const name = group?.displayName || car.name || car.nom || 'Véhicule';
+        const rate = bookingVehicleRateForBand(group, bandValue);
+        const label = bandValue === '0_30'
+            ? publicBookingVehicleLabel(group)
+            : `${name} — ${rate ? `${formatMGA(rate)} / jour` : 'Sur devis'}`;
+        return `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(label)}</option>`;
+    }).join('');
+    if (groups.some(group => group.id === wantedId)) select.value = wantedId;
+    else if (groups.length) select.value = groups[0].id;
+}
+
 function openLongTermQuote(vehicleName) {
     openTab('contact');
     setTimeout(() => {
@@ -486,11 +519,7 @@ function usePublicCarsAsBookingFallback() {
     bookingVehicles = (publicCars || []).flatMap(group => group.units || [group.vehicle || group]).filter(Boolean);
     window.bookingVehicles = bookingVehicles;
     window.bookingFleets = window.RentCarFleet ? window.RentCarFleet.groupFleetVehicles(bookingVehicles) : bookingVehicles.map(vehicle => ({ id: vehicle.id, displayName: vehicle.name || vehicle.nom, vehicle, units: [vehicle], capacity: 1 }));
-    const select = document.getElementById('booking-vehicle');
-    if (select) {
-        select.innerHTML = window.bookingFleets.map(group => `<option value="${group.id}">${publicBookingVehicleLabel(group)}</option>`).join('');
-        if (pendingBookingFleetId && [...select.options].some(option => option.value === pendingBookingFleetId)) select.value = pendingBookingFleetId;
-    }
+    refreshBookingVehicleOptions(pendingBookingFleetId);
 
     updateBookingQuote();
 }
@@ -534,11 +563,7 @@ async function loadBookingData() {
         bookingCurrentReservations = currentReservations || [];
         bookingCurrentMaintenance = currentMaintenance || [];
     }
-    const select = document.getElementById('booking-vehicle');
-    if (select) {
-        select.innerHTML = window.bookingFleets.map(group => `<option value="${group.id}">${publicBookingVehicleLabel(group)}</option>`).join('');
-        if (pendingBookingFleetId && [...select.options].some(option => option.value === pendingBookingFleetId)) select.value = pendingBookingFleetId;
-    }
+    refreshBookingVehicleOptions(pendingBookingFleetId);
     const availabilityVehicle = document.getElementById('availability-vehicle');
     if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${window.bookingFleets.map(group => `<option value="${group.id}">${group.displayName}</option>`).join('')}`;
      window.updateClientDriverLabel?.(); window.bookingSlotAvailability = bookingSlotAvailability; window.getBookingFleet = id => (window.bookingFleets || []).find(group => group.id === id); ['booking-start-date','booking-end-date','booking-start-time','booking-end-time'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars)); updateBookingQuote(); renderLiveFleetButtons(); renderPublicCars();
@@ -921,10 +946,13 @@ async function verifyInvoiceOtp(event, credentials) {
     }
 }
 
-['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver','booking-distance-band'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
+['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 ['booking-vehicle','booking-start-date','booking-start-time','booking-end-date','booking-end-time','booking-rental-type','booking-deposit','booking-delivery','booking-recovery','booking-driver'].forEach(id => document.getElementById(id)?.addEventListener('input', updateBookingQuote));
 document.getElementById('booking-vehicle')?.addEventListener('change', updateBookingQuote);
-document.getElementById('booking-distance-band')?.addEventListener('change', updateBookingQuote);
+document.getElementById('booking-distance-band')?.addEventListener('change', () => {
+    refreshBookingVehicleOptions();
+    updateBookingQuote();
+});
 
 
 function syncRentalTimes() {
