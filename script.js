@@ -449,14 +449,18 @@ function refreshBookingVehicleOptions(preferredId = '') {
     if (!select) return;
     const allGroups = window.bookingFleets || [];
     const bandValue = document.getElementById('booking-distance-band')?.value || '0_30';
-    // Show only cars priced for the selected band, then sort cheapest first.
-    const groups = allGroups
-        .filter(group => bandValue === '0_30' || bookingVehicleRateForBand(group, bandValue) > 0)
-        .sort((a, b) => {
-            const rateA = bookingVehicleRateForBand(a, bandValue);
-            const rateB = bookingVehicleRateForBand(b, bandValue);
-            return (rateA || Number.POSITIVE_INFINITY) - (rateB || Number.POSITIVE_INFINITY);
-        });
+    // Keep the whole fleet visible. Sort cars with a price for this band first;
+    // quote-only cars remain selectable and changing bands never substitutes a car.
+    const groups = [...allGroups].sort((a, b) => {
+        const rateA = bookingVehicleRateForBand(a, bandValue);
+        const rateB = bookingVehicleRateForBand(b, bandValue);
+        if (rateA && rateB) return rateA - rateB;
+        if (rateA) return -1;
+        if (rateB) return 1;
+        const nameA = a?.displayName || a?.vehicle?.name || a?.name || '';
+        const nameB = b?.displayName || b?.vehicle?.name || b?.name || '';
+        return String(nameA).localeCompare(String(nameB), 'fr');
+    });
     const wantedId = preferredId || select.value || pendingBookingFleetId;
     const startDate = document.getElementById('booking-start-date')?.value;
     const startTime = document.getElementById('booking-start-time')?.value;
@@ -465,18 +469,18 @@ function refreshBookingVehicleOptions(preferredId = '') {
     const start = startDate && startTime ? `${startDate}T${startTime}` : '';
     const end = endDate && endTime ? `${endDate}T${endTime}` : '';
     const hasValidPeriod = start && end && new Date(end) > new Date(start);
-    select.innerHTML = groups.map(group => {
+    select.innerHTML = `<option value="">Choisissez un véhicule</option>${groups.map(group => {
         const car = group?.vehicle || group || {};
         const name = group?.displayName || car.name || car.nom || 'Véhicule';
         const rate = bookingVehicleRateForBand(group, bandValue);
-        const price = rate ? `${formatMGA(rate)} / jour` : (car.prix || 'Sur devis');
+        const price = rate ? `${formatMGA(rate)} / jour` : 'Sans tarif pour ce palier — sur devis';
         const slot = hasValidPeriod && bookingAvailabilityLoaded ? bookingSlotAvailability(group.id, start, end) : null;
         const availability = slot ? (slot.available ? ' — Disponible aux dates choisies' : ' — Indisponible aux dates choisies') : '';
         const label = `${name} — ${price}${availability}`;
         return `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(label)}</option>`;
-    }).join('');
-    if (groups.some(group => group.id === wantedId)) select.value = wantedId;
-    else if (groups.length) select.value = groups[0].id;
+    }).join('')}`;
+    if (allGroups.some(group => group.id === wantedId)) select.value = wantedId;
+    else select.value = '';
     return { previousId: wantedId, selectedId: select.value };
 }
 

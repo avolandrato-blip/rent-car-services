@@ -7,7 +7,8 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
 test('le devis client recalcule lors du changement de palier et utilise les jours facturés', () => {
   const script = read('script.js');
-  assert.match(script, /booking-distance-band'\)\?\.addEventListener\('change', updateBookingQuote\)/);
+  assert.match(script, /booking-distance-band'\)\?\.addEventListener\('change', \(\) => \{/);
+  assert.match(script, /refreshBookingVehicleOptions\(selectedId\);[\s\S]*updateBookingQuote\(\);/);
   assert.match(script, /if \(days < band\.minDays\)/);
   assert.doesNotMatch(script, /if \(hours < band\.minHours\)/);
 });
@@ -107,14 +108,14 @@ test('le choix de l’i30 manuelle ou de la Pride manuelle affiche les quatre ta
   });
   assert.equal(panel.hidden, false);
   for (const price of ['150.000 Ar / 12 h', '180.000 Ar', '200.000 Ar/jour', '250.000 Ar/jour', '300.000 Ar/jour']) assert.ok(panel.innerHTML.includes(price), price);
-  for (const label of ['Tana PK 0 → 30 km', 'Tana PK 0 → 100 km', 'Tana PK 0 → 200 km', 'Tana PK 0 → +200 km']) assert.ok(panel.innerHTML.includes(label), label);
+  for (const label of ['Tana -> 30 km', 'Tana -> 100 km', 'Tana -> 200 km', 'Tana -> +200 km']) assert.ok(panel.innerHTML.includes(label), label);
   assert.match(panel.innerHTML, /Palier choisi/);
   assert.match(panel.innerHTML, /Minimum 2 jours/);
   assert.deepEqual(options.map(option => option.textContent), [
-    'Tana PK 0 → 30 km — 150.000 Ar / 12 h · 180.000 Ar / 24 h',
-    'Tana PK 0 → 100 km — 200.000 Ar/jour · min. 2 j',
-    'Tana PK 0 → 200 km — 250.000 Ar/jour · min. 3 j',
-    'Tana PK 0 → +200 km — 300.000 Ar/jour · min. 4 j'
+    'Tana -> 30 km — 12 h : 150.000 Ar · 24 h : 180.000 Ar',
+    'Tana -> 100 km — 200.000 Ar/jour · min. 2 j',
+    'Tana -> 200 km — 250.000 Ar/jour · min. 3 j',
+    'Tana -> +200 km — 300.000 Ar/jour · min. 4 j'
   ]);
   assert.ok(options.every(option => !option.textContent.includes('1 000 Ar/km')));
   context.renderPrices({
@@ -122,17 +123,17 @@ test('le choix de l’i30 manuelle ou de la Pride manuelle affiche les quatre ta
     price_per_day: 150000, price_12h: 150000, price_24h: 180000,
     price_30_100_per_day: 200000, price_100_200_per_day: 250000, price_over_200_per_day: 300000
   });
-  assert.ok(panel.innerHTML.includes('Tana PK 0 → +200 km'));
-  assert.ok(options[1].textContent.startsWith('Tana PK 0 → 100 km'));
+  assert.ok(panel.innerHTML.includes('Tana -> +200 km'));
+  assert.ok(options[1].textContent.startsWith('Tana -> 100 km'));
   context.renderPrices({ name: 'PRIDE Automatique', model: 'Pride', transmission: 'Automatique', price_per_day: 140000 });
-  assert.ok(options[1].textContent.startsWith('30–100 km'));
+  assert.ok(options[1].textContent.startsWith('Tana -> 100 km'));
   const publicPage = read('index.html');
   const bandSelect = publicPage.match(/<select id="booking-distance-band"[\s\S]*?<\/select>/)?.[0] || '';
   assert.ok(bandSelect);
   assert.doesNotMatch(bandSelect, /1 000 Ar\/km/);
 });
 
-test('à 30 km, les voitures sont triées par prix croissant avec disponibilité selon les dates', () => {
+test('à 30 km, toutes les voitures sont triées par prix avec disponibilité selon les dates', () => {
   const vm = require('node:vm');
   const script = read('script.js');
   const start = script.indexOf('function refreshBookingVehicleOptions(');
@@ -146,8 +147,8 @@ test('à 30 km, les voitures sont triées par prix croissant avec disponibilité
     value: 'expensive',
     options: [],
     set innerHTML(markup) {
-      this.options = [...markup.matchAll(/<option value="([^"]+)">([^<]*)<\/option>/g)].map(([, value, textContent]) => ({ value, textContent }));
-      if (!this.options.some(option => option.value === this.value)) this.value = this.options[0]?.value || '';
+      this.options = [...markup.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)].map(([, value, textContent]) => ({ value, textContent }));
+      this.value = this.options[0]?.value || '';
     }
   };
   const context = {
@@ -163,12 +164,13 @@ test('à 30 km, les voitures sont triées par prix croissant avec disponibilité
   context.document.getElementById = id => id === 'booking-vehicle' ? select : id === 'booking-distance-band' ? { value: '0_30' } : id === 'booking-start-date' ? { value: '2026-11-01' } : id === 'booking-start-time' ? { value: '07:00' } : id === 'booking-end-date' ? { value: '2026-11-02' } : id === 'booking-end-time' ? { value: '18:00' } : null;
   context.bookingVehicleRateForBand = group => group.vehicle.price_per_day;
   vm.runInNewContext(`${script.slice(start, end)}; refreshBookingVehicleOptions('expensive');`, context);
-  assert.deepEqual(select.options.map(option => option.value), ['cheap', 'expensive']);
-  assert.match(select.options[0].textContent, /100000 Ar \/ jour — Disponible aux dates choisies/);
-  assert.match(select.options[1].textContent, /250000 Ar \/ jour — Indisponible aux dates choisies/);
+  assert.deepEqual(select.options.map(option => option.value), ['', 'cheap', 'expensive']);
+  assert.equal(select.value, 'expensive');
+  assert.match(select.options[1].textContent, /100000 Ar \/ jour — Disponible aux dates choisies/);
+  assert.match(select.options[2].textContent, /250000 Ar \/ jour — Indisponible aux dates choisies/);
 });
 
-test('à 100 km et plus, les voitures sans prix sur le palier choisi sont masquées', () => {
+test('à 100 km et plus, toute la flotte reste visible et les voitures sans tarif sont indiquées sur devis', () => {
   const vm = require('node:vm');
   const script = read('script.js');
   const start = script.indexOf('function refreshBookingVehicleOptions(');
@@ -177,7 +179,7 @@ test('à 100 km et plus, les voitures sans prix sur le palier choisi sont masqu�
     { id: 'city-only', displayName: 'Voiture Tana seulement', vehicle: { name: 'Voiture Tana seulement', price_per_day: 100000 } },
     { id: 'province', displayName: 'Voiture province', vehicle: { name: 'Voiture province', price_per_day: 250000, price_30_100_per_day: 200000, price_100_200_per_day: 300000 } }
   ];
-  const select = { value: 'city-only', options: [], set innerHTML(markup) { this.options = [...markup.matchAll(/<option value="([^"]+)">([^<]*)<\/option>/g)].map(([, value, textContent]) => ({ value, textContent })); if (!this.options.some(option => option.value === this.value)) this.value = this.options[0]?.value || ''; } };
+  const select = { value: 'city-only', options: [], set innerHTML(markup) { this.options = [...markup.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)].map(([, value, textContent]) => ({ value, textContent })); this.value = this.options[0]?.value || ''; } };
   const context = {
     document: { getElementById: id => id === 'booking-vehicle' ? select : id === 'booking-distance-band' ? { value: '100_200' } : null },
     window: { bookingFleets: groups }, pendingBookingFleetId: '',
@@ -185,6 +187,25 @@ test('à 100 km et plus, les voitures sans prix sur le palier choisi sont masqu�
     formatMGA: value => `${value} Ar`, escapeFunHtml: value => String(value)
   };
   vm.runInNewContext(`${script.slice(start, end)}; refreshBookingVehicleOptions('city-only');`, context);
-  assert.deepEqual(select.options.map(option => option.value), ['province']);
-  assert.equal(select.value, 'province');
+  assert.deepEqual(select.options.map(option => option.value), ['', 'province', 'city-only']);
+  assert.equal(select.value, 'city-only');
+  assert.match(select.options[2].textContent, /Sans tarif pour ce palier — sur devis/);
+});
+
+test('aucune voiture n’est sélectionnée automatiquement si le client n’en a pas choisi', () => {
+  const vm = require('node:vm');
+  const script = read('script.js');
+  const start = script.indexOf('function refreshBookingVehicleOptions(');
+  const end = script.indexOf('\n}', start) + 2;
+  const groups = [{ id: 'first', displayName: 'Première voiture', vehicle: { price_per_day: 100000 } }];
+  const select = { value: '', options: [], set innerHTML(markup) { this.options = [...markup.matchAll(/<option value="([^"]*)">([^<]*)<\/option>/g)].map(([, value]) => ({ value })); this.value = this.options[0]?.value || ''; } };
+  const context = {
+    document: { getElementById: id => id === 'booking-vehicle' ? select : id === 'booking-distance-band' ? { value: '0_30' } : null },
+    window: { bookingFleets: groups }, pendingBookingFleetId: '',
+    bookingVehicleRateForBand: group => group.vehicle.price_per_day,
+    formatMGA: value => `${value} Ar`, escapeFunHtml: value => String(value)
+  };
+  vm.runInNewContext(`${script.slice(start, end)}; refreshBookingVehicleOptions();`, context);
+  assert.equal(select.value, '');
+  assert.deepEqual(select.options.map(option => option.value), ['', 'first']);
 });
