@@ -33,10 +33,64 @@
       : { band: null, label: 'Palier non renseigné', limit: 'À confirmer par écrit', minimumLabel: 'À confirmer', surcharge: 'Le palier et toute majoration kilométrique doivent être confirmés par écrit avant la remise du véhicule.' };
   }
 
+  const clause = (number, title, text) => `<p class="subarticle"><b>${number} ${title} —</b> ${text}</p>`;
+  const article = (title, clauses) => `<h2>${title}</h2>${clauses.join('')}`;
+
+  function buildSelfDriveTerms(distance) {
+    return [
+      article('Article 2 : Conditions du locataire', [
+        clause('2.1', 'Âge et permis', 'Le locataire doit être âgé d’au moins 21 ans et détenir un permis valide depuis au moins 2 ans.'),
+        clause('2.2', 'Pièces justificatives', 'Il doit présenter une pièce d’identité et une copie du permis de conduire.'),
+        clause('2.3', 'Solvabilité et conducteur', 'Le locataire doit être solvable, assuré et conducteur déclaré par écrit dans le présent contrat.')
+      ]),
+      article('Article 3 : Zone, palier kilométrique et conditions d’utilisation', [
+        clause('3.1', 'Palier et distance', `${distance.label} — ${distance.limit}. ${distance.surcharge} La distance du trajet aller est appréciée pour le trajet et la destination indiqués à l’article 1, selon le compteur kilométrique ou le GPS.`),
+        clause('3.2', 'Utilisation et interdictions', 'Tout changement de destination ou sortie de la zone convenue requiert l’accord écrit préalable du loueur. Le locataire doit respecter le code de la route et utiliser le véhicule avec soin. Il est interdit de l’utiliser pour une activité commerciale ou professionnelle rémunérée, notamment comme taxi ou pour le transport via InDrive, Rapid App ou toute application similaire, sauf accord écrit préalable du loueur. Sont également interdits le transport illégal, les courses, le transport de marchandises dangereuses, la surcharge et les routes incompatibles avec le véhicule.')
+      ]),
+      article('Article 4 : Prêt, sous-location, vente et fraude', [
+        clause('4.1', 'Prêt et transfert', 'Le véhicule reste la propriété exclusive du loueur. Il est interdit de le prêter, céder, louer, re-louer, sous-louer, vendre, tenter de vendre, mettre en gage, publier une annonce à son sujet ou percevoir un paiement pour sa remise à un tiers.'),
+        clause('4.2', 'Identité et fraude', 'Le locataire garantit l’exactitude et l’authenticité de son identité, de son permis et des documents remis. Toute fausse identité, faux document, document falsifié, dissimulation du conducteur, fausse signature, fausse déclaration ou manœuvre frauduleuse peut entraîner la reprise immédiate du véhicule, la résiliation du contrat et le dépôt d’une plainte ou d’un signalement auprès des autorités compétentes. Les préjudices et frais directement causés peuvent être réclamés sur justificatifs.')
+      ]),
+      article('Article 5 : État, carburant et restitution', [
+        clause('5.1', 'État des lieux', 'Un état des lieux indiquant le kilométrage, le carburant, l’état du véhicule, les équipements, accessoires et clés est réalisé avant la remise et après la restitution ou la reprise. Des photographies ou vidéos datées peuvent être réalisées et transmises.'),
+        clause('5.2', 'Restitution et carburant', 'Le véhicule doit être rendu à la date et à l’heure convenues, avec le même niveau de carburant et les mêmes équipements. Le carburant manquant est facturé selon la quantité consommée, avec 20 000 Ariary de frais de service.'),
+        clause('5.3', 'Retard', 'Jusqu’à 1 heure : 10 000 Ariary ; de plus d’1 heure à 3 heures : 25 000 Ariary par heure entamée ; au-delà de 3 heures : une journée supplémentaire.')
+      ]),
+      article('Article 6 : Accident, panne, casse et frais', [
+        clause('6.1', 'Incident et signalement', 'En cas d’accident, panne, casse, incendie, incident ou immobilisation, le locataire doit assurer la sécurité, informer immédiatement le loueur, communiquer le lieu, prendre des photos si possible, suivre ses instructions et faire les démarches nécessaires. Aucune réparation, modification ou remorquage ne peut être engagé sans l’accord du loueur, sauf urgence de sécurité.'),
+        clause('6.2', 'Frais liés à un manquement', 'Lorsque le dommage résulte d’une faute, négligence, mauvaise utilisation, sortie non autorisée de la zone ou autre manquement du locataire, les frais directement liés sont à sa charge : pièces, main-d’œuvre, diagnostic, déplacement, remorquage, récupération, transport, gardiennage, immobilisation et démarches. Ces frais sont justifiés par devis, factures, reçus ou autres pièces disponibles.'),
+        clause('6.3', 'Amendes et fourrière', 'Les frais de fourrière, amendes, retrait de documents ou immobilisation liés au locataire sont également à sa charge.'),
+        clause('6.4', 'Panne hors zone autorisée', 'En cas de panne ou d’immobilisation survenant en dehors de la zone d’utilisation inscrite à l’article 1, après un déplacement effectué sans l’autorisation écrite préalable du loueur, le locataire prend en charge les frais supplémentaires liés à cette situation, notamment les frais de déplacement, de dépannage, de remorquage, de transport ou de rapatriement du véhicule, de gardiennage et d’immobilisation, sur présentation de justificatifs. Cette stipulation concerne ces frais supplémentaires et ne rend pas le locataire responsable d’une panne mécanique indépendante de son comportement. Le locataire doit avertir immédiatement le loueur et ne pas faire réparer ou remorquer le véhicule sans son accord préalable, sauf urgence de sécurité.')
+      ]),
+      article('Article 7 : Vol, clés et non-restitution', [
+        clause('7.1', 'Vol et non-restitution', 'En cas de vol, disparition ou non-restitution, le locataire doit informer immédiatement le loueur, contacter les autorités, déposer plainte, transmettre le récépissé et remettre les clés, documents et accessoires encore en sa possession.'),
+        clause('7.2', 'Clés et remise à un tiers', 'La perte, le vol ou la détérioration des clés, ainsi que les frais de remplacement ou de réparation, peuvent être facturés sur justificatifs. La dissimulation, la remise à un tiers, la vente ou la mise en gage du véhicule peuvent entraîner une plainte et une demande de réparation.')
+      ]),
+      article('Article 8 : Vérification et reprise du véhicule', [
+        clause('8.1', 'Vérification', 'Pendant toute la location, le loueur peut vérifier à tout moment, sans préavis, l’état, la localisation, le kilométrage et les conditions d’utilisation du véhicule. Sauf urgence, la vérification est effectuée dans un lieu accessible et à des horaires raisonnables ; elle ne permet pas d’entrer au domicile du locataire.'),
+        clause('8.2', 'Reprise', 'Le loueur peut reprendre le véhicule à tout moment et sans préavis en cas de vente, re-location, sous-location, remise à un tiers, fraude, usage de faux, non-paiement, refus de vérification ou de restitution, utilisation interdite, sortie non autorisée de la zone, accident, immobilisation, disparition ou risque sérieux de perte. Un état des lieux de reprise est établi dans la mesure du possible.')
+      ]),
+      article('Article 9 : Remboursement en cas de retrait anticipé', [
+        clause('9.1', 'Retrait non imputable au locataire', 'Si le retrait n’est pas imputable au locataire, le prix payé pour la période restant à courir est remboursé au prorata des jours ou heures non utilisés. Les périodes commencées et les frais de livraison, récupération ou prestations déjà exécutées ne sont pas remboursés.'),
+        clause('9.2', 'Délai de remboursement', 'Le remboursement est effectué entre le 20 et le 30 du mois suivant le retrait.'),
+        clause('9.3', 'Usage commercial interdit et autres manquements', 'En cas d’utilisation commerciale interdite visée à l’article 3, le loueur peut reprendre immédiatement le véhicule conformément à l’article 8. Une surfacturation de 100 000 Ariary par jour de location consommé au cours duquel cet usage est constaté est due. Les jours restants déjà payés sont remboursés à 50 % uniquement. Pour tout autre manquement du locataire ayant entraîné le retrait, aucun remboursement des jours restants n’est dû, sans préjudice des sommes, dommages et frais réclamables.')
+      ]),
+      article('Article 10 : Responsabilité financière et règlement', [
+        clause('10.1', 'Responsabilité financière', 'Aucune caution n’est demandée, mais le locataire reste responsable des dommages, pertes, retards, amendes, fourrière, carburant, clés, accessoires et autres frais qui lui sont directement imputables. Le loueur communique le détail et les justificatifs disponibles.'),
+        clause('10.2', 'Observations et règlement', 'Le locataire peut présenter ses observations dans le jour suivant le décompte. Les sommes certaines, exigibles et non contestées sont payables dans les 10 jours.')
+      ]),
+      article('Article 11 : Acceptation', [
+        clause('11.1', 'Acceptation', 'Le locataire reconnaît avoir lu, compris et accepté les conditions du présent contrat, notamment celles relatives au palier kilométrique, aux usages interdits, à la vente, à la sous-location, à la fraude, à la vérification, à la reprise et au remboursement.')
+      ])
+    ].join('');
+  }
+
   function buildContractTerms(withDriver, distanceBand) {
     const distance = getDistanceTerms(distanceBand);
+    if (!withDriver) return buildSelfDriveTerms(distance);
+
     const articles = [
-      ['Article 2 : Conditions du locataire', withDriver ? 'Le locataire doit présenter une pièce d’identité valide et les justificatifs demandés pour la réservation. Le véhicule est conduit par le chauffeur mis à disposition par le loueur; le locataire n’est pas autorisé à le conduire, sauf accord écrit préalable.' : 'Le locataire doit être âgé d’au moins 21 ans et détenir un permis valide depuis au moins 2 ans. Il doit présenter une pièce d’identité et une copie du permis de conduire. Il doit être solvable, assuré et conducteur déclaré par écrit dans le présent contrat.'],
+      ['Article 2 : Conditions du locataire', 'Le locataire doit présenter une pièce d’identité valide et les justificatifs demandés pour la réservation. Le véhicule est conduit par le chauffeur mis à disposition par le loueur; le locataire n’est pas autorisé à le conduire, sauf accord écrit préalable.'],
       ['Article 3 : Zone, palier kilométrique et conditions d’utilisation', `${distance.label} — ${distance.limit}. ${distance.surcharge} La distance du trajet aller est appréciée pour le trajet et la destination indiqués à l’article 1, selon le compteur kilométrique ou le GPS. Tout changement de destination ou sortie de la zone convenue requiert l’accord écrit préalable du loueur. Le locataire doit respecter le code de la route et utiliser le véhicule avec soin. Il est interdit de l’utiliser pour une activité commerciale ou professionnelle rémunérée, notamment comme taxi ou pour le transport via InDrive, sauf autorisation écrite préalable. Sont également interdits le transport illégal, les courses, le transport de marchandises dangereuses, la surcharge et les routes incompatibles avec le véhicule.`],
       ['Article 4 : Prêt, sous-location, vente et fraude', 'Le véhicule reste la propriété exclusive du loueur. Il est interdit de le prêter, céder, louer, re-louer, sous-louer, vendre, tenter de vendre, mettre en gage, publier une annonce à son sujet ou percevoir un paiement pour sa remise à un tiers. Le locataire garantit l’exactitude et l’authenticité de son identité, de son permis et des documents remis. Toute fausse identité, faux document, document falsifié, dissimulation du conducteur, fausse signature, fausse déclaration ou manœuvre frauduleuse peut entraîner la reprise immédiate du véhicule, la résiliation du contrat et le dépôt d’une plainte auprès des autorités compétentes. Les préjudices et frais directement causés peuvent être réclamés sur justificatifs.'],
       ['Article 5 : État, carburant et restitution', 'Un état des lieux indiquant le kilométrage, le carburant, l’état du véhicule, les équipements, accessoires et clés est réalisé avant la remise et après la restitution ou la reprise. Des photographies ou vidéos datées peuvent être réalisées et transmises. Le véhicule doit être rendu à la date et à l’heure convenues, avec le même niveau de carburant et les mêmes équipements. Le carburant manquant est facturé selon la quantité consommée, avec 20 000 Ariary de frais de service. En cas de retard : jusqu’à 1 heure, 10 000 Ariary ; de plus d’1 heure à 3 heures, 25 000 Ariary par heure entamée ; au-delà de 3 heures, une journée supplémentaire.'],
@@ -47,7 +101,7 @@
       ['Article 10 : Responsabilité financière et règlement', 'Aucune caution n’est demandée, mais le locataire reste responsable des dommages, pertes, retards, amendes, fourrière, carburant, clés, accessoires et autres frais qui lui sont directement imputables. Le loueur communique le détail et les justificatifs disponibles. Le locataire peut présenter ses observations dans le jour suivant le décompte. Les sommes certaines, exigibles et non contestées sont payables dans les 10 jours.'],
       ['Article 11 : Acceptation', 'Le locataire reconnaît avoir lu, compris et accepté les conditions du présent contrat, notamment celles relatives au palier kilométrique, aux usages interdits, à la vente, à la sous-location, à la fraude, à la vérification, à la reprise et au remboursement.']
     ];
-    if (withDriver) articles.push(['Article 12 : Conditions particulières de la location avec chauffeur', 'Le véhicule est conduit par le chauffeur mis à disposition par le loueur. Le client convient avec le loueur de l’itinéraire et des horaires. Toute modification de l’itinéraire ou des horaires doit être préalablement validée par le loueur. Les repas et l’hébergement du chauffeur sont à la charge du client, sauf accord contraire écrit.']);
+    articles.push(['Article 12 : Conditions particulières de la location avec chauffeur', 'Le véhicule est conduit par le chauffeur mis à disposition par le loueur. Le client convient avec le loueur de l’itinéraire et des horaires. Toute modification de l’itinéraire ou des horaires doit être préalablement validée par le loueur. Les repas et l’hébergement du chauffeur sont à la charge du client, sauf accord contraire écrit.']);
     return articles.map(([title, text]) => `<h2>${title}</h2><p>${text}</p>`).join('');
   }
 
