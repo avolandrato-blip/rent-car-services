@@ -23,13 +23,8 @@
         <button class="menu-burger" type="button" aria-label="Ouvrir le menu" aria-controls="nav-menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
         <nav id="nav-menu">
             <button onclick="openTab('home')">Accueil</button>
-            <button onclick="openTab('cars')">Location</button>
-            <button onclick="openTab('booking')">Réservation</button>
-            <button onclick="openTab('drivers')">Nos chauffeurs</button>
-            <a class="nav-sale-link" href="sell.html">Ventes</a>
-            <button onclick="openTab('fun')">Médias & divertissement</button>
-            <button onclick="openTab('terms')">Condition</button>
-            <button onclick="openTab('contact')" class="nav-special">Nous contacter</button>
+            <button onclick="openTab('cars')">Nos véhicules</button>
+            <button onclick="openTab('terms')">Nos conditions</button>
         </nav>
     </div>
 </header>
@@ -41,13 +36,6 @@
                 <h2 id="hero-title">Chargement...</h2>
                 <p id="hero-slogan" class="slogan-top"></p>
                 
-                <div class="hero-btns">
-                    <button class="btn btn-primary" onclick="openTab('cars')"><i class="fas fa-car"></i> Voir les voitures</button>
-                    <button class="btn btn-primary" onclick="openTab('booking')"><i class="fas fa-calendar-check"></i> Réserver</button>
-                    <a class="btn btn-outline" href="sell.html"><i class="fas fa-tag"></i> Vendre une voiture</a>
-                    <a id="hero-whatsapp" href="#" target="_blank" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                </div>
-
                 <p id="hero-desc" class="description-bottom"></p>
             </div>
         </div>
@@ -68,10 +56,6 @@
                 <label>Capacité<select id="fleet-seats"><option value="all">Toutes</option></select></label>
                 <label>Prix maximal par jour<input id="fleet-max-price" type="number" min="0" placeholder="Ex. 150000"></label>
                 <label>Ordre d’affichage<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
-            </div>
-            <div id="live-fleet-panel" class="live-fleet-panel">
-                <div class="live-fleet-heading"><strong>Disponibilité aujourd’hui</strong><span id="live-fleet-updated" class="live-fleet-updated"></span></div>
-                <div id="live-fleet-buttons" class="live-fleet-buttons"><p class="muted live-fleet-empty">Vérification de la disponibilité en cours…</p></div>
             </div>
             <div id="cars-grid" class="cars-grid"></div>
         </div>
@@ -193,6 +177,13 @@
 <footer class="footer-fixed">
     <div class="container">
         <div id="footer-info" class="footer-text"></div>
+        <nav class="footer-nav" aria-label="Liens complémentaires">
+            <button type="button" onclick="openTab('booking')">Réservation</button>
+            <button type="button" onclick="openTab('drivers')">Nos chauffeurs</button>
+            <a href="sell.html">Vendre une voiture</a>
+            <button type="button" onclick="openTab('fun')">Médias &amp; divertissement</button>
+            <button type="button" onclick="openTab('contact')">Nous contacter</button>
+        </nav>
         <div id="social-links" class="social-footer"></div>
     </div>
 </footer>
