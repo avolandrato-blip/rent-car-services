@@ -1,6 +1,7 @@
 let siteConfig = {};
 let activePromo = null;
 let userSelectedTab = false;
+const secureInvoiceLinkRequested = new URLSearchParams(window.location.hash.slice(1)).get('invoice') === 'access';
 function promoEligibility(quote) {
     if (!activePromo) return { valid: true, discount: 0 };
     const minimumDays = Number(activePromo.minimum_days || 0);
@@ -102,7 +103,7 @@ async function initSite() {
         await safeLoad(loadContact, 'contact');
         await safeLoad(loadBookingData, 'réservation');
         const initialTab = location.hash.slice(1);
-        if (!userSelectedTab) {
+        if (!userSelectedTab && !secureInvoiceLinkRequested) {
             if (initialTab && document.getElementById(initialTab)?.classList.contains('tab')) openTab(initialTab, { silent: true });
             else if (!initialTab) openTab('home', { silent: true });
         }

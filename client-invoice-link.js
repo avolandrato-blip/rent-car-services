@@ -2,6 +2,7 @@
   function openInvoiceFromSecureLink() {
     const params = new URLSearchParams(window.location.hash.slice(1));
     if (params.get('invoice') !== 'access') return;
+    window.secureInvoiceLinkRequested = true;
 
     const credentials = {
       reference: params.get('reference') || '',
