@@ -92,6 +92,8 @@ async function initSite() {
 
         const heroWhatsapp = document.getElementById('hero-whatsapp');
         if(heroWhatsapp) heroWhatsapp.href = `https://wa.me/${siteConfig.footer.whatsapp}`;
+        const footerWhatsapp = document.getElementById('footer-whatsapp');
+        if (footerWhatsapp) footerWhatsapp.href = `https://wa.me/${String(siteConfig.footer.whatsapp || siteConfig.footer.telephone || '').replace(/\D/g, '')}?text=${encodeURIComponent('Bonjour, je souhaite un devis pour une location de voiture.')}`;
 
         // 6. Chargement des modules de données
         const safeLoad = async (loader, label) => { try { await loader(); } catch (error) { console.warn(`Chargement ${label} impossible, le reste du site continue.`, error); } };
