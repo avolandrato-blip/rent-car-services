@@ -83,7 +83,9 @@
     const method = $('booking-payment-method')?.selectedOptions?.[0]?.textContent || '—';
     const quote = $('booking-quote')?.textContent || '—';
     const balance = $('booking-balance-note')?.textContent || '—';
-    const services = [$('booking-delivery')?.checked ? 'Livraison' : '', $('booking-recovery')?.checked ? 'Récupération' : '', $('booking-driver')?.checked ? 'Chauffeur' : ''].filter(Boolean).join(' · ') || 'Aucun';
+    const selectedGroup = (window.bookingFleets || []).find(item => item.id === $('booking-vehicle')?.value);
+    const selectedVehicle = selectedGroup?.vehicle || null;
+    const services = [$('booking-delivery')?.checked ? 'Livraison' : '', $('booking-recovery')?.checked ? 'Récupération' : '', $('booking-driver')?.checked ? (selectedVehicle?.driver_mode === 'with_driver' ? 'Chauffeur supplémentaire' : 'Chauffeur') : ''].filter(Boolean).join(' · ') || 'Aucun';
     const mobileSelected = $('booking-payment-method')?.value === 'mobile_money';
     const provider = mobileSelected ? ($('booking-mobile-provider')?.selectedOptions?.[0]?.textContent || '—') : '';
     const rows = [['Véhicule', vehicle], ['Départ', start], ['Retour', end], ['Client', $('booking-name')?.value || '—'], ['Téléphone', $('booking-phone')?.value || '—'], ['WhatsApp', $('booking-whatsapp')?.value || '—'], ['Permis', `${$('booking-license')?.value || '—'} — ${$('booking-license-place')?.value || '—'} — ${$('booking-license-date')?.value || '—'}`], ['CIN', `${$('booking-cin')?.value || '—'} — ${$('booking-cin-place')?.value || '—'} — ${$('booking-cin-date')?.value || '—'}${$('booking-cin-type')?.value === 'true' ? ' — Duplicata' : ' — Original'}`], ['Itinéraire', `${$('booking-trip-from')?.value || '—'} → ${$('booking-trip-to')?.value || '—'}`], ['Services', services], ['Tarification', quote], ['Acompte', `${deposit.toLocaleString('fr-FR')} Ar`], ['Solde', balance], ['Mode de paiement', method], ...(mobileSelected ? [['Service Mobile Money', provider]] : [])];

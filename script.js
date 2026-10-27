@@ -796,9 +796,9 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
     }
     const delivery = document.getElementById('booking-delivery')?.checked ? 20000 : 0;
     const recovery = document.getElementById('booking-recovery')?.checked ? 20000 : 0;
-    const wantsDriver = vehicle.driver_mode === 'with_driver' || document.getElementById('booking-driver')?.checked;
+    const extraDriverRequested = Boolean(document.getElementById('booking-driver')?.checked);
     const driverRate = Number(vehicle.driver_mode === 'with_driver' ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000));
-    const chauffeur = wantsDriver ? driverRate * days : 0;
+    const chauffeur = extraDriverRequested ? driverRate * days : 0;
     if (requiresQuote) return { hours, billedHours, days, rate12, rate24, rentalAmount: 0, delivery: 0, recovery: 0, chauffeur: 0, distanceBand, band, bandRate: Number(vehicle[band.priceKey] || 0), requiresQuote, quoteReason, total: 0 };
     return { hours, billedHours, days, rate12, rate24, rentalAmount, delivery, recovery, chauffeur, distanceBand, band, bandRate: Number(vehicle[band.priceKey] || 0), requiresQuote, quoteReason, total: rentalAmount + delivery + recovery + chauffeur };
 }
@@ -810,6 +810,13 @@ function updateBookingQuote() {
     const quote = document.getElementById('booking-quote');
     const mini = document.getElementById('booking-quote-mini');
     const submit = document.getElementById('booking-submit-button');
+    const driverOptionLabel = document.getElementById('booking-driver-label');
+    if (driverOptionLabel) {
+        const driverRate = vehicle ? Number(vehicle.driver_mode === 'with_driver' ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000)) : 30000;
+        driverOptionLabel.textContent = vehicle?.driver_mode === 'with_driver'
+            ? `Ajouter un chauffeur supplémentaire${driverRate ? ` — ${formatMGA(driverRate)} / jour` : ' — sur devis'}`
+            : `Ajouter un chauffeur — ${formatMGA(driverRate)} / jour`;
+    }
     renderBookingDistancePrices(vehicle);
     if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) {
         if (quote) quote.textContent = '';
@@ -834,9 +841,9 @@ function updateBookingQuote() {
         return;
     }
     const promoState = promoEligibility(q), promoDiscount = promoState.discount, finalTotal = Math.max(0, q.total - promoDiscount);
-    const quoteText = `${q.distanceBand === '0_30' ? `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.rentalAmount)}` : `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Hors carburant, repas et hébergement du chauffeur. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    const quoteText = `${q.distanceBand === '0_30' ? `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.rentalAmount)}` : `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Le chauffeur est inclus lorsque le véhicule est proposé avec chauffeur ; repas et hébergement restent exclus. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (quote) quote.textContent = quoteText;
-    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · Zone : ${distanceLabel} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}</span>`;
+    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · Zone : ${distanceLabel} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${q.chauffeur ? ' · chauffeur supplémentaire inclus dans les options' : ''}</span>`;
     const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = `Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
 }
@@ -959,7 +966,8 @@ async function verifyInvoiceOtp(event, credentials) {
     const escapeFunHtml = value => String(value ?? '—').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const contractEscape = escapeFunHtml;
     const shared = `<p>Référence : ${contractEscape(data.reference)}<br>Client : ${contractEscape(data.customer_name)}<br>Téléphone : ${contractEscape(data.customer_phone)}<br>Adresse : ${contractEscape(data.customer_address || '—')}${data.with_driver ? '' : `<br>Permis : ${contractEscape(data.customer_license || '—')} — délivré à ${contractEscape(data.license_acquired_place || '—')} le ${contractEscape(data.license_acquired_at || '—')}`}<br>CIN : ${contractEscape(data.customer_cin || '—')} — ${data.cin_is_duplicate ? 'Duplicata' : 'Original'} — délivrée à ${contractEscape(data.cin_acquired_place || '—')} le ${contractEscape(data.cin_acquired_at || '—')}<br>Véhicule : ${contractEscape(vehicle)}<br>Mode : ${data.with_driver ? 'Avec chauffeur' : 'Sans chauffeur'}<br>Immatriculation : ${contractEscape(data.vehicles?.registration_number || '—')}<br>Période : ${new Date(data.start_at).toLocaleString('fr-FR')} → ${new Date(data.end_at).toLocaleString('fr-FR')}<br>Nombre de jour(s) : ${data.days || 1}<br>Formule : ${contractEscape(typeLabel)}</p>`;
-    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}<br>Chauffeur : ${formatMGA(data.chauffeur_fee)} (30 000 Ar / jour × ${data.days || 1})<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, repas et hébergement du chauffeur exclus.</p>`;
+    const extraDriverLine = Number(data.chauffeur_fee || 0) > 0 ? `<br>Chauffeur supplémentaire : ${formatMGA(data.chauffeur_fee)}` : data.with_driver ? '<br>Chauffeur : inclus dans le tarif' : '';
+    const finance = `<p>Location : ${formatMGA(rentalOnly)}<br>Livraison : ${formatMGA(data.delivery_fee)}<br>Récupération : ${formatMGA(data.recovery_fee)}${extraDriverLine}<br>Acompte payé : ${formatMGA(data.deposit_amount)}</p><p class="total">Total : ${formatMGA(data.total_amount)}<br>Reste à payer : ${formatMGA(reste)}</p><p><b>Important :</b> prix hors carburant. Avec chauffeur, seuls les repas et l’hébergement du chauffeur restent exclus.</p>`;
     if (!window.RentCarContractTerms) {
         result.className = 'booking-result booking-error';
         result.textContent = 'Le contrat complet n’est pas disponible. Actualisez la page et réessayez.';
