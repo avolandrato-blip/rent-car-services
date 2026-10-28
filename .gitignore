@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build outputs - Keep dist/ since it's needed for the deployed site
+# dist/
+
+# Package manager files (keep lock files)
+# package-lock.json
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
