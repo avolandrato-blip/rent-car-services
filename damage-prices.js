@@ -13,6 +13,7 @@
     ['door_handle', 'Poignée de porte']
   ];
   const defaultKeys = new Set(defaults.map(([key]) => key));
+  window.rentCarDamageComponents = defaults.map(([key, label]) => ({ key, label }));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   let rows = [];
   let currentVehicleId = '';
