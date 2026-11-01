@@ -17,3 +17,12 @@ test('mini-jeux autonomes accessibles depuis Médias et divertissement', () => {
   const gameEntries = games.match(/\['[^']+','[^']+','[^']+','[^']+'\]/g) || [];
   assert.equal(gameEntries.length, 10);
 });
+
+test('habillage arcade coloré et animations avec respect du mouvement réduit', () => {
+  const games = read('games.html');
+  assert.match(games, /--game-accent:#/);
+  assert.match(games, /@keyframes emoji-bob/);
+  assert.match(games, /\.status\.celebrate::after/);
+  assert.match(games, /classList\.toggle\('celebrate'/);
+  assert.match(games, /@media\(prefers-reduced-motion:reduce\)/);
+});
