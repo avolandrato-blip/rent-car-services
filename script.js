@@ -122,19 +122,23 @@ function safePublicUrl(value) {
     try { const url = new URL(String(value || ''), window.location.href); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch (_) { return ''; }
 }
 async function loadAds() {
-    const slot = document.getElementById('ads-slot');
-    if (!slot || !window.rentCarSupabase) return;
-    const { data, error } = await window.rentCarSupabase.from('site_ads').select('id,title,image_url,target_url,alt_text,starts_at,ends_at').eq('active', true).order('created_at', { ascending: false });
-    if (error) { slot.innerHTML = ''; slot.classList.add('hidden'); return; }
+    const slots = { home: document.getElementById('ads-slot-home'), fleet: document.getElementById('ads-slot-fleet') };
+    if (!Object.values(slots).some(Boolean) || !window.rentCarSupabase) return;
+    const { data, error } = await window.rentCarSupabase.from('site_ads').select('id,title,image_url,target_url,alt_text,placement,starts_at,ends_at').eq('active', true).order('created_at', { ascending: false });
+    if (error) { Object.values(slots).forEach(slot => { if (slot) { slot.innerHTML = ''; slot.classList.add('hidden'); } }); return; }
     const now = Date.now();
     const ads = (data || []).filter(ad => (!ad.starts_at || new Date(ad.starts_at).getTime() <= now) && (!ad.ends_at || new Date(ad.ends_at).getTime() >= now) && safePublicUrl(ad.image_url));
-    slot.innerHTML = ads.map(ad => {
-        const image = safePublicUrl(ad.image_url);
-        const target = safePublicUrl(ad.target_url);
-        const content = `<img src="${escapePublicHtml(image)}" alt="${escapePublicHtml(ad.alt_text || ad.title || 'Publicité')}" loading="lazy"><span class="ad-slot-caption">${escapePublicHtml(ad.title || 'Publicité')}</span>`;
-        return target ? `<a href="${escapePublicHtml(target)}" target="_blank" rel="sponsored noopener noreferrer">${content}</a>` : `<div>${content}</div>`;
-    }).join('');
-    slot.classList.toggle('hidden', !ads.length);
+    Object.entries(slots).forEach(([placement, slot]) => {
+        if (!slot) return;
+        const placedAds = ads.filter(ad => (ad.placement || 'home') === placement);
+        slot.innerHTML = placedAds.map(ad => {
+            const image = safePublicUrl(ad.image_url);
+            const target = safePublicUrl(ad.target_url);
+            const content = `<img src="${escapePublicHtml(image)}" alt="${escapePublicHtml(ad.alt_text || ad.title || 'Annonce')}" loading="lazy">`;
+            return target ? `<a href="${escapePublicHtml(target)}" target="_blank" rel="sponsored noopener noreferrer">${content}</a>` : `<div>${content}</div>`;
+        }).join('');
+        slot.classList.toggle('hidden', !placedAds.length);
+    });
 }
 async function loadHome() {
     const res = await fetch('home.json');

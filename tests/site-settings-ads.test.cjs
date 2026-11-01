@@ -23,8 +23,12 @@ test('les publicités sont chargées selon leur période et affichées sur l’a
   assert.match(script, /site_ads/);
   assert.match(script, /starts_at/);
   assert.match(script, /ends_at/);
-  assert.match(script, /ads-slot/);
-  assert.match(html, /id="ads-slot"/);
+  assert.match(script, /ads-slot-home/);
+  assert.match(script, /ads-slot-fleet/);
+  assert.match(script, /placement/);
+  assert.match(html, /id="ads-slot-home"/);
+  assert.match(html, /id="ads-slot-fleet"/);
+  assert.doesNotMatch(html, /facebook-ad-card|PUBLICITÉ FACEBOOK/);
 });
 
 test('admin permet de gérer une publicité avec image, lien et date de fin', () => {
@@ -34,6 +38,7 @@ test('admin permet de gérer une publicité avec image, lien et date de fin', ()
   assert.match(html, /id="ads-form"/);
   assert.match(html, /id="ad-image-file"/);
   assert.match(html, /id="ad-ends-at"/);
+  assert.match(html, /id="ad-placement"/);
   assert.match(admin, /site_ads/);
   assert.match(admin, /site-ads/);
   assert.match(admin, /ends_at/);

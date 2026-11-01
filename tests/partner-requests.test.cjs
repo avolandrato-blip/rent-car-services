@@ -5,14 +5,14 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('l’accueil présente B2C, P2P, B2B et les deux publicités Facebook', () => {
+test('l’accueil présente B2C, P2P, B2B et deux emplacements administrables', () => {
   const html = read('index.html');
   assert.match(html, /B2C/);
   assert.match(html, /P2P/);
   assert.match(html, /B2B/);
-  assert.match(html, /1BmDhgKo2D/);
-  assert.match(html, /1CZHNBXkZn/);
-  assert.match(html, /facebook-ad-card-secondary/);
+  assert.match(html, /ads-slot-home/);
+  assert.match(html, /ads-slot-fleet/);
+  assert.doesNotMatch(html, /facebook.com\/share/);
 });
 
 test('les formulaires partenaires enregistrent les deux types de demandes', () => {
