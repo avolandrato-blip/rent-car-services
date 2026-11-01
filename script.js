@@ -248,7 +248,7 @@ async function loadCars() {
     let normalized = localCars.filter(car => car.status !== 'contract_ended');
     if (window.rentCarSupabase) {
         try {
-            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date').neq('status','inactive').neq('status','contract_ended').order('price_per_day',{ascending:true}).order('name',{ascending:true});
+            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date').order('price_per_day',{ascending:true}).order('name',{ascending:true});
             if (!vehicleError && remoteCars?.length) normalized = remoteCars.map(car => ({...car,nom:car.name,prix:car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',pricing:{half_day:car.price_12h ? formatMGA(car.price_12h) : 'Sur devis',full_day:car.price_24h ? formatMGA(car.price_24h) : 'Sur devis'},places:car.seats,carburant:car.fuel || '—',photos:car.image_urls || []}));
             const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
             publicRentalCounts = (booked || []).reduce((acc,row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
@@ -568,12 +568,11 @@ async function loadBookingData() {
     let result;
     try {
         result = await Promise.all([
-            db.from('vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,registration_number,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date').eq('status','available').order('name'),
-            db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status',['pre_reserved','reserved']),
-            db.from('maintenance').select('vehicle_id,start_at,end_at')
+            db.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date').eq('status','available').order('name'),
+            db.from('public_fleet_busy_slots').select('vehicle_id,start_at,end_at,slot_type').limit(1000)
         ]);
     } catch (error) { console.warn('Supabase booking data unavailable:', error); usePublicCarsAsBookingFallback(); return; }
-    const [{ data: vehicles, error: vehicleError }, { data: reservations }, { data: maintenance }] = result;
+    const [{ data: vehicles, error: vehicleError }, { data: busySlots, error: busyError }] = result;
     if (vehicleError) { console.warn('Supabase booking data unavailable:', vehicleError.message); usePublicCarsAsBookingFallback(); return; }
     bookingVehicles = vehicles || []; window.bookingVehicles = bookingVehicles;
     if (!publicCars.length && bookingVehicles.length) {
@@ -585,21 +584,18 @@ async function loadBookingData() {
         document.getElementById('fleet-seats') && (document.getElementById('fleet-seats').innerHTML = '<option value="all">Toutes</option>' + seats.map(v => `<option value="${v}">${v} places</option>`).join(''));
     }
     window.bookingFleets = window.RentCarFleet ? window.RentCarFleet.groupFleetVehicles(bookingVehicles) : bookingVehicles.map(vehicle => ({id:vehicle.id,displayName:vehicle.name,vehicle,units:[vehicle],capacity:1}));
-    bookingReservations = reservations || []; bookingMaintenance = maintenance || [];
+    bookingReservations = (busySlots || []).filter(slot => slot.slot_type === 'pre_reserved' || slot.slot_type === 'reserved'); bookingMaintenance = (busySlots || []).filter(slot => slot.slot_type === 'maintenance');
     const now = new Date();
-    const [{ data: currentReservations, error: busyError }, { data: currentMaintenance, error: currentSlotsError }] = await Promise.all([
-        db.from('reservations').select('vehicle_id,start_at,end_at,status').in('status',['pre_reserved','reserved']).lt('start_at', new Date(now.getTime() + 1).toISOString()).gt('end_at', now.toISOString()),
-        db.from('maintenance').select('vehicle_id,start_at,end_at').lt('start_at', new Date(now.getTime() + 1).toISOString()).gt('end_at', now.toISOString()),
-    ]);
-    if (busyError || currentSlotsError) {
+    if (busyError) {
         bookingAvailabilityLoaded = false;
         bookingCurrentReservations = [];
         bookingCurrentMaintenance = [];
     } else {
+        const currentSlots = (busySlots || []).filter(slot => new Date(slot.start_at) <= now && new Date(slot.end_at) > now);
         bookingAvailabilityLoaded = true;
         bookingAvailabilityUpdatedAt = now;
-        bookingCurrentReservations = currentReservations || [];
-        bookingCurrentMaintenance = currentMaintenance || [];
+        bookingCurrentReservations = currentSlots.filter(slot => slot.slot_type === 'pre_reserved' || slot.slot_type === 'reserved');
+        bookingCurrentMaintenance = currentSlots.filter(slot => slot.slot_type === 'maintenance');
     }
     refreshBookingVehicleOptions(pendingBookingFleetId);
     const availabilityVehicle = document.getElementById('availability-vehicle');
