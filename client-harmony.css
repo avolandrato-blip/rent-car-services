@@ -187,3 +187,46 @@ body[data-theme="royal-night"] footer { background: #0d1b2b !important; border-c
 .partner-modal .partner-form-fields > p { grid-column: 1 / -1; }
 body[data-theme="royal-night"] .partner-modal { background: #12182d; }
 @media (max-width: 700px) { .partner-types { grid-template-columns: 1fr; } .partner-modal-header, .partner-modal #partner-request-form { padding-left: 20px; padding-right: 20px; } .partner-trust-strip { padding-left: 20px; padding-right: 20px; } .partner-modal .partner-form-fields { grid-template-columns: 1fr; } }
+
+/* Direction marketing — modal partenaires et annonces éditoriales */
+.partner-modal-backdrop { background: radial-gradient(circle at 50% 0%, rgba(36,91,135,.42), rgba(4,13,24,.84) 58%), rgba(3,12,22,.78); backdrop-filter: blur(8px); }
+.partner-modal { width: min(860px, 100%); border: 0; border-radius: 28px; background: var(--surface); box-shadow: 0 32px 100px rgba(0,0,0,.46); overflow: hidden; }
+.partner-modal-header { position: relative; min-height: 178px; padding: 34px 38px 30px; background: linear-gradient(125deg, #071827 0%, #0e3657 58%, #176890 100%); overflow: hidden; }
+.partner-modal-header::after { content: ''; position: absolute; width: 260px; height: 260px; right: -70px; top: -120px; border: 1px solid rgba(240,197,104,.38); border-radius: 50%; box-shadow: 0 0 0 24px rgba(240,197,104,.06), 0 0 0 48px rgba(240,197,104,.04); }
+.partner-modal-heading { position: relative; z-index: 1; max-width: 700px; }
+.partner-modal-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #f4ca70; font-size: .68rem; font-weight: 800; letter-spacing: .16em; }
+.partner-modal-eyebrow::before { content: ''; width: 24px; height: 2px; background: #f4ca70; }
+.partner-modal-heading h2 { margin: 12px 0 8px; font-family: 'Poppins', sans-serif; font-size: clamp(1.6rem, 4vw, 2.25rem); letter-spacing: -.03em; }
+.partner-modal-heading p { max-width: 640px; color: #d8e8f4; font-size: .94rem; line-height: 1.6; }
+.partner-modal-close { position: relative; z-index: 2; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.42); background: rgba(255,255,255,.1); backdrop-filter: blur(8px); transition: .2s ease; }
+.partner-modal-close:hover { background: #f4ca70; border-color: #f4ca70; color: #071827; transform: rotate(90deg); }
+.partner-trust-strip { justify-content: center; gap: 12px 28px; padding: 15px 30px; background: linear-gradient(90deg, rgba(217,164,65,.2), rgba(217,164,65,.07)); border-bottom: 1px solid rgba(217,164,65,.36); color: var(--ink); }
+.partner-trust-strip span { font-size: .76rem; }
+.partner-modal #partner-request-form { padding: 30px 38px 36px; }
+.partner-modal .partner-form-fields > p { margin: 0 0 4px; padding: 14px 16px; border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0; background: rgba(217,164,65,.1); color: var(--muted); line-height: 1.5; }
+.partner-modal .field label { color: var(--ink); font-weight: 700; }
+.partner-modal .field input, .partner-modal .field textarea, .partner-modal .field select { border: 1px solid var(--line); background: var(--surface-soft); transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.partner-modal .field input:focus, .partner-modal .field textarea:focus, .partner-modal .field select:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px rgba(217,164,65,.15); outline: none; }
+.partner-modal #partner-request-form > .field.full:last-child { margin-top: 8px; padding-top: 22px; border-top: 1px solid var(--line); }
+.partner-modal #partner-request-form button[type="submit"] { min-width: 220px; background: linear-gradient(135deg, #d9a441, #f2c866); color: #10273b; border: 0; box-shadow: 0 10px 24px rgba(167,112,13,.24); }
+.partner-modal #partner-request-form button[type="submit"]:hover { background: linear-gradient(135deg, #e9b957, #ffda7c); box-shadow: 0 14px 28px rgba(167,112,13,.32); }
+body[data-theme="royal-night"] .partner-modal { background: #122337; }
+body[data-theme="royal-night"] .partner-modal .field input, body[data-theme="royal-night"] .partner-modal .field textarea, body[data-theme="royal-night"] .partner-modal .field select { background: #0d1b2b; color: #fff; border-color: #29435b; }
+
+.ad-slot { margin-top: 30px; margin-bottom: 34px; }
+.ad-slot > a, .ad-slot > div { display: grid; grid-template-columns: minmax(180px, .78fr) minmax(0, 1.22fr); min-height: 190px; position: relative; overflow: hidden; border: 1px solid rgba(217,164,65,.48); border-radius: 22px; background: linear-gradient(115deg, #0a2034, #164f73); box-shadow: 0 18px 42px rgba(8,25,42,.2); color: #fff; text-decoration: none; }
+.ad-slot > a::after, .ad-slot > div::after { content: ''; position: absolute; width: 230px; height: 230px; right: -80px; top: -120px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 18px rgba(255,255,255,.04); pointer-events: none; }
+.ad-slot img { grid-column: 1; grid-row: 1; width: 100%; height: 100%; min-height: 190px; max-height: none; object-fit: cover; }
+.ad-slot .ad-slot-copy { grid-column: 2; grid-row: 1; align-self: center; padding: 28px 32px; z-index: 1; }
+.ad-slot .ad-slot-kicker { display: block; color: #f4ca70; font-size: .68rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.ad-slot .ad-slot-title { display: block; margin: 8px 0 7px; color: #fff; font-size: clamp(1.15rem, 2.4vw, 1.65rem); font-weight: 800; line-height: 1.18; }
+.ad-slot .ad-slot-description { display: block; color: #d8e8f4; font-size: .86rem; line-height: 1.55; }
+.ad-slot .ad-slot-cta { display: inline-flex; margin-top: 16px; padding: 10px 15px; border-radius: 9px; background: #f2c866; color: #10273b; font-size: .78rem; font-weight: 800; }
+body[data-theme="royal-night"] .ad-slot > a, body[data-theme="royal-night"] .ad-slot > div { box-shadow: 0 18px 42px rgba(0,0,0,.28); }
+@media (max-width: 650px) {
+  .partner-modal-header, .partner-modal #partner-request-form { padding-left: 20px; padding-right: 20px; }
+  .partner-trust-strip { justify-content: flex-start; padding-left: 20px; padding-right: 20px; }
+  .ad-slot > a, .ad-slot > div { grid-template-columns: 1fr; }
+  .ad-slot img { grid-column: 1; grid-row: 1; height: 150px; min-height: 150px; }
+  .ad-slot .ad-slot-copy { grid-column: 1; grid-row: 2; padding: 22px; }
+}

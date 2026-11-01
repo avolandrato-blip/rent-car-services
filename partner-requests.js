@@ -7,7 +7,11 @@
   const setMode = type => {
     const owner = type === 'vehicle-owner';
     $('partner-request-type').value = owner ? 'vehicle_owner' : 'business_quote';
-    $('partner-modal-title').textContent = owner ? 'Proposer mon véhicule' : 'Demander une offre entreprise';
+    $('partner-modal-title').textContent = owner ? 'Faisons connaître votre véhicule' : 'Construisons votre offre entreprise';
+    $('partner-modal-subtitle').textContent = owner
+      ? 'Présentez-nous votre voiture : nous étudions son potentiel et vous expliquons simplement la suite.'
+      : 'Décrivez votre projet de mobilité : nous revenons vers vous avec une solution adaptée à votre volume et votre trajet.';
+    $('partner-modal-eyebrow').textContent = owner ? 'PARTENARIAT · VOTRE VÉHICULE' : 'B2B · SOLUTION SUR MESURE';
     $('vehicle-owner-fields').classList.toggle('hidden', !owner);
     $('business-quote-fields').classList.toggle('hidden', owner);
     $('business-company-wrap').classList.toggle('hidden', owner);

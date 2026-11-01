@@ -21,6 +21,9 @@ test('les publicités sont chargées selon leur période et affichées sur l’a
   const script = read('script.js');
   const html = read('index.html');
   assert.match(script, /site_ads/);
+  assert.match(script, /description/);
+  assert.match(script, /cta_label/);
+  assert.match(script, /ad-slot-copy/);
   assert.match(script, /starts_at/);
   assert.match(script, /ends_at/);
   assert.match(script, /ads-slot-home/);
@@ -39,7 +42,23 @@ test('admin permet de gérer une publicité avec image, lien et date de fin', ()
   assert.match(html, /id="ad-image-file"/);
   assert.match(html, /id="ad-ends-at"/);
   assert.match(html, /id="ad-placement"/);
+  assert.match(html, /id="ad-description"/);
+  assert.match(html, /id="ad-cta-label"/);
   assert.match(admin, /site_ads/);
   assert.match(admin, /site-ads/);
+  assert.match(admin, /description/);
+  assert.match(admin, /cta_label/);
   assert.match(admin, /ends_at/);
+});
+
+test('le modal partenaire adopte une présentation marketing', () => {
+  const html = read('index.html');
+  const css = read('client-harmony.css');
+  const js = read('partner-requests.js');
+  assert.match(html, /partner-modal-eyebrow/);
+  assert.match(html, /partner-modal-subtitle/);
+  assert.match(html, /partner-trust-strip/);
+  assert.match(css, /partner-modal-header/);
+  assert.match(css, /backdrop-filter/);
+  assert.match(js, /Construisons votre offre entreprise/);
 });
