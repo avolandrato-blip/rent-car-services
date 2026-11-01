@@ -145,6 +145,7 @@ body {
 .multitask-note { margin: 16px 0; color: #66788a; font-size: .8rem; line-height: 1.5; }
 .multitask-note i { color: var(--accent); margin-right: 5px; }
 .youtube-panel .btn { width: 100%; justify-content: center; }
+.games-panel .btn { width: 100%; justify-content: center; margin-top: 8px; }
 body[data-theme="royal-night"] .entertainment-panel { background: #12182d; color: #f5f7ff; }
 body[data-theme="royal-night"] .entertainment-panel-heading p, body[data-theme="royal-night"] .radio-now-playing span, body[data-theme="royal-night"] .multitask-note { color: #c7d0e4; }
 body[data-theme="royal-night"] .entertainment-select { background: #0b1021; color: #fff; border-color: #354060; }
