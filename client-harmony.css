@@ -230,3 +230,8 @@ body[data-theme="royal-night"] .ad-slot > a, body[data-theme="royal-night"] .ad-
   .ad-slot img { grid-column: 1; grid-row: 1; height: 150px; min-height: 150px; }
   .ad-slot .ad-slot-copy { grid-column: 1; grid-row: 2; padding: 22px; }
 }
+.ad-slot-booking { margin: 0 0 24px; }
+.ad-slot-booking > a, .ad-slot-booking > div { min-height: 150px; grid-template-columns: 145px minmax(0, 1fr); border-radius: 16px; }
+.ad-slot-booking img { min-height: 150px; }
+.ad-slot-booking .ad-slot-copy { padding: 22px 24px; }
+.ad-slot-booking .ad-slot-title { font-size: 1.15rem; }
