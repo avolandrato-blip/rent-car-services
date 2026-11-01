@@ -10,7 +10,7 @@ test('mini-jeux autonomes accessibles depuis Médias et divertissement', () => {
   const script = read('script.js');
   const games = read('games.html');
   assert.match(script, /class="entertainment-panel games-panel"/);
-  assert.match(script, /href="games\.html\?v=20261101-mobile-62" target="_blank" rel="noopener noreferrer"/);
+  assert.match(script, /href="games\.html\?v=20261101-arcade" target="_blank" rel="noopener noreferrer"/);
   assert.match(games, /<html lang="fr">/);
   assert.match(games, /href="index\.html#fun"/);
   assert.doesNotMatch(games, /<script[^>]+src=/i);

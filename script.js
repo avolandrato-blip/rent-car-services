@@ -371,7 +371,7 @@ async function loadFun() {
         <div class="entertainment-panel games-panel">
             <div class="entertainment-panel-heading"><i class="fas fa-gamepad"></i><div><h3>Mini-jeux</h3><p>Une pause ludique, sur ordinateur ou téléphone.</p></div></div>
             <p class="entertainment-games-copy">Choisissez parmi 10 jeux : Morpion, Snake, Démineur, dames, course automobile, Puissance 4 et plus encore. Plusieurs proposent un mode deux joueurs sur le même appareil.</p>
-            <a class="btn btn-primary" href="games.html?v=20261101-mobile-62" target="_blank" rel="noopener noreferrer"><i class="fas fa-play"></i> Ouvrir les mini-jeux</a>
+            <a class="btn btn-primary" href="games.html?v=20261101-arcade" target="_blank" rel="noopener noreferrer"><i class="fas fa-play"></i> Ouvrir les mini-jeux</a>
         </div>`;
     bindEntertainmentPlayers(data);
 }
