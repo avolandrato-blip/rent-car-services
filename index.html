@@ -41,6 +41,16 @@
         </div>
         
         <div id="ads-slot" class="container ad-slot hidden" aria-label="Publicité"></div>
+        <div class="container partner-intro">
+            <h2 class="section-title">Une mise en relation adaptée à votre besoin</h2>
+            <div class="partner-types">
+                <article class="partner-type"><span class="partner-type-code">B2C</span><h3>Professionnel → particulier</h3><p>Les particuliers recherchent un véhicule fiable proposé par un professionnel, avec des tarifs et des conditions clairs.</p></article>
+                <article class="partner-type"><span class="partner-type-code">P2P</span><h3>Particulier → particulier</h3><p>Un propriétaire peut proposer sa voiture à Rent Car Services. Nous étudions la demande, gérons l’annonce et suivons le contrat.</p></article>
+                <article class="partner-type"><span class="partner-type-code">B2B</span><h3>Professionnel → professionnel</h3><p>Les entreprises peuvent transmettre leurs besoins de véhicules, de volume, de durée et de trajet pour recevoir une offre adaptée.</p></article>
+            </div>
+            <div class="partner-actions"><button type="button" class="btn btn-primary" data-partner-open="vehicle-owner"><i class="fas fa-car"></i> Proposer mon véhicule</button><button type="button" class="btn btn-outline" data-partner-open="business-quote"><i class="fas fa-building"></i> Demander une offre entreprise</button></div>
+        </div>
+        <div class="container facebook-ad-card" aria-label="Publicité Facebook"><div><span class="ad-kicker">PUBLICITÉ FACEBOOK</span><h3>Trouvez le véhicule qu’il vous faut</h3><p>Besoin d’une voiture pour vos déplacements ? Découvrez nos offres de location et contactez-nous pour vérifier les disponibilités et les tarifs.</p></div><a class="btn btn-share" href="https://www.facebook.com/share/1BmDhgKo2D/" target="_blank" rel="sponsored noopener noreferrer">Voir la publicité Facebook</a></div>
         <div class="container">
             <h2 class="section-title">Les avantages de notre service</h2>
             <div id="features-grid" class="features-grid"></div>
@@ -59,6 +69,7 @@
             </div>
             <div id="cars-grid" class="cars-grid"></div>
         </div>
+        <div class="container facebook-ad-card facebook-ad-card-secondary" aria-label="Publicité Facebook"><div><span class="ad-kicker">PUBLICITÉ FACEBOOK</span><h3>Vous souhaitez proposer votre véhicule ?</h3><p>Vous êtes propriétaire d’une voiture ? Contactez Rent Car Services pour proposer votre véhicule. Après étude et accord, nous pourrons le présenter aux personnes intéressées.</p></div><a class="btn btn-share" href="https://www.facebook.com/share/1CZHNBXkZn/" target="_blank" rel="sponsored noopener noreferrer">Voir la publicité Facebook</a></div>
     </section>
 
     <section id="drivers" class="tab">
@@ -173,6 +184,7 @@
         </div>
     </section>
 </main>
+<div id="partner-modal" class="partner-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title"><section class="partner-modal"><header><h2 id="partner-modal-title">Votre demande</h2><button type="button" class="partner-modal-close" data-partner-close aria-label="Fermer">&times;</button></header><form id="partner-request-form" class="form-grid"><input id="partner-request-type" type="hidden"><div id="vehicle-owner-fields" class="partner-form-fields"><p class="muted">Décrivez votre véhicule et laissez-nous vos coordonnées. Après étude, nous vous recontacterons.</p><div class="field"><label>Marque *<input id="partner-make" required></label></div><div class="field"><label>Modèle *<input id="partner-model" required></label></div><div class="field"><label>Nombre de places *<input id="partner-seats" type="number" min="1" required></label></div><div class="field"><label>Transmission *<input id="partner-transmission" required></label></div><div class="field"><label>Carburant *<input id="partner-fuel" required></label></div></div><div id="business-quote-fields" class="partner-form-fields hidden"><p class="muted">Indiquez le besoin de votre entreprise pour recevoir une proposition personnalisée.</p><div class="field"><label>Type de voiture *<input id="business-car-type" required></label></div><div class="field"><label>Nombre de places *<input id="business-seats" type="number" min="1" required></label></div><div class="field"><label>Nombre de voitures *<input id="business-count" type="number" min="1" required></label></div><div class="field"><label>Durée en jours *<input id="business-days" type="number" min="1" required></label></div><div class="field full"><label>Trajet *<input id="business-route" required></label></div></div><div class="field"><label id="partner-name-label">Nom et prénom *<input id="partner-name" required></label></div><div class="field"><label>Téléphone / WhatsApp *<input id="partner-phone" required></label></div><div class="field"><label>Email<input id="partner-email" type="email"></label></div><div id="business-company-wrap" class="field hidden"><label>Nom de l’entreprise *<input id="business-company"></label></div><div class="field full"><label>Message complémentaire<textarea id="partner-message" rows="3"></textarea></label></div><div class="field full"><button class="btn btn-primary" type="submit">Envoyer ma demande</button><p id="partner-request-result" class="booking-result" role="status"></p></div></form></section></div>
 
 <footer class="footer-fixed">
     <div class="container">
@@ -215,6 +227,7 @@
     <script src="contract-terms.js?v=20261025-subarticles"></script>
     <script src="script.js?v=20261027-driver-pricing"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261031-1"></script>
     <script src="enhancements.js?v=20261027-driver-pricing"></script>
+    <script src="partner-requests.js?v=20261101-1"></script>
     <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
     <script src="chauffeurs.js?v=20260928-1"></script>
