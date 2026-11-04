@@ -6,7 +6,6 @@
   const requiredDocuments = [
     { kind: 'cin_recto', field: 'cinRecto', label: 'CIN — recto' },
     { kind: 'cin_verso', field: 'cinVerso', label: 'CIN — verso' },
-    { kind: 'permis_recto', field: 'permisRecto', label: 'Permis — recto' },
   ];
   const acceptedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const maxFileSize = 8 * 1024 * 1024;

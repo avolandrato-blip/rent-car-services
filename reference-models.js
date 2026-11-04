@@ -16,13 +16,14 @@
     if (!printTab) return alert('Autorisez les fenêtres pop-up pour générer le document.');
     printTab.document.write('<p style="font:16px Arial;padding:30px">Préparation du document…</p>');
     const withDriver = v.driver_mode === 'with_driver' || Boolean(r.with_driver);
-    const requiredIdentityKinds = withDriver ? ['cin_recto','cin_verso'] : ['cin_recto','cin_verso','permis_recto'];
+    const requiredIdentityKinds = ['cin_recto','cin_verso'];
+    const availableIdentityKinds = withDriver ? requiredIdentityKinds : [...requiredIdentityKinds, 'permis_recto'];
     let documentImages = [];
     if (!isInvoice && window.rentCarSupabase) {
       const found = await window.rentCarSupabase.from('contract_documents').select('document_kind,storage_bucket,storage_path,mime_type').eq('reservation_id', id).eq('storage_bucket', 'contract-documents');
       if (found.error) { printTab.close(); alert('Impossible de lire les pièces jointes. Le contrat n’a pas été généré afin d’éviter une annexe incomplète.'); return; }
       for (const doc of (found.data || [])) {
-        if (!requiredIdentityKinds.includes(doc.document_kind) || !['image/jpeg','image/png','image/webp'].includes(doc.mime_type) || !String(doc.storage_path || '').startsWith(`${id}/`)) continue;
+        if (!availableIdentityKinds.includes(doc.document_kind) || !['image/jpeg','image/png','image/webp'].includes(doc.mime_type) || !String(doc.storage_path || '').startsWith(`${id}/`)) continue;
         const signed = await window.rentCarSupabase.storage.from('contract-documents').createSignedUrl(doc.storage_path, 900);
         if (signed.error || !signed.data?.signedUrl) { printTab.close(); alert('Impossible de charger une pièce d’identité. Le contrat n’a pas été généré. Vérifiez votre connexion et réessayez.'); return; }
         documentImages.push({kind: doc.document_kind, url: signed.data.signedUrl});
@@ -32,7 +33,8 @@
     const documentBox = (label, kind) => `<div><img src="${esc(documentByKind(kind))}" alt="${label}"><small>${label}</small></div>`;
     const documentTiles = (withDriver ? [['CIN — Recto','cin_recto'],['CIN — Verso','cin_verso']] : [['CIN — Recto','cin_recto'],['CIN — Verso','cin_verso'],['Permis — Recto','permis_recto']]).filter(([, kind]) => documentByKind(kind)).map(([label, kind]) => documentBox(label, kind)).join('');
     const documentAppendix = !isInvoice && documentTiles ? `<div class="page-break"><h2>Annexe — Pièces d’identité disponibles</h2><div class="document-grid">${documentTiles}</div></div>` : '';
-    const licenseDetails = withDriver ? '' : `<br>Numéro de permis : ${esc(r.customer_license || '________________________')}<br>Permis délivré à : ${esc(r.license_acquired_place || '________________________')} — le : ${esc(r.license_acquired_at || '________________')}`;
+    const hasLicenseDetails = Boolean(r.customer_license || r.license_acquired_place || r.license_acquired_at);
+    const licenseDetails = withDriver || !hasLicenseDetails ? '' : `<br>Numéro de permis : ${esc(r.customer_license || '________________________')}<br>Permis délivré à : ${esc(r.license_acquired_place || '________________________')} — le : ${esc(r.license_acquired_at || '________________')}`;
     const hasCustomOwner = [v.owner_name, v.owner_first_name, v.owner_phone, v.owner_address, v.owner_nif, v.owner_stat].some(Boolean);
     const owner = {name: v.owner_name || 'ANDRIANASOLO', firstName: v.owner_first_name || (hasCustomOwner ? '' : 'Volandrato'), phone: v.owner_phone || '034 91 207 26', address: v.owner_address || '67 HA Nord-Ouest, Antananarivo, 101', nif: v.owner_nif || '', stat: v.owner_stat || ''};
     const ownerFullName = `${owner.name}${owner.firstName ? ` ${owner.firstName}` : ''}`;
