@@ -15,7 +15,7 @@
     const r = reservation(id); if (!r) return; const v = vehicle(r); const p = paid(r); const isInvoice = kind === 'invoice';
     const printTab = window.open('', '_blank');
     if (!printTab) return alert('Autorisez les fenêtres pop-up pour générer le document.');
-    printTab.document.write('<div style="min-height:45vh;display:grid;place-items:center;padding:24px"><img src="https://avolandrato-blip.github.io/rent-car-services/images/logo.png" alt="Rent Car Services" style="display:block;width:min(160px,45vw);height:auto;object-fit:contain"></div>');
+    printTab.document.write('<p style="font:14px Arial;color:#6d7b86;padding:20px;margin:0">Préparation du document…</p>');
     const withDriver = v.driver_mode === 'with_driver' || Boolean(r.with_driver);
     const requiredIdentityKinds = ['cin_recto','cin_verso'];
     const availableIdentityKinds = withDriver ? requiredIdentityKinds : [...requiredIdentityKinds, 'permis_recto'];
