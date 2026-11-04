@@ -8,6 +8,6 @@ const admin = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
 const script = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
 const drivers = fs.readFileSync(path.join(root, 'chauffeurs.js'), 'utf8');
 test('l’accueil contient une action Réserver', () => assert.match(index, /Réserver/));
-test('le chargement des voitures tolère l’absence de cars.json', () => assert.match(script, /localData\s*=\s*\{\s*liste:\s*\[\]\s*\}/));
+test('le catalogue de voitures est chargé depuis la flotte publique', () => { assert.match(script, /let normalized = \[\]/); assert.match(script, /from\('public_fleet_vehicles'\)/); });
 test('la page admin expose la gestion des chauffeurs', () => { assert.match(admin, /data-tab="chauffeurs"/); assert.match(admin, /id="driver-form"/); });
 test('les tarifs chauffeur sont directs et bornés', () => { assert.match(drivers, /value < 20000 \|\| value > 50000/); assert.match(drivers, /city_daily_rate/); });
