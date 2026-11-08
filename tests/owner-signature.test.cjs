@@ -38,6 +38,8 @@ test('le gabarit administratif appose la signature du loueur sur contrat et fact
   const template = read('reference-models.js');
   assert.match(template, /ownerSignatureDataUrl = ''/);
   assert.match(template, /safeOwnerSignature/);
+  assert.match(template, /owner-stamp\.png/);
+  assert.match(template, /document-owner-stamp-image/);
   assert.match(template, /document-owner-signature/);
   assert.match(template, /owner-invoice-signature/);
   assert.match(template, /const signatureCards = tenantSignatureCard \+ ownerSignatureCard/);
@@ -82,8 +84,10 @@ test('une signature confirmée est rendue dans les deux documents administratifs
   await fakeWindow.printDocument('r1', 'contract', signature);
   assert.equal(windows.length, 2);
   assert.match(windows[0].html, /owner-invoice-signature/);
+  assert.match(windows[0].html, /owner-stamp\.png/);
   assert.match(windows[0].html, /src="data:image\/png;base64,aGVsbG8="/);
   assert.match(windows[1].html, /document-contract/);
+  assert.match(windows[1].html, /owner-stamp\.png/);
   assert.match(windows[1].html, /src="data:image\/png;base64,aGVsbG8="/);
   assert.match(windows[1].html, /Le locataire/);
 });
