@@ -967,6 +967,7 @@ async function verifyInvoiceOtp(event, credentials) {
     const reservation = packageData?.invoice?.reservation;
     if (error || !reservation) { globalThis.document.getElementById('invoice-access-form').classList.remove('hidden'); result.className = 'booking-result booking-error'; result.textContent = 'Référence, téléphone ou code OTP incorrect. La facture et le contrat sont accessibles après validation de l’acompte.'; return; }
     const data = { ...reservation, vehicles: packageData.invoice.vehicle || {} };
+    document.title = `Facture et contrat ${data.reference || 'location'} — Rent Car Service`;
     const typeLabel = data.rental_type === 'night' ? 'Nuit — 12 h (19h00 à 06h00)' : data.rental_type === '24h' ? '24 heures' : 'Jour — 12 h (07h00 à 18h00)';
     const rentalOnly = Number(data.total_amount||0) - Number(data.delivery_fee||0) - Number(data.recovery_fee||0) - Number(data.chauffeur_fee||0);
     const reste = Math.max(0, Number(data.total_amount||0) - Number(data.deposit_amount||0));
