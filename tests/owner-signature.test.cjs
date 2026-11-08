@@ -87,3 +87,81 @@ test('une signature confirmée est rendue dans les deux documents administratifs
   assert.match(windows[1].html, /src="data:image\/png;base64,aGVsbG8="/);
   assert.match(windows[1].html, /Le locataire/);
 });
+
+test('la signature client est saisie et apposée sur les deux documents sans stockage local ou serveur', () => {
+  const html = read('index.html');
+  const publicScript = read('client-signature.js');
+  const documentGenerator = read('script.js');
+  assert.match(html, /id="invoice-client-signature-canvas"/);
+  assert.match(html, /id="invoice-client-signature-apply"/);
+  assert.match(html, /ne l’enregistre pas/);
+  assert.match(documentGenerator, /data-client-signature-slot="invoice"/);
+  assert.match(documentGenerator, /data-client-signature-slot="contract"/);
+  assert.match(documentGenerator, /window\.showClientDocumentSignature\?\.\(\)/);
+  assert.match(publicScript, /canvas\.toDataURL\('image\/png'\)/);
+  assert.match(publicScript, /slot\.replaceChildren\(image\)/);
+  assert.doesNotMatch(publicScript, /localStorage|sessionStorage|rentCarSupabase|fetch\(|sign_contract|contract_signatures/);
+  assert.match(documentGenerator, /invoice-print-button'\)\?\.classList\.add\('hidden'\)/);
+});
+
+test('les anciens RPC de signature persistée sont désactivés pour les clients', () => {
+  const migration = read('supabase/migrations/20261108105000_disable_persisted_client_signing.sql');
+  assert.match(migration, /revoke all on function public\.create_contract_signing_link\(uuid\) from public, anon, authenticated/i);
+  assert.match(migration, /revoke all on function public\.get_contract_for_signing\(text\) from public, anon, authenticated/i);
+  assert.match(migration, /revoke all on function public\.sign_contract\(text, text, text, text, text, text, text\) from public, anon, authenticated/i);
+});
+
+test('le parcours client en mémoire exige dessin et confirmation avant de débloquer l’impression', () => {
+  const vm = require('node:vm');
+  const handlers = {};
+  const makeElement = () => {
+    const classes = new Set(['hidden']);
+    return {
+      className: '', textContent: '', checked: false, width: 0, height: 0,
+      classList: { add: value => classes.add(value), remove: value => classes.delete(value), contains: value => classes.has(value) },
+      addEventListener: (name, handler) => { handlers[name] = handler; },
+    };
+  };
+  const panel = makeElement();
+  const canvas = makeElement();
+  canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 320, height: 180 });
+  canvas.getContext = () => ({ setTransform() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, clearRect() {} });
+  canvas.setPointerCapture = () => {};
+  canvas.toDataURL = () => 'data:image/png;base64,dGVzdA==';
+  const slots = ['invoice', 'contract'].map(kind => ({
+    dataset: { clientSignatureSlot: kind },
+    innerHTML: '<div class="document-signature-line"></div>Signature',
+    replaceChildren(image) { this.image = image; },
+  }));
+  const documentRoot = { querySelectorAll: () => slots };
+  const consent = makeElement();
+  const printButton = makeElement();
+  const status = makeElement();
+  const elements = {
+    'invoice-client-signature-panel': panel,
+    'invoice-client-signature-canvas': canvas,
+    'invoice-client-signature-consent': consent,
+    'invoice-client-signature-apply': makeElement(),
+    'invoice-client-signature-clear': makeElement(),
+    'invoice-client-signature-status': status,
+    'invoice-access-document': documentRoot,
+    'invoice-print-button': printButton,
+  };
+  const fakeDocument = {
+    getElementById: id => elements[id] || null,
+    createElement: () => ({ className: '', alt: '', src: '' }),
+  };
+  const fakeWindow = { devicePixelRatio: 1, addEventListener() {}, showClientDocumentSignature: undefined };
+  const context = { document: fakeDocument, window: fakeWindow, requestAnimationFrame: callback => callback() };
+  vm.runInNewContext(read('client-signature.js'), context);
+  fakeWindow.showClientDocumentSignature();
+  assert.equal(panel.classList.contains('hidden'), false);
+  handlers.pointerdown({ preventDefault() {}, currentTarget: canvas, pointerId: 1, clientX: 30, clientY: 40 });
+  handlers.pointermove({ preventDefault() {}, currentTarget: canvas, pointerId: 1, clientX: 60, clientY: 50 });
+  handlers.pointerup();
+  consent.checked = true;
+  handlers.click();
+  assert.ok(slots.every(slot => slot.image?.src === 'data:image/png;base64,dGVzdA=='));
+  assert.equal(printButton.classList.contains('hidden'), false);
+  assert.match(status.textContent, /ne sera pas enregistrée sur le site/);
+});
