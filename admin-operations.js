@@ -41,7 +41,24 @@
   function printPreviewDocument(id, kind) {
     try {
       if (typeof window.printDocument !== 'function') throw new Error('Fonction d’impression indisponible.');
-      window.printDocument(id, kind);
+      const signatureState = window.getLessorSignatureState?.() || {};
+      const status = $('admin-preview-status');
+      if (signatureState.loading) {
+        if (status) { status.hidden = false; status.textContent = 'La signature enregistrée est encore en cours de chargement. Réessayez dans un instant.'; }
+        return;
+      }
+      const savedSignature = window.getLessorSignatureForPrint?.() || '';
+      if (signatureState.error) {
+        const continueUnsigned = window.confirm('La signature enregistrée est inaccessible. Générer ce document sans signature ?');
+        if (!continueUnsigned) return;
+      }
+      let approvedSignature = '';
+      if (savedSignature) {
+        const documentLabel = kind === 'invoice' ? 'cette facture' : 'ce contrat';
+        const approved = window.confirm(`Ajouter votre signature à ${documentLabel} ?\n\nOK : ajouter la signature. Annuler : générer le document sans signature.`);
+        if (approved) approvedSignature = savedSignature;
+      }
+      window.printDocument(id, kind, approvedSignature);
     } catch (error) {
       const status = $('admin-preview-status');
       if (status) { status.hidden = false; status.textContent = `Impossible d’ouvrir le document : ${error.message || 'fenêtre bloquée'}. Autorisez les fenêtres surgissantes pour GitHub Pages puis réessayez.`; }
