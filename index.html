@@ -202,7 +202,60 @@
         </div>
     </section>
 </main>
-<div id="partner-modal" class="partner-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title"><section class="partner-modal"><header class="partner-modal-header"><div class="partner-modal-heading"><span class="partner-modal-eyebrow" id="partner-modal-eyebrow">RENT CAR SERVICE · PROJET MOBILITÉ</span><h2 id="partner-modal-title">Votre demande</h2><p id="partner-modal-subtitle">Parlez-nous de votre besoin. Notre équipe prépare une réponse claire et personnalisée.</p></div><button type="button" class="partner-modal-close" data-partner-close aria-label="Fermer">&times;</button></header><div class="partner-trust-strip"><span><i class="fas fa-bolt"></i> Réponse rapide</span><span><i class="fas fa-handshake"></i> Étude personnalisée</span><span><i class="fas fa-shield-halved"></i> Données traitées avec soin</span></div><form id="partner-request-form" class="form-grid"><input id="partner-request-type" type="hidden"><div id="vehicle-owner-fields" class="partner-form-fields"><p class="muted">Décrivez votre véhicule et laissez-nous vos coordonnées. Après étude, nous vous recontacterons.</p><div class="field"><label>Marque *<input id="partner-make" required></label></div><div class="field"><label>Modèle *<input id="partner-model" required></label></div><div class="field"><label>Nombre de places *<input id="partner-seats" type="number" min="1" required></label></div><div class="field"><label>Transmission *<input id="partner-transmission" required></label></div><div class="field"><label>Carburant *<input id="partner-fuel" required></label></div></div><div id="business-quote-fields" class="partner-form-fields hidden"><p class="muted">Indiquez le besoin de votre entreprise pour recevoir une proposition personnalisée.</p><div class="field"><label>Type de voiture *<input id="business-car-type" required></label></div><div class="field"><label>Nombre de places *<input id="business-seats" type="number" min="1" required></label></div><div class="field"><label>Nombre de voitures *<input id="business-count" type="number" min="1" required></label></div><div class="field"><label>Durée en jours *<input id="business-days" type="number" min="1" required></label></div><div class="field full"><label>Trajet *<input id="business-route" required></label></div></div><div class="field"><label id="partner-name-label">Nom et prénom *<input id="partner-name" required></label></div><div class="field"><label>Téléphone / WhatsApp *<input id="partner-phone" required></label></div><div class="field"><label>Email<input id="partner-email" type="email"></label></div><div id="business-company-wrap" class="field hidden"><label>Nom de l’entreprise *<input id="business-company"></label></div><div class="field full"><label>Message complémentaire<textarea id="partner-message" rows="3"></textarea></label></div><div class="field full"><button class="btn btn-primary" type="submit">Envoyer ma demande</button><p id="partner-request-result" class="booking-result" role="status"></p></div></form></section></div>
+<div id="partner-modal" class="partner-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title">
+    <section class="partner-modal">
+        <header class="partner-modal-header">
+            <div class="partner-modal-heading">
+                <span class="partner-modal-eyebrow" id="partner-modal-eyebrow">PARTENARIAT · VOTRE VÉHICULE</span>
+                <h2 id="partner-modal-title">Présentez-nous votre véhicule</h2>
+                <p id="partner-modal-subtitle">Nous étudions son potentiel et vous expliquons simplement la suite.</p>
+            </div>
+            <button type="button" class="partner-modal-close" data-partner-close aria-label="Fermer">&times;</button>
+        </header>
+        <div class="partner-trust-strip">
+            <span><i class="fas fa-bolt"></i> Réponse rapide</span>
+            <span><i class="fas fa-sliders"></i> Étude personnalisée</span>
+            <span><i class="fas fa-shield-halved"></i> Données traitées avec soin</span>
+        </div>
+        <div class="partner-modal-body">
+            <form id="partner-request-form" class="form-grid">
+                <input id="partner-request-type" type="hidden">
+                <div id="vehicle-owner-fields" class="partner-form-fields">
+                    <p class="muted">Décrivez votre véhicule et laissez-nous vos coordonnées. Après étude, nous vous recontacterons.</p>
+                    <div class="field"><label><i class="fas fa-car"></i> Marque *<input id="partner-make" required></label></div>
+                    <div class="field"><label><i class="fas fa-car-side"></i> Modèle *<input id="partner-model" required></label></div>
+                    <div class="field"><label><i class="fas fa-users"></i> Nombre de places *<input id="partner-seats" type="number" min="1" required></label></div>
+                    <div class="field"><label><i class="fas fa-gears"></i> Transmission *<input id="partner-transmission" required></label></div>
+                    <div class="field"><label><i class="fas fa-gas-pump"></i> Carburant *<input id="partner-fuel" required></label></div>
+                </div>
+                <div id="business-quote-fields" class="partner-form-fields hidden">
+                    <p class="muted">Indiquez le besoin de votre entreprise pour recevoir une proposition personnalisée.</p>
+                    <div class="field"><label><i class="fas fa-car"></i> Type de voiture *<input id="business-car-type" required></label></div>
+                    <div class="field"><label><i class="fas fa-users"></i> Nombre de places *<input id="business-seats" type="number" min="1" required></label></div>
+                    <div class="field"><label><i class="fas fa-layer-group"></i> Nombre de voitures *<input id="business-count" type="number" min="1" required></label></div>
+                    <div class="field"><label><i class="fas fa-calendar-days"></i> Durée en jours *<input id="business-days" type="number" min="1" required></label></div>
+                    <div class="field full"><label><i class="fas fa-route"></i> Trajet *<input id="business-route" required></label></div>
+                </div>
+                <div class="field"><label id="partner-name-label"><i class="fas fa-user"></i> Nom et prénom *<input id="partner-name" required></label></div>
+                <div class="field"><label><i class="fas fa-phone"></i> Téléphone / WhatsApp *<input id="partner-phone" required></label></div>
+                <div class="field"><label><i class="fas fa-envelope"></i> Email<input id="partner-email" type="email"></label></div>
+                <div id="business-company-wrap" class="field hidden"><label><i class="fas fa-building"></i> Nom de l’entreprise *<input id="business-company"></label></div>
+                <div class="field full"><label><i class="fas fa-message"></i> Message complémentaire<textarea id="partner-message" rows="3"></textarea></label></div>
+                <div class="field full partner-submit-row"><button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Envoyer ma demande <i class="fas fa-arrow-right"></i></button><p id="partner-request-result" class="booking-result" role="status"></p></div>
+            </form>
+            <aside class="partner-modal-sidecard">
+                <div class="partner-side-icon"><i id="partner-side-icon" class="fas fa-handshake"></i></div>
+                <h3 id="partner-side-title">Ensemble,<br><strong>allons plus loin</strong></h3>
+                <span class="partner-side-rule"></span>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i><span id="partner-side-point-1">Accompagnement sur mesure</span></li>
+                    <li><i class="fas fa-check-circle"></i><span id="partner-side-point-2">Réponse rapide</span></li>
+                    <li><i class="fas fa-check-circle"></i><span id="partner-side-point-3">Solution adaptée à vos besoins</span></li>
+                </ul>
+            </aside>
+        </div>
+    </section>
+</div>
 
 <footer class="footer-fixed">
     <div class="container">

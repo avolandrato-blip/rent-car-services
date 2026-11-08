@@ -6,12 +6,18 @@
   if (!modal || !form) return;
   const setMode = type => {
     const owner = type === 'vehicle-owner';
+    modal.dataset.mode = owner ? 'owner' : 'business';
     $('partner-request-type').value = owner ? 'vehicle_owner' : 'business_quote';
     $('partner-modal-title').textContent = owner ? 'Faisons connaître votre véhicule' : 'Construisons votre offre entreprise';
     $('partner-modal-subtitle').textContent = owner
       ? 'Présentez-nous votre voiture : nous étudions son potentiel et vous expliquons simplement la suite.'
       : 'Décrivez votre projet de mobilité : nous revenons vers vous avec une solution adaptée à votre volume et votre trajet.';
     $('partner-modal-eyebrow').textContent = owner ? 'PARTENARIAT · VOTRE VÉHICULE' : 'B2B · SOLUTION SUR MESURE';
+    $('partner-side-icon').className = owner ? 'fas fa-handshake' : 'fas fa-building';
+    $('partner-side-title').innerHTML = owner ? 'Ensemble,<br><strong>allons plus loin</strong>' : 'Votre mobilité,<br><strong>notre priorité</strong>';
+    $('partner-side-point-1').textContent = owner ? 'Accompagnement sur mesure' : 'Flotte adaptée à votre activité';
+    $('partner-side-point-2').textContent = owner ? 'Réponse rapide' : 'Tarifs avantageux';
+    $('partner-side-point-3').textContent = owner ? 'Solution adaptée à vos besoins' : 'Service professionnel';
     $('vehicle-owner-fields').classList.toggle('hidden', !owner);
     $('business-quote-fields').classList.toggle('hidden', owner);
     $('business-company-wrap').classList.toggle('hidden', owner);
