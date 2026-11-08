@@ -345,7 +345,7 @@ async function loadFun() {
     }
 
     data.radios = [...new Map(data.radios.filter(radio => radio?.url).map(radio => [radio.url, radio])).values()];
-    data.playlists = [...new Map(data.playlists.filter(playlist => /(^|\.)youtube\.com|youtu\.be/i.test(playlist?.link || '')).map(playlist => [playlist.link, playlist])).values()];
+    data.playlists = [...new Map(data.playlists.filter(playlist => /youtube\.com|youtu\.be/i.test(playlist?.link || '')).map(playlist => [playlist.link, playlist])).values()];
 
     document.getElementById('radios-grid').innerHTML = `
         <div class="entertainment-panel">
