@@ -48,17 +48,11 @@
         return;
       }
       const savedSignature = window.getLessorSignatureForPrint?.() || '';
-      if (signatureState.error) {
-        const continueUnsigned = window.confirm('La signature enregistrée est inaccessible. Générer ce document sans signature ?');
-        if (!continueUnsigned) return;
+      if (signatureState.error || !savedSignature) {
+        if (status) { status.hidden = false; status.textContent = 'Votre signature enregistrée est indisponible. Le document n’a pas été généré sans votre signature ; vérifiez le panneau Signature puis réessayez.'; }
+        return;
       }
-      let approvedSignature = '';
-      if (savedSignature) {
-        const documentLabel = kind === 'invoice' ? 'cette facture' : 'ce contrat';
-        const approved = window.confirm(`Ajouter votre signature à ${documentLabel} ?\n\nOK : ajouter la signature. Annuler : générer le document sans signature.`);
-        if (approved) approvedSignature = savedSignature;
-      }
-      window.printDocument(id, kind, approvedSignature);
+      window.printDocument(id, kind, savedSignature);
     } catch (error) {
       const status = $('admin-preview-status');
       if (status) { status.hidden = false; status.textContent = `Impossible d’ouvrir le document : ${error.message || 'fenêtre bloquée'}. Autorisez les fenêtres surgissantes pour GitHub Pages puis réessayez.`; }
@@ -73,7 +67,7 @@
     $('admin-preview-backdrop')?.remove();
     const paid = typeof window.paidFor === 'function' ? window.paidFor(reservation) : Number(reservation.deposit_amount || 0);
     const title = kind === 'invoice' ? 'Prévisualisation de la facture' : 'Prévisualisation du contrat';
-    document.body.insertAdjacentHTML('beforeend', `<div id="admin-preview-backdrop" class="admin-modal-backdrop"><div class="admin-modal" role="dialog" aria-modal="true"><h2>${title}</h2><div class="admin-preview-content"><h3>Rent Car Service</h3><p><strong>Référence :</strong> ${esc(reservation.reference)}<br><strong>Client :</strong> ${esc(reservation.customer_name)}<br><strong>Téléphone :</strong> ${esc(reservation.customer_phone || '—')}<br><strong>Véhicule :</strong> ${esc(vehicle.name || vehicle.model || '—')}<br><strong>Période :</strong> ${new Date(reservation.start_at).toLocaleString('fr-FR')} → ${new Date(reservation.end_at).toLocaleString('fr-FR')}<br><strong>Formule :</strong> ${reservation.with_driver ? 'Avec chauffeur' : 'Sans chauffeur'}<br><strong>Total :</strong> ${money(reservation.total_amount)}<br><strong>Acompte payé :</strong> ${money(paid)}<br><strong>Reste à payer :</strong> ${money(Math.max(0, Number(reservation.total_amount || 0) - paid))}</p>${kind === 'contract' ? '<p>Le contrat complet comprendra les conditions de location, les informations CIN et permis, les conditions de restitution et les signatures.</p>' : '<p>La facture complète reprendra le détail financier enregistré pour cette réservation.</p>'}</div><p id="admin-preview-status" class="notice" hidden></p><div class="modal-actions"><button type="button" class="btn outline" onclick="document.getElementById(\'admin-preview-backdrop\')?.remove()">Fermer</button><button type="button" class="btn primary" onclick="window.printPreviewDocument(\'${esc(id)}\',\'${esc(kind)}\')">Imprimer / générer</button></div></div></div>`);
+    document.body.insertAdjacentHTML('beforeend', `<div id="admin-preview-backdrop" class="admin-modal-backdrop"><div class="admin-modal" role="dialog" aria-modal="true"><h2>${title}</h2><div class="admin-preview-content"><h3>Rent Car Service</h3><p><strong>Référence :</strong> ${esc(reservation.reference)}<br><strong>Client :</strong> ${esc(reservation.customer_name)}<br><strong>Téléphone :</strong> ${esc(reservation.customer_phone || '—')}<br><strong>Véhicule :</strong> ${esc(vehicle.name || vehicle.model || '—')}<br><strong>Période :</strong> ${new Date(reservation.start_at).toLocaleString('fr-FR')} → ${new Date(reservation.end_at).toLocaleString('fr-FR')}<br><strong>Formule :</strong> ${reservation.with_driver ? 'Avec chauffeur' : 'Sans chauffeur'}<br><strong>Total :</strong> ${money(reservation.total_amount)}<br><strong>Acompte payé :</strong> ${money(paid)}<br><strong>Reste à payer :</strong> ${money(Math.max(0, Number(reservation.total_amount || 0) - paid))}</p>${kind === 'contract' ? '<p>Le contrat complet comprendra les conditions de location, les informations CIN et permis, les conditions de restitution et les signatures.</p>' : '<p>La facture complète reprendra le détail financier enregistré pour cette réservation.</p>'}</div><p id="admin-preview-status" class="notice" hidden></p><div class="modal-actions"><button type="button" class="btn outline" onclick="document.getElementById(\'admin-preview-backdrop\')?.remove()">Fermer</button><button type="button" class="btn outline" onclick="window.sendCustomerSignatureLink?.(\'${esc(id)}\')">Faire signer par le client</button><button type="button" class="btn primary" onclick="window.printPreviewDocument(\'${esc(id)}\',\'${esc(kind)}\')">Imprimer / générer</button></div></div></div>`);
   }
 
   function showCustomerDetails(id) {

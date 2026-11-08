@@ -27,11 +27,22 @@ test('la signature enregistrée est privée et réservée aux super-administrate
   assert.match(migration, /data:image\/png;base64/);
 });
 
-test('chaque facture ou contrat exige une confirmation avant d’apposer la signature enregistrée', () => {
+test('chaque facture ou contrat admin appose automatiquement la signature enregistrée sans confirmation', () => {
   const operations = read('admin-operations.js');
-  assert.match(operations, /window\.confirm\(`Ajouter votre signature à \$\{documentLabel\}/);
-  assert.match(operations, /window\.printDocument\(id, kind, approvedSignature\)/);
-  assert.match(operations, /Annuler : générer le document sans signature/);
+  assert.match(operations, /window\.printDocument\(id, kind, savedSignature\)/);
+  assert.match(operations, /signatureState\.error \|\| !savedSignature/);
+  assert.doesNotMatch(operations, /Ajouter votre signature à/);
+  assert.match(operations, /Faire signer par le client/);
+  assert.match(operations, /window\.sendCustomerSignatureLink/);
+});
+
+test('le lien de signature client admin exige un acompte libéré et prépare un message WhatsApp OTP', () => {
+  const otp = read('admin-invoice-otp.js');
+  assert.match(otp, /window\.sendCustomerSignatureLink/);
+  assert.match(otp, /!reservation\.invoice_released/);
+  assert.match(otp, /Number\(reservation\.deposit_amount \|\| 0\) <= 0/);
+  assert.match(otp, /signer votre facture et votre contrat/);
+  assert.match(otp, /makeClientInvoiceLink\(reservation, otp\)/);
 });
 
 test('le gabarit administratif appose la signature du loueur sur contrat et facture, sinon garde la ligne vide', () => {
