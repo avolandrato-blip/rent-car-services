@@ -66,6 +66,37 @@
     $('customer-details-backdrop')?.remove();
     document.body.insertAdjacentHTML('beforeend', `<div id="customer-details-backdrop" class="admin-modal-backdrop"><div class="admin-modal" role="dialog" aria-modal="true"><h2>Détails du client</h2><div class="admin-preview-content"><h3>${esc(customer.full_name || 'Client')}</h3><p><strong>Téléphone :</strong> ${esc(customer.phone || '—')}<br><strong>WhatsApp :</strong> ${esc(customer.whatsapp_phone || '—')}<br><strong>Email :</strong> ${esc(customer.email || '—')}<br><strong>Adresse :</strong> ${esc(customer.address || '—')}<br><strong>Permis :</strong> ${esc(customer.driving_license || '—')}<br><strong>CIN :</strong> ${esc(customer.cin || '—')}<br><strong>Historique payé :</strong> ${money(customer.historical_paid_total || 0)}<br><strong>Nombre de réservations :</strong> ${history.length}</p>${history.length ? `<h4>Dernières réservations</h4><ul>${history.slice(0,8).map(r => `<li><strong>${esc(r.reference || '—')}</strong> — ${esc(r.status || '—')} — ${r.start_at ? new Date(r.start_at).toLocaleDateString('fr-FR') : 'Date inconnue'}</li>`).join('')}</ul>` : '<p>Aucune réservation liée.</p>'}</div><div class="modal-actions"><button type="button" class="btn outline" onclick="document.getElementById('customer-details-backdrop')?.remove()">Fermer</button><button type="button" class="btn primary" onclick="document.getElementById('customer-details-backdrop')?.remove();document.querySelector('[data-tab=\'reservations\']')?.click();document.getElementById('office-existing-customer')?.value='${esc(customer.id)}';document.getElementById('office-existing-customer')?.dispatchEvent(new Event('change',{bubbles:true}))">Nouvelle réservation avec ce client</button></div></div></div>`);
   }
+
+  function editCustomer(id) {
+    const customer = (typeof customers !== 'undefined' ? customers : []).find(c => c.id === id);
+    if (!customer) return alert('Client introuvable. Actualisez la liste.');
+    $('customer-edit-backdrop')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `<div id="customer-edit-backdrop" class="admin-modal-backdrop"><div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="customer-edit-title"><h2 id="customer-edit-title">Modifier les informations client</h2><form id="customer-edit-form" class="form-grid"><div class="field"><label>Nom et prénom<input name="full_name" required value="${esc(customer.full_name)}"></label></div><div class="field"><label>Téléphone<input name="phone" required value="${esc(customer.phone)}"></label></div><div class="field"><label>WhatsApp<input name="whatsapp_phone" value="${esc(customer.whatsapp_phone)}"></label></div><div class="field"><label>Email<input name="email" type="email" value="${esc(customer.email)}"></label></div><div class="field full"><label>Adresse<input name="address" value="${esc(customer.address)}"></label></div><div class="field"><label>Permis de conduire<input name="driving_license" value="${esc(customer.driving_license)}"></label></div><div class="field"><label>CIN<input name="cin" value="${esc(customer.cin)}"></label></div><div class="field"><label>Expiration du permis<input name="license_expiry" type="date" value="${esc(customer.license_expiry)}"></label></div><div class="field full"><label>Notes<textarea name="notes" rows="3">${esc(customer.notes)}</textarea></label></div><div class="modal-actions"><button type="button" class="btn outline" onclick="document.getElementById('customer-edit-backdrop')?.remove()">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form></div></div>`);
+    $('customer-edit-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const values = Object.fromEntries(new FormData(form).entries());
+      const payload = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, String(value || '').trim() || null]));
+      const { error } = await window.rentCarSupabase.from('customers').update(payload).eq('id', id);
+      if (error) return alert(`Modification impossible : ${error.message}`);
+      $('customer-edit-backdrop')?.remove();
+      await window.refreshAll?.();
+    });
+  }
+
+  async function deleteCustomer(id) {
+    const customer = (typeof customers !== 'undefined' ? customers : []).find(c => c.id === id);
+    if (!customer) return alert('Client introuvable. Actualisez la liste.');
+    const history = (typeof reservations !== 'undefined' ? reservations : []).filter(r => r.customer_id === id);
+    if (history.length) return alert(`Ce client possède ${history.length} réservation(s). Pour conserver l’historique, modifiez ses informations au lieu de supprimer sa fiche.`);
+    if (!confirm(`Supprimer définitivement la fiche de ${customer.full_name || 'ce client'} ?`)) return;
+    const { error } = await window.rentCarSupabase.from('customers').delete().eq('id', id);
+    if (error) return alert(`Suppression impossible : ${error.message}`);
+    await window.refreshAll?.();
+  }
+
+  window.editCustomer = editCustomer;
+  window.deleteCustomer = deleteCustomer;
   window.showCustomerDetails = showCustomerDetails;
 
   function refreshEnhancements() { setupSearch(); renderAlerts(); }
