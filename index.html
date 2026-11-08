@@ -12,7 +12,7 @@
     <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261108-client-signature"><link rel="stylesheet" href="client-harmony.css?v=20261103-footer-3d-buttons">
+    <link rel="stylesheet" href="style.css?v=20261108-shared-signature-modal"><link rel="stylesheet" href="client-harmony.css?v=20261103-footer-3d-buttons">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -140,6 +140,7 @@
                             <p class="muted">Vérifiez attentivement les informations ci-dessous avant l’envoi définitif.</p>
                             <div id="booking-summary" class="booking-summary"></div>
                             <div class="booking-confirmation terms-gate"><label class="checkbox-line"><input id="booking-terms-consent" type="checkbox" required disabled> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label><button id="booking-read-terms" class="btn btn-outline terms-read-button" type="button">Lire les conditions (obligatoire)</button><small id="booking-terms-read-status" class="field-note" role="status">La case d’acceptation sera activée après lecture des conditions.</small></div>
+                            <div class="booking-client-signature-prompt"><p><strong>Signature du client — facultative avant l’envoi</strong><br>Vous pouvez l’enregistrer avec la réservation. Elle ne sera ajoutée à la facture et au contrat que si vous la confirmez à nouveau lorsque vous consulterez les documents.</p><button id="booking-client-signature-open" class="btn btn-outline" type="button">Ajouter ma signature</button><p id="booking-client-signature-state" class="field-note" role="status">Aucune signature enregistrée pour le moment.</p></div>
                             <p class="muted booking-policy-note">Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception et validation d’un acompte.</p>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button id="booking-submit-button" class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
                         </section>
@@ -156,20 +157,25 @@
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
                 <div id="invoice-access-document" class="invoice-access-document hidden"></div>
-                <section id="invoice-client-signature-panel" class="invoice-client-signature-panel hidden" aria-labelledby="invoice-client-signature-title">
-                    <h3 id="invoice-client-signature-title">Signer le contrat et la facture</h3>
-                    <p>Après avoir lu les deux documents ci-dessus, dessinez votre signature au doigt ou à la souris. Elle sera ajoutée aux deux documents affichés dans cette page uniquement. Le site ne l’enregistre pas : si vous quittez ou actualisez la page, il faudra signer à nouveau.</p>
-                    <label for="invoice-client-signature-canvas">Votre signature</label>
-                    <canvas id="invoice-client-signature-canvas" aria-label="Zone de dessin de la signature du client"></canvas>
-                    <label class="invoice-client-signature-consent"><input id="invoice-client-signature-consent" type="checkbox"> Je confirme vouloir apposer cette signature sur le contrat et la facture de cette réservation.</label>
-                    <div class="invoice-client-signature-actions">
-                        <button id="invoice-client-signature-clear" class="btn btn-outline" type="button">Effacer / recommencer</button>
-                        <button id="invoice-client-signature-apply" class="btn btn-primary" type="button">Apposer ma signature aux deux documents</button>
-                    </div>
-                    <p id="invoice-client-signature-status" class="booking-result" role="status" aria-live="polite"></p>
-                </section>
                 <button id="invoice-print-button" class="btn btn-outline hidden" type="button" onclick="window.print()">Imprimer / enregistrer en PDF</button>
             </div>
+            <dialog id="invoice-client-signature-modal" class="client-signature-modal" aria-labelledby="invoice-client-signature-title">
+                <section id="invoice-client-signature-panel" class="invoice-client-signature-panel" aria-labelledby="invoice-client-signature-title">
+                    <h3 id="invoice-client-signature-title">Signature du client</h3>
+                    <p id="invoice-client-signature-description">Dessinez votre signature si vous souhaitez l’enregistrer avec cette réservation.</p>
+                    <div id="invoice-client-signature-saved-preview" class="client-saved-signature hidden"></div>
+                    <button id="invoice-client-signature-use-saved" class="btn btn-outline hidden" type="button">Utiliser ma signature enregistrée</button>
+                    <label for="invoice-client-signature-canvas">Votre signature</label>
+                    <canvas id="invoice-client-signature-canvas" aria-label="Zone de dessin de la signature du client"></canvas>
+                    <label class="invoice-client-signature-consent"><input id="invoice-client-signature-consent" type="checkbox"> <span id="invoice-client-signature-consent-text">Je confirme enregistrer cette signature afin de pouvoir la proposer sur mes documents ultérieurement.</span></label>
+                    <div class="invoice-client-signature-actions">
+                        <button id="invoice-client-signature-clear" class="btn btn-outline" type="button">Effacer / recommencer</button>
+                        <button id="invoice-client-signature-decline" class="btn btn-outline" type="button">Continuer sans signer</button>
+                        <button id="invoice-client-signature-apply" class="btn btn-primary" type="button">Enregistrer ma signature</button>
+                    </div>
+                </section>
+            </dialog>
+            <p id="invoice-client-signature-status" class="booking-result" role="status" aria-live="polite"></p>
         </div>
     </section>
 
@@ -238,7 +244,7 @@
     <script src="fleet-utils.js?v=20260929-1"></script>
     <script src="navigation.js?v=20260929-1"></script>
     <script src="contract-terms.js?v=20261025-subarticles"></script>
-    <script src="script.js?v=20261108-owner-stamp-signature"></script><script src="client-signature.js?v=20261108-no-save"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261031-1"></script>
+    <script src="script.js?v=20261108-booking-signature-rpc"></script><script src="client-signature.js?v=20261108-shared-signature-modal"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261031-1"></script>
     <script src="enhancements.js?v=20261108-owner-routing"></script>
     <script src="partner-requests.js?v=20261101-1"></script>
     <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>

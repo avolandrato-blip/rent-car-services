@@ -901,7 +901,9 @@ async function submitReservation(event) {
     if (deposit > quote.total) { result.className = 'booking-result booking-error'; result.textContent = 'L’acompte ne peut pas dépasser le montant total.'; return; }
     const paymentMethod = document.getElementById('booking-payment-method').value || null;
     if (deposit > 0 && !paymentMethod) { result.className = 'booking-result booking-error'; result.textContent = 'Sélectionnez le mode de paiement de l’acompte.'; return; }
+    if (!document.getElementById('booking-terms-consent')?.checked) { result.className = 'booking-result booking-error'; result.textContent = 'Lisez et acceptez les conditions de location avant d’envoyer la réservation.'; return; }
     const days = quote.days;
+    const signatureData = window.getBookingClientSignature?.() || '';
     const payload = {
         vehicle_id: vehicle.id,
         customer_name: document.getElementById('booking-name').value.trim(),
@@ -918,6 +920,7 @@ async function submitReservation(event) {
         start_at: new Date(start).toISOString(),
         end_at: new Date(end).toISOString(),
         with_driver: vehicle.driver_mode === 'with_driver' || document.getElementById('booking-driver').checked,
+        extra_driver_requested: Boolean(document.getElementById('booking-driver').checked),
         rental_type: rentalType,
         rate_12h: quote.rate12,
         rate_24h: quote.rate24,
@@ -938,18 +941,38 @@ async function submitReservation(event) {
         mobile_reference: document.getElementById('booking-mobile-reference').value.trim() || null,
         mobile_number: document.getElementById('booking-mobile-number').value.trim() || null,
         notes: document.getElementById('booking-notes').value.trim() || null,
-        status: deposit > 0 ? 'reserved' : 'pre_reserved'
+        distance_band: document.getElementById('booking-distance-band').value || '0_30',
+        distance_km: null,
+        delivery_requested: Boolean(document.getElementById('booking-delivery').checked),
+        recovery_requested: Boolean(document.getElementById('booking-recovery').checked),
+        quote_requested: Boolean(quote.requiresQuote),
+        quote_reason: quote.quoteReason || null,
+        terms_accepted_at: new Date().toISOString()
     };
-    const { data, error } = await window.rentCarSupabase.from('reservations').insert(payload).select('id,reference').single();
+    const { data: created, error } = await window.rentCarSupabase.rpc('create_public_distance_reservation', { p_payload: payload });
     if (error) {
         result.className = 'booking-result booking-error';
         result.textContent = 'Impossible d’enregistrer la demande pour le moment. Contactez-nous par WhatsApp.';
         console.error(error);
         return;
     }
+    const data = Array.isArray(created) ? created[0] : created;
+    if (!data?.id || !data?.reference) { result.className = 'booking-result booking-error'; result.textContent = 'La réservation n’a pas pu être confirmée. Contactez-nous par WhatsApp.'; return; }
+    let signatureSaveFailed = false;
+    if (signatureData) {
+        const { data: signatureSaved, error: signatureError } = await window.rentCarSupabase.rpc('save_public_reservation_signature', {
+            p_reservation_id: data.id,
+            p_reference: data.reference,
+            p_phone: payload.customer_phone,
+            p_signature_data: signatureData
+        });
+        signatureSaveFailed = Boolean(signatureError || signatureSaved !== true);
+        if (signatureError) console.error('Client signature was not stored:', signatureError);
+    }
     result.className = 'booking-result booking-success';
-    result.textContent = deposit > 0 ? `Réservation ${data.reference} enregistrée avec acompte. La date est bloquée.` : `Demande ${data.reference} enregistrée. La date reste disponible jusqu’au paiement de l’acompte.`;
-    document.getElementById('booking-form').reset(); activePromo = null; activePromo = null;
+    result.textContent = `${deposit > 0 ? `Réservation ${data.reference} enregistrée. L’acompte sera vérifié par Rent Car Service.` : `Demande ${data.reference} enregistrée. La réservation sera confirmée après validation de l’acompte.`}${signatureSaveFailed ? ' Votre réservation est bien enregistrée, mais votre signature ne l’a pas été ; vous pourrez signer les documents plus tard après validation de l’acompte.' : ''}`;
+    document.getElementById('booking-form').reset(); activePromo = null;
+    window.clearBookingClientSignature?.();
     await loadBookingData();
 }
 
@@ -1024,9 +1047,9 @@ async function verifyInvoiceOtp(event, credentials) {
         output.innerHTML = document.body.innerHTML;
         output.classList.remove('hidden');
         globalThis.document.getElementById('invoice-access-form').classList.add('hidden');
-        window.showClientDocumentSignature?.();
+        window.showClientDocumentSignature?.(packageData.customerSignature || '');
         result.className = 'booking-result booking-success';
-        result.textContent = 'Votre facture et votre contrat sont affichés ci-dessous. Lisez-les, puis signez sur cette page pour activer l’impression des deux documents.';
+        result.textContent = 'Votre facture et votre contrat sont affichés ci-dessous. Choisissez de signer avec la signature enregistrée, d’en dessiner une nouvelle, ou de continuer sans signature.';
     }
 }
 

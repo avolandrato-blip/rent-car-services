@@ -35,7 +35,7 @@ test('la consultation utilise le endpoint OTP protégé et contrôle les annexes
   assert.match(script, /escapeFunHtml\(doc\.url\)/);
   assert.match(script, /await Promise\.all\(\[\.\.\.document\.images\]/);
   assert.match(script, /brokenImages\.length/);
-  assert.match(script, /Lisez-les, puis signez sur cette page/);
+  assert.match(script, /Choisissez de signer avec la signature enregistrée, d’en dessiner une nouvelle, ou de continuer sans signature/);
 });
 
 test('les champs contractuels additionnels ne sont récupérés qu’après validation OTP côté serveur', () => {

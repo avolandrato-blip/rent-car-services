@@ -124,7 +124,20 @@ Deno.serve(async (req: Request) => {
       ? lessorSignature
       : "";
 
-    return response({ invoice, documents, lessorSignature: safeLessorSignature });
+    const customerSignatureQuery = new URLSearchParams({
+      reservation_id: `eq.${reservationId}`,
+      select: "signature_data",
+      limit: "1",
+    });
+    const customerSignatureResponse = await fetch(`${supabaseUrl}/rest/v1/reservation_client_signatures?${customerSignatureQuery.toString()}`, { headers });
+    if (!customerSignatureResponse.ok) return response({ error: "Impossible de préparer la signature du client." }, 502);
+    const customerSignatureRows = await customerSignatureResponse.json();
+    const customerSignature = Array.isArray(customerSignatureRows) ? String(customerSignatureRows[0]?.signature_data || "") : "";
+    const safeCustomerSignature = /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(customerSignature) && customerSignature.length <= 500000
+      ? customerSignature
+      : "";
+
+    return response({ invoice, documents, lessorSignature: safeLessorSignature, customerSignature: safeCustomerSignature });
   } catch (error) {
     console.error("get-invoice-contract-package failed", error);
     return response({ error: "Impossible de préparer le contrat pour le moment." }, 500);

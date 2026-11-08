@@ -103,20 +103,46 @@ test('une signature confirmée est rendue dans les deux documents administratifs
   assert.match(windows[1].html, /Le locataire/);
 });
 
-test('la signature client est saisie et apposée sur les deux documents sans stockage local ou serveur', () => {
+test('le dialogue de signature client est réutilisé à la réservation et aux documents', () => {
   const html = read('index.html');
   const publicScript = read('client-signature.js');
   const documentGenerator = read('script.js');
+  assert.match(html, /id="booking-client-signature-open"/);
+  assert.match(html, /id="invoice-client-signature-modal"/);
   assert.match(html, /id="invoice-client-signature-canvas"/);
   assert.match(html, /id="invoice-client-signature-apply"/);
-  assert.match(html, /ne l’enregistre pas/);
+  assert.match(publicScript, /window\.getBookingClientSignature/);
   assert.match(documentGenerator, /data-client-signature-slot="invoice"/);
   assert.match(documentGenerator, /data-client-signature-slot="contract"/);
-  assert.match(documentGenerator, /window\.showClientDocumentSignature\?\.\(\)/);
+  assert.match(documentGenerator, /window\.showClientDocumentSignature\?\.\(packageData\.customerSignature \|\| ''\)/);
+  assert.match(documentGenerator, /create_public_distance_reservation/);
+  assert.match(documentGenerator, /save_public_reservation_signature/);
+  assert.match(documentGenerator, /extra_driver_requested: Boolean\(document\.getElementById\('booking-driver'\)\.checked\)/);
   assert.match(publicScript, /canvas\.toDataURL\('image\/png'\)/);
   assert.match(publicScript, /slot\.replaceChildren\(image\)/);
   assert.doesNotMatch(publicScript, /localStorage|sessionStorage|rentCarSupabase|fetch\(|sign_contract|contract_signatures/);
+  assert.match(html, /Continuer sans signer/);
+  assert.match(publicScript, /restoreDocumentSignatureSlots\(\)/);
   assert.match(documentGenerator, /invoice-print-button'\)\?\.classList\.add\('hidden'\)/);
+});
+
+test('la signature client est conservée dans une table privée et n’est renvoyée qu’après OTP', () => {
+  const migration = read('supabase/migrations/20261108152000_private_client_reservation_signatures.sql');
+  const edge = read('supabase/functions/get-invoice-contract-package/index.ts');
+  assert.match(migration, /reservation_client_signatures ENABLE ROW LEVEL SECURITY/i);
+  assert.match(migration, /REVOKE ALL ON TABLE public\.reservation_client_signatures FROM PUBLIC, anon, authenticated/i);
+  assert.match(migration, /save_public_reservation_signature/);
+  assert.match(migration, /r\.reference = left\(trim\(coalesce\(p_reference/);
+  assert.match(edge, /reservation_client_signatures/);
+  assert.match(edge, /customerSignature: safeCustomerSignature/);
+  assert.ok(edge.indexOf('get_public_invoice_by_otp') < edge.indexOf('reservation_client_signatures'));
+});
+
+test('le RPC public distingue le chauffeur inclus du supplément chauffeur sélectionné', () => {
+  const migration = read('supabase/migrations/20261108152400_public_booking_extra_driver_flag.sql');
+  assert.match(migration, /v_extra_driver_requested boolean/);
+  assert.match(migration, /and v_extra_driver_requested/);
+  assert.match(migration, /v_with_driver\);/);
 });
 
 test('les anciens RPC de signature persistée sont désactivés pour les clients', () => {
@@ -131,7 +157,7 @@ test('le paquet OTP ne renvoie la signature du loueur qu’après libération de
   const edge = read('supabase/functions/get-invoice-contract-package/index.ts');
   assert.match(edge, /get_public_invoice_by_otp/);
   assert.match(edge, /admin_signature_settings/);
-  assert.match(edge, /return response\(\{ invoice, documents, lessorSignature: safeLessorSignature \}\)/);
+  assert.match(edge, /return response\(\{ invoice, documents, lessorSignature: safeLessorSignature, customerSignature: safeCustomerSignature \}\)/);
   assert.match(edge, /data:image\\\/png;base64/);
 });
 
@@ -144,39 +170,57 @@ test('le tampon fourni et la signature du loueur apparaissent dans la facture et
   assert.match(script, /Signature du loueur/);
 });
 
-test('le parcours client en mémoire exige dessin et confirmation avant de débloquer l’impression', () => {
+test('le dialogue client signe sur confirmation et laisse vierges les deux zones si le client refuse', () => {
   const vm = require('node:vm');
-  const handlers = {};
   const makeElement = () => {
     const classes = new Set(['hidden']);
     return {
-      className: '', textContent: '', checked: false, width: 0, height: 0,
-      classList: { add: value => classes.add(value), remove: value => classes.delete(value), contains: value => classes.has(value) },
-      addEventListener: (name, handler) => { handlers[name] = handler; },
+      className: '', textContent: '', checked: false, width: 0, height: 0, innerHTML: '',
+      classList: { add: value => classes.add(value), remove: value => classes.delete(value), toggle: (value, force) => force ? classes.add(value) : classes.delete(value), contains: value => classes.has(value) },
+      addEventListener(name, handler) { this[`on${name}`] = handler; },
     };
   };
-  const panel = makeElement();
   const canvas = makeElement();
   canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 320, height: 180 });
   canvas.getContext = () => ({ setTransform() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, clearRect() {} });
   canvas.setPointerCapture = () => {};
   canvas.toDataURL = () => 'data:image/png;base64,dGVzdA==';
-  const slots = ['invoice', 'contract'].map(kind => ({
-    dataset: { clientSignatureSlot: kind },
-    innerHTML: '<div class="document-signature-line"></div>Signature',
-    replaceChildren(image) { this.image = image; },
-  }));
+  const slots = ['invoice', 'contract'].map(kind => {
+    const slot = {
+      dataset: { clientSignatureSlot: kind },
+      image: null,
+      replaceChildren(image) { this.innerHTML = ''; this.image = image; },
+    };
+    let html = '<div class="document-signature-line"></div>Signature';
+    Object.defineProperty(slot, 'innerHTML', {
+      get: () => html,
+      set: value => { html = value; slot.image = null; },
+    });
+    return slot;
+  });
   const documentRoot = { querySelectorAll: () => slots };
   const consent = makeElement();
   const printButton = makeElement();
   const status = makeElement();
+  const dialog = makeElement();
+  dialog.open = false;
+  dialog.showModal = () => { dialog.open = true; };
+  dialog.close = () => { dialog.open = false; };
   const elements = {
-    'invoice-client-signature-panel': panel,
+    'invoice-client-signature-modal': dialog,
+    'invoice-client-signature-title': makeElement(),
+    'invoice-client-signature-description': makeElement(),
+    'invoice-client-signature-consent-text': makeElement(),
+    'invoice-client-signature-saved-preview': makeElement(),
+    'invoice-client-signature-use-saved': makeElement(),
+    'invoice-client-signature-decline': makeElement(),
+    'invoice-client-signature-panel': makeElement(),
     'invoice-client-signature-canvas': canvas,
     'invoice-client-signature-consent': consent,
     'invoice-client-signature-apply': makeElement(),
     'invoice-client-signature-clear': makeElement(),
     'invoice-client-signature-status': status,
+    'booking-client-signature-state': makeElement(),
     'invoice-access-document': documentRoot,
     'invoice-print-button': printButton,
   };
@@ -184,17 +228,24 @@ test('le parcours client en mémoire exige dessin et confirmation avant de débl
     getElementById: id => elements[id] || null,
     createElement: () => ({ className: '', alt: '', src: '' }),
   };
-  const fakeWindow = { devicePixelRatio: 1, addEventListener() {}, showClientDocumentSignature: undefined };
+  const fakeWindow = { devicePixelRatio: 1, addEventListener() {} };
   const context = { document: fakeDocument, window: fakeWindow, requestAnimationFrame: callback => callback() };
   vm.runInNewContext(read('client-signature.js'), context);
   fakeWindow.showClientDocumentSignature();
-  assert.equal(panel.classList.contains('hidden'), false);
-  handlers.pointerdown({ preventDefault() {}, currentTarget: canvas, pointerId: 1, clientX: 30, clientY: 40 });
-  handlers.pointermove({ preventDefault() {}, currentTarget: canvas, pointerId: 1, clientX: 60, clientY: 50 });
-  handlers.pointerup();
+  assert.equal(dialog.open, true);
+  canvas.onpointerdown({ preventDefault() {}, currentTarget: canvas, pointerId: 1, clientX: 30, clientY: 40 });
+  canvas.onpointermove({ preventDefault() {}, currentTarget: canvas, clientX: 60, clientY: 50 });
+  canvas.onpointerup();
   consent.checked = true;
-  handlers.click();
+  elements['invoice-client-signature-apply'].onclick();
   assert.ok(slots.every(slot => slot.image?.src === 'data:image/png;base64,dGVzdA=='));
   assert.equal(printButton.classList.contains('hidden'), false);
-  assert.match(status.textContent, /ne sera pas enregistrée sur le site/);
+  assert.match(status.textContent, /apposée aux deux documents/);
+
+  fakeWindow.resetClientDocumentSignature();
+  fakeWindow.showClientDocumentSignature();
+  elements['invoice-client-signature-decline'].onclick();
+  assert.ok(slots.every(slot => !slot.image && slot.innerHTML.includes('document-signature-line')));
+  assert.equal(printButton.classList.contains('hidden'), false);
+  assert.match(status.textContent, /Votre partie restera vierge/);
 });
