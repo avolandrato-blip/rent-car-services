@@ -109,7 +109,22 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    return response({ invoice, documents });
+    // The lessor signature is private. Return it only after the OTP RPC has
+    // confirmed that this reservation's documents have been released.
+    const signatureQuery = new URLSearchParams({
+      id: "eq.lessor",
+      select: "signature_data",
+      limit: "1",
+    });
+    const signatureResponse = await fetch(`${supabaseUrl}/rest/v1/admin_signature_settings?${signatureQuery.toString()}`, { headers });
+    if (!signatureResponse.ok) return response({ error: "Impossible de préparer la signature du loueur." }, 502);
+    const signatureRows = await signatureResponse.json();
+    const lessorSignature = Array.isArray(signatureRows) ? String(signatureRows[0]?.signature_data || "") : "";
+    const safeLessorSignature = /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(lessorSignature) && lessorSignature.length <= 500000
+      ? lessorSignature
+      : "";
+
+    return response({ invoice, documents, lessorSignature: safeLessorSignature });
   } catch (error) {
     console.error("get-invoice-contract-package failed", error);
     return response({ error: "Impossible de préparer le contrat pour le moment." }, 500);

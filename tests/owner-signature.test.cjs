@@ -111,6 +111,24 @@ test('les anciens RPC de signature persistée sont désactivés pour les clients
   assert.match(migration, /revoke all on function public\.sign_contract\(text, text, text, text, text, text, text\) from public, anon, authenticated/i);
 });
 
+
+test('le paquet OTP ne renvoie la signature du loueur qu’après libération des documents', () => {
+  const edge = read('supabase/functions/get-invoice-contract-package/index.ts');
+  assert.match(edge, /get_public_invoice_by_otp/);
+  assert.match(edge, /admin_signature_settings/);
+  assert.match(edge, /return response\(\{ invoice, documents, lessorSignature: safeLessorSignature \}\)/);
+  assert.match(edge, /data:image\\\/png;base64/);
+});
+
+test('le tampon fourni et la signature du loueur apparaissent dans la facture et le contrat client', () => {
+  const script = read('script.js');
+  assert.ok(fs.existsSync(path.join(root, 'images/owner-stamp.png')));
+  assert.match(script, /images\/owner-stamp\.png/);
+  assert.match(script, /data:image\\\/png;base64/);
+  assert.match(script, /document-owner-signature-slot/);
+  assert.match(script, /Signature du loueur/);
+});
+
 test('le parcours client en mémoire exige dessin et confirmation avant de débloquer l’impression', () => {
   const vm = require('node:vm');
   const handlers = {};
