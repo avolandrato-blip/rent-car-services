@@ -27,7 +27,6 @@
     $('site-review-id').value = '';
     $('review-photo-preview').innerHTML = '';
     $('site-review-active').value = 'true';
-    $('review-photo-file').required = true;
     $('site-review-form-title').textContent = 'Ajouter un avis';
     $('review-save-button').textContent = 'Enregistrer l’avis';
     setStatus('');
@@ -42,7 +41,7 @@
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       $('review-photo-file').value = '';
-      setStatus('Choisissez un fichier image.', true);
+      setStatus('Choisissez une image JPG, PNG ou WebP.', true);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -75,7 +74,7 @@
     rows = data || [];
     host.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Avis</th><th>Note</th><th>État</th><th>Actions</th></tr></thead><tbody>${rows.map(review => {
       const photo = safeImageUrl(review.image_url);
-      return `<tr><td><div class="review-admin-row">${photo ? `<img src="${esc(photo)}" alt="Photo miniature de l’avis" loading="lazy">` : ''}<span>${esc(review.review_text)}</span></div></td><td><span class="review-admin-stars" aria-label="${Number(review.rating) || 0} sur 5">${starText(review.rating)}</span><br><small>${Number(review.rating) || 0}/5</small></td><td><span class="pill ${review.active ? 'available' : 'inactive'}">${review.active ? 'Publié' : 'Masqué'}</span></td><td><div class="actions"><button class="btn outline" type="button" onclick="editSiteReview('${esc(review.id)}')">Modifier</button><button class="btn outline" type="button" onclick="toggleSiteReview('${esc(review.id)}',${!review.active})">${review.active ? 'Masquer' : 'Publier'}</button><button class="btn danger" type="button" onclick="deleteSiteReview('${esc(review.id)}')">Supprimer</button></div></td></tr>`;
+      return `<tr><td><div class="review-admin-row">${photo ? `<img src="${esc(photo)}" alt="Photo miniature de l’avis" loading="lazy">` : '<span class="review-admin-photo-empty" aria-hidden="true"><i class="fas fa-user"></i></span>'}<span>${esc(review.review_text)}</span></div></td><td><span class="review-admin-stars" aria-label="${Number(review.rating) || 0} sur 5">${starText(review.rating)}</span><br><small>${Number(review.rating) || 0}/5</small></td><td><span class="pill ${review.active ? 'available' : 'inactive'}">${review.active ? 'Publié' : 'Masqué'}</span></td><td><div class="actions"><button class="btn outline" type="button" onclick="editSiteReview('${esc(review.id)}')">Modifier</button><button class="btn outline" type="button" onclick="toggleSiteReview('${esc(review.id)}',${!review.active})">${review.active ? 'Masquer' : 'Publier'}</button><button class="btn danger" type="button" onclick="deleteSiteReview('${esc(review.id)}')">Supprimer</button></div></td></tr>`;
     }).join('')}</tbody></table>` : '<div class="empty">Aucun avis enregistré. Ajoutez votre premier avis ci-dessus.</div>';
   }
 
@@ -143,7 +142,6 @@
       const existingId = $('site-review-id').value;
       const rating = Number($('site-review-rating').value);
       const reviewText = $('site-review-text').value.trim();
-      if (!existingId && !file) return setStatus('Ajoutez une photo miniature à cet avis.', true);
       if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) return setStatus('Choisissez une image JPG, PNG ou WebP de 5 Mo maximum.', true);
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) return setStatus('La note doit être comprise entre 1 et 5 étoiles.', true);
       if (reviewText.length < 3 || reviewText.length > 1200) return setStatus('Le texte de l’avis doit contenir entre 3 et 1 200 caractères.', true);
@@ -162,9 +160,13 @@
           if (error) throw error;
         } else {
           const id = crypto.randomUUID();
-          const uploaded = await uploadPhoto(id, file);
-          uploadedPath = uploaded.path;
-          const { error } = await db.from('site_reviews').insert({ id, ...payload, image_url: uploaded.url });
+          let imageUrl = null;
+          if (file) {
+            const uploaded = await uploadPhoto(id, file);
+            uploadedPath = uploaded.path;
+            imageUrl = uploaded.url;
+          }
+          const { error } = await db.from('site_reviews').insert({ id, ...payload, image_url: imageUrl });
           if (error) throw error;
         }
         uploadedPath = null;

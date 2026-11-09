@@ -12,12 +12,15 @@ test('les avis sont gérables dans l’administration avec photo, note et texte'
   assert.match(html, /data-tab="reviews"/);
   assert.match(html, /id="site-review-form"/);
   assert.match(html, /id="review-photo-file"/);
+  assert.doesNotMatch(html, /id="review-photo-file"[^>]*required/);
+  assert.match(html, /Photo miniature \(facultative\)/);
   assert.match(html, /id="site-review-rating"/);
   assert.match(html, /id="site-review-text"/);
   assert.match(admin, /site_reviews/);
   assert.match(admin, /site-review-photos/);
   assert.match(migration, /enable row level security/i);
   assert.match(migration, /site_reviews_public_read/);
+  assert.match(migration, /image_url text,\s*rating/);
 });
 
 test('les avis publiés défilent sur la page d’accueil et restent contrôlables', () => {
@@ -27,6 +30,7 @@ test('les avis publiés défilent sur la page d’accueil et restent contrôlabl
   assert.match(html, /id="reviews-prev"/);
   assert.match(html, /id="reviews-next"/);
   assert.match(carousel, /setInterval/);
+  assert.match(carousel, /5000/);
   assert.match(carousel, /site_reviews/);
   assert.match(carousel, /reviews-dots/);
 });

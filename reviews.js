@@ -64,7 +64,7 @@
   function startTimer() {
     stopTimer();
     if (paused || reviews.length < 2 || document.hidden) return;
-    timer = window.setInterval(() => { activeIndex += 1; updatePosition(); }, 5500);
+    timer = window.setInterval(() => { activeIndex += 1; updatePosition(); }, 5000);
   }
 
   $('reviews-prev')?.addEventListener('click', () => { activeIndex -= 1; updatePosition(); startTimer(); });
@@ -76,8 +76,6 @@
     updatePosition();
     startTimer();
   });
-  root.addEventListener('mouseenter', () => { paused = true; stopTimer(); });
-  root.addEventListener('mouseleave', () => { paused = false; startTimer(); });
   root.addEventListener('focusin', () => { paused = true; stopTimer(); });
   root.addEventListener('focusout', event => {
     if (!root.contains(event.relatedTarget)) { paused = false; startTimer(); }
