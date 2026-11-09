@@ -28,13 +28,14 @@
       const photo = imageUrl(review.image_url);
       const rating = Math.max(1, Math.min(5, Number(review.rating) || 0));
       const stars = Array.from({ length: 5 }, (_, index) => `<span class="${index < rating ? 'is-filled' : ''}" aria-hidden="true">★</span>`).join('');
-      return `<article class="review-slide" aria-label="Avis noté ${rating} sur 5">
+      return `<article class="review-slide" aria-label="Avis de ${esc(review.reviewer_name || 'Client')}, noté ${rating} sur 5">
         <div class="review-card">
           <div class="review-card-top">
             <span class="review-avatar" aria-hidden="true"><i class="fas fa-user"></i>${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>
             <div class="review-rating"><span class="review-stars">${stars}</span><strong>${rating}/5</strong><span class="review-rating-label">Avis client</span></div>
             <i class="fas fa-quote-right review-quote-mark" aria-hidden="true"></i>
           </div>
+          <div class="review-card-author">${esc(review.reviewer_name || 'Client')}</div>
           <blockquote>${esc(review.review_text)}</blockquote>
         </div>
       </article>`;
@@ -85,9 +86,8 @@
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       const { data, error } = await window.rentCarSupabase
-        .from('site_reviews')
-        .select('id,image_url,rating,review_text')
-        .eq('active', true)
+        .from('site_reviews_public')
+        .select('id,image_url,rating,review_text,reviewer_name')
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;

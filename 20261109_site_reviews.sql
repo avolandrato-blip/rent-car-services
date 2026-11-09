@@ -1,6 +1,8 @@
 create table if not exists public.site_reviews (
   id uuid primary key default gen_random_uuid(),
   image_url text,
+  reviewer_name text not null default 'Client' check (char_length(btrim(reviewer_name)) between 1 and 80),
+  reviewer_gender text check (reviewer_gender in ('female', 'male', 'other', 'prefer_not_to_say')),
   rating smallint not null check (rating between 1 and 5),
   review_text text not null check (char_length(btrim(review_text)) between 3 and 1200),
   active boolean not null default true,

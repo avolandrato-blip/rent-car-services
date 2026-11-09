@@ -12,6 +12,7 @@
     } catch (_) { return ''; }
   };
   const starText = rating => `${'★'.repeat(Math.max(0, Math.min(5, Number(rating) || 0)))}${'☆'.repeat(5 - Math.max(0, Math.min(5, Number(rating) || 0)))}`;
+  const genderLabel = value => ({ female: 'Femme', male: 'Homme', other: 'Autre', prefer_not_to_say: 'Préfère ne pas préciser' }[value] || 'Non renseigné');
   let rows = [];
 
   function setStatus(message, error = false) {
@@ -65,16 +66,16 @@
       return;
     }
     const { data, error } = await db.from('site_reviews')
-      .select('id,image_url,rating,review_text,active,created_at')
+      .select('id,image_url,rating,review_text,reviewer_name,reviewer_gender,active,created_at')
       .order('created_at', { ascending: false }).limit(100);
     if (error) {
       host.innerHTML = `<p class="notice review-admin-error">Impossible de charger les avis : ${esc(error.message)}</p>`;
       return;
     }
     rows = data || [];
-    host.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Avis</th><th>Note</th><th>État</th><th>Actions</th></tr></thead><tbody>${rows.map(review => {
+    host.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Personne / genre</th><th>Avis</th><th>Note</th><th>État</th><th>Actions</th></tr></thead><tbody>${rows.map(review => {
       const photo = safeImageUrl(review.image_url);
-      return `<tr><td><div class="review-admin-row">${photo ? `<img src="${esc(photo)}" alt="Photo miniature de l’avis" loading="lazy">` : '<span class="review-admin-photo-empty" aria-hidden="true"><i class="fas fa-user"></i></span>'}<span>${esc(review.review_text)}</span></div></td><td><span class="review-admin-stars" aria-label="${Number(review.rating) || 0} sur 5">${starText(review.rating)}</span><br><small>${Number(review.rating) || 0}/5</small></td><td><span class="pill ${review.active ? 'available' : 'inactive'}">${review.active ? 'Publié' : 'Masqué'}</span></td><td><div class="actions"><button class="btn outline" type="button" onclick="editSiteReview('${esc(review.id)}')">Modifier</button><button class="btn outline" type="button" onclick="toggleSiteReview('${esc(review.id)}',${!review.active})">${review.active ? 'Masquer' : 'Publier'}</button><button class="btn danger" type="button" onclick="deleteSiteReview('${esc(review.id)}')">Supprimer</button></div></td></tr>`;
+      return `<tr><td><strong>${esc(review.reviewer_name || 'Client')}</strong><br><small>Genre (admin uniquement) : ${esc(genderLabel(review.reviewer_gender))}</small></td><td><div class="review-admin-row">${photo ? `<img src="${esc(photo)}" alt="Photo miniature de l’avis" loading="lazy">` : '<span class="review-admin-photo-empty" aria-hidden="true"><i class="fas fa-user"></i></span>'}<span>${esc(review.review_text)}</span></div></td><td><span class="review-admin-stars" aria-label="${Number(review.rating) || 0} sur 5">${starText(review.rating)}</span><br><small>${Number(review.rating) || 0}/5</small></td><td><span class="pill ${review.active ? 'available' : 'inactive'}">${review.active ? 'Publié' : 'Masqué'}</span></td><td><div class="actions"><button class="btn outline" type="button" onclick="editSiteReview('${esc(review.id)}')">Modifier</button><button class="btn outline" type="button" onclick="toggleSiteReview('${esc(review.id)}',${!review.active})">${review.active ? 'Masquer' : 'Publier'}</button><button class="btn danger" type="button" onclick="deleteSiteReview('${esc(review.id)}')">Supprimer</button></div></td></tr>`;
     }).join('')}</tbody></table>` : '<div class="empty">Aucun avis enregistré. Ajoutez votre premier avis ci-dessus.</div>';
   }
 
@@ -82,6 +83,8 @@
     const review = rows.find(row => row.id === id);
     if (!review) return;
     $('site-review-id').value = review.id;
+    $('site-reviewer-name').value = review.reviewer_name || '';
+    $('site-reviewer-gender').value = review.reviewer_gender || '';
     $('site-review-rating').value = String(review.rating);
     $('site-review-text').value = review.review_text || '';
     $('site-review-active').value = String(review.active !== false);
@@ -141,7 +144,10 @@
       const file = $('review-photo-file').files?.[0];
       const existingId = $('site-review-id').value;
       const rating = Number($('site-review-rating').value);
+      const reviewerName = $('site-reviewer-name').value.trim();
+      const reviewerGender = $('site-reviewer-gender').value || null;
       const reviewText = $('site-review-text').value.trim();
+      if (!reviewerName || reviewerName.length > 80) return setStatus('Saisissez un nom affiché de 1 à 80 caractères.', true);
       if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) return setStatus('Choisissez une image JPG, PNG ou WebP de 5 Mo maximum.', true);
       if (!Number.isInteger(rating) || rating < 1 || rating > 5) return setStatus('La note doit être comprise entre 1 et 5 étoiles.', true);
       if (reviewText.length < 3 || reviewText.length > 1200) return setStatus('Le texte de l’avis doit contenir entre 3 et 1 200 caractères.', true);
@@ -149,7 +155,7 @@
       setStatus('Enregistrement en cours…');
       let uploadedPath = null;
       try {
-        const payload = { rating, review_text: reviewText, active: $('site-review-active').value === 'true', updated_at: new Date().toISOString() };
+        const payload = { reviewer_name: reviewerName, reviewer_gender: reviewerGender, rating, review_text: reviewText, active: $('site-review-active').value === 'true', updated_at: new Date().toISOString() };
         if (existingId) {
           if (file) {
             const uploaded = await uploadPhoto(existingId, file);
