@@ -114,8 +114,11 @@
       preview.innerHTML = savedDocumentSignature ? `<span>Signature enregistrée à la réservation</span><img src="${savedDocumentSignature}" alt="Aperçu de la signature enregistrée">` : '';
       printButton?.classList.add('hidden');
     }
-    if (!dialog.open) dialog.showModal();
-    requestAnimationFrame(prepareCanvas);
+    if (!dialog.open) {
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else { dialog.setAttribute('open', ''); dialog.classList.add('is-open'); }
+    }
+    requestAnimationFrame(() => { prepareCanvas(); });
     return true;
   }
   function applyToDocuments(signatureDataUrl) {
@@ -152,7 +155,9 @@
       $('invoice-print-button')?.classList.remove('hidden');
       $('invoice-client-signature-status').textContent = 'Vous avez choisi de ne pas signer. Votre partie restera vierge sur la facture et le contrat ; vous pouvez les imprimer ainsi.';
     }
-    $('invoice-client-signature-modal')?.close();
+    const modal = $('invoice-client-signature-modal');
+    if (typeof modal?.close === 'function') modal.close();
+    else { modal?.removeAttribute('open'); modal?.classList.remove('is-open'); }
     mode = activeMode;
   }
   function applyDrawnSignature() {
