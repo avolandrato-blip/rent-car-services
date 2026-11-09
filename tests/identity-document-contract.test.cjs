@@ -38,7 +38,7 @@ test('article 6 encadre les frais de panne hors zone sans mentionner une panne a
 });
 
 test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond et le palier >200 km reste ouvert', () => {
-  for (const [band, limit, minimum] of [['0_30', '30 km maximum', 'Formules 12 h ou 24 h'], ['30_100', '100 km maximum', 'Minimum 2 jours'], ['100_200', '200 km maximum', 'Minimum 3 jours']]) {
+  for (const [band, limit, minimum] of [['0_30', '30 km maximum', 'Formules 12 h ou 24 h'], ['30_100', '100 km maximum', 'Tarif journalier, durée flexible'], ['100_200', '200 km maximum', 'Tarif journalier, durée flexible']]) {
     const terms = contractTerms.getDistanceTerms(band);
     assert.equal(terms.limit, limit);
     assert.equal(terms.minimumLabel, minimum);
@@ -47,7 +47,7 @@ test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond e
   }
   const open = contractTerms.getDistanceTerms('over_200');
   assert.match(open.limit, /sans plafond supérieur/);
-  assert.equal(open.minimumLabel, 'Minimum 4 jours');
+  assert.equal(open.minimumLabel, 'Tarif journalier, durée flexible');
   assert.doesNotMatch(open.surcharge, /1 000 Ariary par kilomètre/);
   const zoneCondition = rentalConditions.conditions.find(item => item.titre === 'Zone')?.reponse || '';
   for (const limit of ['30 km maximum', '100 km maximum', '200 km maximum', '1 000 Ar', 'sans plafond supérieur']) assert.ok(zoneCondition.includes(limit), limit);

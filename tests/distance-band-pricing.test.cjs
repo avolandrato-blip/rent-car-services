@@ -9,25 +9,21 @@ test('le devis client recalcule lors du changement de palier et utilise les jour
   const script = read('script.js');
   assert.match(script, /booking-distance-band'\)\?\.addEventListener\('change', \(\) => \{/);
   assert.match(script, /refreshBookingVehicleOptions\(selectedId\);[\s\S]*updateBookingQuote\(\);/);
-  assert.match(script, /if \(days < band\.minDays\)/);
+  assert.doesNotMatch(script, /if \(days < band\.minDays\)/);
   assert.doesNotMatch(script, /if \(hours < band\.minHours\)/);
 });
 
-test('les durées minimales sont de 2, 3 et 4 jours pour les trois paliers éloignés', () => {
+test('les paliers éloignés n’imposent plus de durée minimale', () => {
   const script = read('script.js');
-  assert.match(script, /'30_100': \{[^\n]*minDays: 2/);
-  assert.match(script, /'100_200': \{[^\n]*minDays: 3/);
-  assert.match(script, /'over_200': \{[^\n]*minDays: 4, minHours: 96/);
-  assert.match(read('20261008_distance_band_pricing.sql'), /when '100_200' then 3 else 4 end/);
-  assert.match(read('20261008_distance_band_pricing.sql'), /if v_days < v_minimum_days then/);
-  assert.match(read('supabase/migrations/20261009_distance_band_minimum_days.sql'), /then 3 else 4 end/);
+  assert.doesNotMatch(script, /days < band\.minDays/);
+  assert.match(script, /Tarif journalier — durée flexible/);
+  assert.doesNotMatch(read('20261008_distance_band_pricing.sql'), /if v_days < v_minimum_days then/);
+  assert.match(read('supabase/migrations/20261109102500_remove_distance_band_minimum_days.sql'), /Remove minimum-duration enforcement/);
 });
 
 test('la règle du contrat et les conditions client affichent quatre jours minimum au-delà de 200 km', () => {
-  assert.match(read('contract-terms.js'), /minimumLabel: 'Minimum 4 jours'/);
-  assert.match(read('data_cards.json'), /minimum 4 jours/);
-  assert.doesNotMatch(read('contract-terms.js'), /Minimum 5 jours/);
-  assert.doesNotMatch(read('data_cards.json'), /minimum 5 jours/);
+  assert.match(read('contract-terms.js'), /minimumLabel: 'Tarif journalier, durée flexible'/);
+  assert.doesNotMatch(read('data_cards.json'), /minimum [234] jours/i);
 });
 
 test('la Hyundai i30 calcule 400 000 Ar sur deux jours facturés au palier 30–100 km', () => {
@@ -53,9 +49,18 @@ test('la Hyundai i30 calcule 400 000 Ar sur deux jours facturés au palier 30–
   assert.equal(quote.days, 2);
   assert.equal(quote.total, 400000);
   assert.equal(quote.requiresQuote, false);
+  const exception = context.quote(
+    { price_12h: 150000, price_30_100_per_day: 200000, driver_mode: 'without_driver', driver_fee: 30000 },
+    '2026-11-01T07:00',
+    '2026-11-01T18:00',
+    'day'
+  );
+  assert.equal(exception.days, 1);
+  assert.equal(exception.total, 200000);
+  assert.equal(exception.requiresQuote, false);
 });
 
-test('le palier >200 km calcule sur quatre jours et demande un devis en dessous du minimum', () => {
+test('le palier >200 km calcule sans minimum de jours', () => {
   const vm = require('node:vm');
   const script = read('script.js');
   const start = script.indexOf('const distanceBandConfig =');
@@ -74,8 +79,8 @@ test('le palier >200 km calcule sur quatre jours et demande un devis en dessous 
   assert.equal(valid.total, 1200000);
   assert.equal(valid.requiresQuote, false);
   const short = context.quote(vehicle, '2026-11-01T07:00', '2026-11-03T07:00', 'day');
-  assert.equal(short.requiresQuote, true);
-  assert.match(short.quoteReason, /4 jour/);
+  assert.equal(short.requiresQuote, false);
+  assert.equal(short.total, 600000);
 });
 
 test('le choix de l’i30 manuelle ou de la Pride manuelle affiche les quatre tarifs PK cumulatifs', () => {
@@ -110,12 +115,12 @@ test('le choix de l’i30 manuelle ou de la Pride manuelle affiche les quatre ta
   for (const price of ['150.000 Ar / 12 h', '180.000 Ar', '200.000 Ar/jour', '250.000 Ar/jour', '300.000 Ar/jour']) assert.ok(panel.innerHTML.includes(price), price);
   for (const label of ['Tana -> 30 km', 'Tana -> 100 km', 'Tana -> 200 km', 'Tana -> +200 km']) assert.ok(panel.innerHTML.includes(label), label);
   assert.match(panel.innerHTML, /Palier choisi/);
-  assert.match(panel.innerHTML, /Minimum 2 jours/);
+  assert.match(panel.innerHTML, /Tarif journalier — durée flexible/);
   assert.deepEqual(options.map(option => option.textContent), [
     'Tana -> 30 km — 12 h : 150.000 Ar · 24 h : 180.000 Ar',
-    'Tana -> 100 km — 200.000 Ar/jour · min. 2 j',
-    'Tana -> 200 km — 250.000 Ar/jour · min. 3 j',
-    'Tana -> +200 km — 300.000 Ar/jour · min. 4 j'
+    'Tana -> 100 km — 200.000 Ar/jour',
+    'Tana -> 200 km — 250.000 Ar/jour',
+    'Tana -> +200 km — 300.000 Ar/jour'
   ]);
   assert.ok(options.every(option => !option.textContent.includes('1 000 Ar/km')));
   context.renderPrices({

@@ -25,7 +25,7 @@
     {
       "titre": "Zone",
       "icon": "fa-map-marker-alt",
-      "reponse": "Le plafond est mesuré sur le trajet aller : 0–30 km (formule 12 h ou 24 h), 30–100 km (minimum 2 jours) ou 100–200 km (minimum 3 jours). Au-delà de 200 km, aucun plafond supérieur n’est fixé (minimum 4 jours). Dépassement des trois premiers plafonds : 1 000 Ar/km. Tout changement de destination nécessite l’accord du loueur."
+      "reponse": "Le plafond est mesuré sur le trajet aller : 0–30 km (formule 12 h ou 24 h), 30–100 km, 100–200 km ou au-delà de 200 km, avec un tarif journalier et une durée flexible. Dépassement des trois premiers plafonds : 1 000 Ar/km. Tout changement de destination nécessite l’accord du loueur."
     },
     {
       "titre": "Usages interdits",

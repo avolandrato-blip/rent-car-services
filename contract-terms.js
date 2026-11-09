@@ -9,19 +9,19 @@
     '30_100': {
       label: 'Tana -> 100 km',
       limit: '100 km maximum',
-      minimumLabel: 'Minimum 2 jours',
+      minimumLabel: 'Tarif journalier, durée flexible',
       surcharge: 'Le trajet aller contractuel est limité à 100 km. En cas de dépassement, les kilomètres effectués au-delà de 100 km sont majorés de 1 000 Ariary par kilomètre. La distance est comptée sur le trajet aller uniquement; le retour n’est pas ajouté une seconde fois au calcul du palier.'
     },
     '100_200': {
       label: 'Tana -> 200 km',
       limit: '200 km maximum',
-      minimumLabel: 'Minimum 3 jours',
+      minimumLabel: 'Tarif journalier, durée flexible',
       surcharge: 'Le trajet aller contractuel est limité à 200 km. En cas de dépassement, les kilomètres effectués au-delà de 200 km sont majorés de 1 000 Ariary par kilomètre. La distance est comptée sur le trajet aller uniquement; le retour n’est pas ajouté une seconde fois au calcul du palier.'
     },
     'over_200': {
       label: 'Tana -> +200 km',
       limit: 'Palier ouvert, sans plafond supérieur',
-      minimumLabel: 'Minimum 4 jours',
+      minimumLabel: 'Tarif journalier, durée flexible',
       surcharge: 'Le palier supérieur à 200 km est ouvert et ne comporte pas de plafond supérieur. Il n’existe donc pas de seuil kilométrique supplémentaire au-delà duquel la majoration de dépassement serait calculée. La distance de référence reste le trajet aller contractuel.'
     }
   };
