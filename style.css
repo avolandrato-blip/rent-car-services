@@ -368,10 +368,10 @@ body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce
 .invoice-client-signature-consent input { margin-top: 4px; }
 .invoice-client-signature-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .invoice-client-signature-panel .booking-result { margin-bottom: 0; }
-#invoice-access-document .document-signatures.invoice-client-signature { grid-template-columns: 1fr; }
+#invoice-access-document .document-signatures.invoice-client-signature { grid-template-columns: 1fr 1fr; }
 #invoice-access-document .client-document-signature-slot { min-height: 75px; margin-top: 4px; }
 #invoice-access-document .document-client-signature-image { display: block; width: 150px; max-width: 100%; height: 58px; object-fit: contain; object-position: left center; }
-@media (max-width: 600px) { .invoice-client-signature-panel { padding: 16px; } .invoice-client-signature-actions .btn { width: 100%; } }
+@media (max-width: 600px) { #invoice-access-document .document-signatures.invoice-client-signature { grid-template-columns: 1fr; } .invoice-client-signature-panel { padding: 16px; } .invoice-client-signature-actions .btn { width: 100%; } }
 .booking-client-signature-prompt{margin:14px 0;padding:14px;border:1px solid #dbe5ed;border-radius:12px;background:#f8fafc}.booking-client-signature-prompt p{margin:0 0 10px}.client-signature-modal{width:min(620px,calc(100vw - 24px));max-width:620px;max-height:calc(100dvh - 24px);padding:0;border:0;border-radius:16px;background:#fff;color:#132f45;box-shadow:0 24px 80px #0b1f3350}.client-signature-modal::backdrop{background:#0b1f3380;backdrop-filter:blur(2px)}.client-signature-modal .invoice-client-signature-panel{display:grid;gap:12px;padding:clamp(18px,4vw,30px);max-height:calc(100dvh - 24px);overflow:auto}.client-signature-modal h3{margin:0}.client-signature-modal canvas{width:100%;height:170px;touch-action:none;border:1px solid #9aabba;border-radius:10px;background:#fff}.client-signature-modal .invoice-client-signature-actions{display:flex;flex-wrap:wrap;gap:8px}.client-saved-signature{padding:10px;border:1px dashed #cbd5e1;border-radius:8px}.client-saved-signature img{display:block;max-width:220px;max-height:80px;object-fit:contain}
 
 /* Garantit la visibilité du modal et des actions de signature sur les navigateurs mobiles. */
