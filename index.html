@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=20261109-signature-mobile-shared-signature-modal"><link rel="stylesheet" href="client-harmony.css?v=20261108-partner-modal">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="reviews.css?v=20261109-reviews-1">
 </head>
 <body>
 
@@ -40,7 +41,15 @@
             </div>
         </div>
         
-        <div id="ads-slot-home" class="container ad-slot hidden" aria-label="Annonce"></div>
+        <section id="customer-reviews" class="container reviews-section hidden" aria-labelledby="customer-reviews-title">
+            <div class="reviews-heading"><div><span class="reviews-eyebrow">TÉMOIGNAGES CLIENTS</span><h2 id="customer-reviews-title" class="section-title">Les avis de nos clients</h2><p>Découvrez les retours partagés par nos clients.</p></div></div>
+            <div class="reviews-carousel" role="region" aria-roledescription="carrousel" aria-label="Avis clients">
+                <button id="reviews-prev" class="review-carousel-button" type="button" aria-label="Afficher l’avis précédent"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+                <div class="reviews-viewport"><div id="reviews-track" class="reviews-track"></div></div>
+                <button id="reviews-next" class="review-carousel-button" type="button" aria-label="Afficher l’avis suivant"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+            </div>
+            <div id="reviews-dots" class="reviews-dots" aria-label="Choisir un avis"></div>
+        </section>
         <div class="container partner-intro">
             <h2 class="section-title">Une mise en relation adaptée à votre besoin</h2>
             <div class="partner-types">
@@ -303,5 +312,6 @@
     <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
     <script src="chauffeurs.js?v=20260928-1"></script>
+    <script src="reviews.js?v=20261109-reviews-1"></script>
 </body>
 </html>

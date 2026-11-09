@@ -17,20 +17,23 @@ test('le footer client utilise les liens sociaux administrables', () => {
   assert.match(admin, /settings-maps/);
 });
 
-test('les publicités sont chargées selon leur période et affichées sur l’accueil', () => {
+test('les publicités restent sur leurs emplacements dédiés et l’accueil affiche les avis', () => {
   const script = read('script.js');
   const html = read('index.html');
+  const reviews = read('reviews.js');
   assert.match(script, /site_ads/);
   assert.match(script, /description/);
   assert.match(script, /cta_label/);
   assert.match(script, /ad-slot-copy/);
   assert.match(script, /starts_at/);
   assert.match(script, /ends_at/);
-  assert.match(script, /ads-slot-home/);
+  assert.doesNotMatch(script, /ads-slot-home/);
   assert.match(script, /ads-slot-fleet/);
   assert.match(script, /ads-slot-booking/);
   assert.match(script, /placement/);
-  assert.match(html, /id="ads-slot-home"/);
+  assert.doesNotMatch(html, /id="ads-slot-home"/);
+  assert.match(html, /id="customer-reviews"/);
+  assert.match(reviews, /site_reviews/);
   assert.match(html, /id="ads-slot-fleet"/);
   assert.match(html, /id="ads-slot-booking"/);
   assert.doesNotMatch(html, /facebook-ad-card|PUBLICITÉ FACEBOOK/);
@@ -44,11 +47,13 @@ test('admin permet de gérer une publicité avec image, lien et date de fin', ()
   assert.match(html, /id="ad-image-file"/);
   assert.match(html, /id="ad-ends-at"/);
   assert.match(html, /id="ad-placement"/);
+  assert.match(html, /value="home" disabled/);
   assert.match(html, /id="ad-description"/);
   assert.match(html, /id="ad-cta-label"/);
   assert.match(html, /value="booking"/);
   assert.match(admin, /site_ads/);
   assert.match(admin, /site-ads/);
+  assert.match(admin, /\['fleet','booking'\]/);
   assert.match(admin, /description/);
   assert.match(admin, /cta_label/);
   assert.match(admin, /ends_at/);

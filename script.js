@@ -122,7 +122,7 @@ function safePublicUrl(value) {
     try { const url = new URL(String(value || ''), window.location.href); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; } catch (_) { return ''; }
 }
 async function loadAds() {
-    const slots = { home: document.getElementById('ads-slot-home'), fleet: document.getElementById('ads-slot-fleet'), booking: document.getElementById('ads-slot-booking') };
+    const slots = { fleet: document.getElementById('ads-slot-fleet'), booking: document.getElementById('ads-slot-booking') };
     if (!Object.values(slots).some(Boolean) || !window.rentCarSupabase) return;
     const { data, error } = await window.rentCarSupabase.from('site_ads').select('id,title,description,cta_label,image_url,target_url,alt_text,placement,starts_at,ends_at').eq('active', true).order('created_at', { ascending: false });
     if (error) { Object.values(slots).forEach(slot => { if (slot) { slot.innerHTML = ''; slot.classList.add('hidden'); } }); return; }
