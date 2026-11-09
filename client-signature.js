@@ -99,7 +99,7 @@
       title.textContent = 'Ajouter une signature à la réservation';
       description.textContent = 'Cette étape est facultative. Si vous confirmez, l’image sera conservée de façon privée avec la réservation et pourra vous être proposée quand vous consulterez vos documents. Elle ne sera pas ajoutée aux documents sans votre confirmation ultérieure.';
       consentText.textContent = 'Je confirme enregistrer cette signature pour pouvoir la proposer ultérieurement sur mes documents.';
-      apply.textContent = 'Enregistrer avec la réservation';
+      apply.textContent = 'Valider et enregistrer ma signature';
       useSaved.classList.add('hidden');
       preview.classList.add('hidden');
     } else {
@@ -108,7 +108,7 @@
         ? 'Une signature a été enregistrée avec cette réservation. Vous pouvez la réutiliser, en redessiner une ou continuer sans signer. Elle ne sera appliquée qu’après votre confirmation.'
         : 'Après avoir lu les deux documents, dessinez votre signature pour les signer, ou choisissez de continuer sans signature : votre partie restera vierge.';
       consentText.textContent = 'Je confirme vouloir apposer cette signature sur la facture et le contrat de cette réservation.';
-      apply.textContent = 'Apposer ma signature aux deux documents';
+      apply.textContent = 'Valider et signer les documents';
       useSaved.classList.toggle('hidden', !savedDocumentSignature);
       preview.classList.toggle('hidden', !savedDocumentSignature);
       preview.innerHTML = savedDocumentSignature ? `<span>Signature enregistrée à la réservation</span><img src="${savedDocumentSignature}" alt="Aperçu de la signature enregistrée">` : '';
