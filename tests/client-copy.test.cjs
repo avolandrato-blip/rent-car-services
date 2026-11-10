@@ -111,3 +111,17 @@ test('le bouton de réservation de l’accueil ouvre directement l’onglet Rés
   assert.match(hero, /Réservez une voiture/);
   assert.match(hero, /onclick="openTab\('booking'\)"/);
 });
+
+test('les icônes sociales ignorent les URL vides et les destinations du site lui-même', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '..', 'script.js'), 'utf8');
+  assert.match(source, /if \(!socialIcons\[name\] \|\| !String\(value \|\| ''\)\.trim\(\)\) return false/);
+  assert.match(source, /new URL\(url\)\.origin !== window\.location\.origin/);
+});
+
+test('les boutons ont un relief 3D, un état pressé et respectent la réduction du mouvement', () => {
+  const css = fs.readFileSync(path.resolve(__dirname, '..', 'client-harmony.css'), 'utf8');
+  assert.match(css, /box-shadow: 0 4px 0/);
+  assert.match(css, /:active[^{]*\{\s*transform: translateY\(2px\)/);
+  assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+});

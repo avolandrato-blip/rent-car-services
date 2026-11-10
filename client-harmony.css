@@ -281,3 +281,38 @@ body[data-theme="royal-night"] .ad-slot > a, body[data-theme="royal-night"] .ad-
 .partner-modal-sidecard li i { flex: 0 0 auto; color: #f7c62f; margin-top: 2px; }
 @media (max-width: 760px) { .partner-modal { max-height: 94vh; border-radius: 20px; } .partner-modal-header { min-height: 0; padding: 25px 22px 22px; } .partner-trust-strip { padding: 12px 22px; gap: 9px 16px; } .partner-modal-body { grid-template-columns: 1fr; gap: 18px; padding: 22px 20px 24px; overflow-y: auto; } .partner-modal-sidecard { min-height: 0; padding: 22px; } .partner-modal-sidecard ul { grid-template-columns: repeat(3,1fr); gap: 10px; } .partner-modal-sidecard li { font-size: .72rem; flex-direction: column; gap: 5px; } }
 @media (max-width: 500px) { .partner-trust-strip { display: grid; grid-template-columns: 1fr 1fr; } .partner-modal .form-grid, .partner-modal .partner-form-fields { grid-template-columns: 1fr; } .partner-modal-sidecard ul { grid-template-columns: 1fr; } .partner-modal-sidecard li { flex-direction: row; font-size: .78rem; } .partner-modal #partner-request-form button[type=submit] { width: 100%; min-width: 0; } }
+
+/* Actions de réservation visibles dès le premier écran. */
+.hero-btns { justify-content: center; margin-top: 24px; }
+.hero-btns > .btn { width: auto; min-width: 190px; min-height: 48px; padding-inline: 18px; }
+.hero-btns .btn-primary { background: #d9a441; border-color: #d9a441; color: #0b1f33; }
+.hero-btns .btn-primary:hover { background: #f0c568; border-color: #f0c568; color: #0b1f33; }
+.hero-btns .btn-outline { background: rgba(11,31,51,.72); border-color: #fff; color: #fff; }
+.hero-btns .btn-outline:hover { background: #fff; color: #0b1f33; }
+.hero-btns .btn-whatsapp { background: #fff; border-color: #fff; color: #0b1f33; }
+:where(button, a, input, select, textarea, summary):focus-visible { outline: 3px solid #d9a441; outline-offset: 3px; scroll-margin-top: 80px; }
+@media (max-width: 768px) { .hero-btns { gap: 10px; } .hero-btns > .btn { width: 100%; min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* Boutons à relief 3D — ombre stable, survol court et pression tangible. */
+.btn, .btn-submit, button, input[type="button"], input[type="submit"] {
+  box-shadow: 0 4px 0 rgba(7, 22, 35, .34), 0 7px 14px rgba(7, 22, 35, .15);
+  transform: translateY(0);
+  transition: transform 140ms cubic-bezier(.2,.8,.2,1), box-shadow 140ms cubic-bezier(.2,.8,.2,1), filter 140ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover, .btn-submit:not(:disabled):hover, button:not(:disabled):hover, input[type="button"]:not(:disabled):hover, input[type="submit"]:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(7, 22, 35, .34), 0 10px 18px rgba(7, 22, 35, .19);
+    filter: brightness(1.035);
+  }
+}
+.btn:not(:disabled):active, .btn-submit:not(:disabled):active, button:not(:disabled):active, input[type="button"]:not(:disabled):active, input[type="submit"]:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(7, 22, 35, .36), 0 3px 7px rgba(7, 22, 35, .12);
+}
+.btn:disabled, .btn-submit:disabled, button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled { box-shadow: none; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn-submit, button, input[type="button"], input[type="submit"] { transition: none; }
+  .btn:not(:disabled):hover, .btn-submit:not(:disabled):hover, button:not(:disabled):hover, .btn:not(:disabled):active, .btn-submit:not(:disabled):active, button:not(:disabled):active { transform: none; }
+}

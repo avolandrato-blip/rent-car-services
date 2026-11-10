@@ -389,3 +389,26 @@ body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce
 .team-review-row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px solid #e7eef3;font-size:13px}.team-review-row:last-child{border-bottom:0}.team-review-row span{color:#607386}.team-review-row strong{text-align:right;white-space:pre-wrap;overflow-wrap:anywhere}
 .team-mission-review-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid #dfe8ef}
 @media(max-width:620px){.team-mission-review{padding:18px}.team-mission-review-content{grid-template-columns:1fr}.team-review-section:last-of-type{grid-column:auto}.team-review-row{display:block}.team-review-row strong{display:block;text-align:left;margin-top:3px}.team-mission-review-actions .btn{width:100%}}
+
+/* Boutons à relief 3D — ombre stable, survol court et pression tangible. */
+.btn, .btn-submit, button, input[type="button"], input[type="submit"] {
+  box-shadow: 0 4px 0 rgba(7, 22, 35, .34), 0 7px 14px rgba(7, 22, 35, .15);
+  transform: translateY(0);
+  transition: transform 140ms cubic-bezier(.2,.8,.2,1), box-shadow 140ms cubic-bezier(.2,.8,.2,1), filter 140ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover, .btn-submit:not(:disabled):hover, button:not(:disabled):hover, input[type="button"]:not(:disabled):hover, input[type="submit"]:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(7, 22, 35, .34), 0 10px 18px rgba(7, 22, 35, .19);
+    filter: brightness(1.035);
+  }
+}
+.btn:not(:disabled):active, .btn-submit:not(:disabled):active, button:not(:disabled):active, input[type="button"]:not(:disabled):active, input[type="submit"]:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(7, 22, 35, .36), 0 3px 7px rgba(7, 22, 35, .12);
+}
+.btn:disabled, .btn-submit:disabled, button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled { box-shadow: none; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn-submit, button, input[type="button"], input[type="submit"] { transition: none; }
+  .btn:not(:disabled):hover, .btn-submit:not(:disabled):hover, button:not(:disabled):hover, .btn:not(:disabled):active, .btn-submit:not(:disabled):active, button:not(:disabled):active { transform: none; }
+}

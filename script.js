@@ -82,7 +82,11 @@ async function initSite() {
             maps: 'fas fa-map-marker-alt'
         };
         document.getElementById('social-links').innerHTML = Object.entries(siteConfig.social_links || {})
-            .filter(([name, url]) => socialIcons[name] && safePublicUrl(url))
+            .filter(([name, value]) => {
+                if (!socialIcons[name] || !String(value || '').trim()) return false;
+                const url = safePublicUrl(value);
+                return Boolean(url) && new URL(url).origin !== window.location.origin;
+            })
             .map(([name, url]) => `<a href="${escapePublicHtml(safePublicUrl(url))}" target="_blank" rel="noopener noreferrer" aria-label="${name}" title="${name === 'maps' ? 'Google Maps' : name}"><i class="${socialIcons[name]}"></i></a>`)
             .join('');
 

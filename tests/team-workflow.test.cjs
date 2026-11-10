@@ -14,6 +14,9 @@ test('l’attribution exige un compte chauffeur et prépare un lien wa.me avec a
   assert.match(admin, /response','accept/);
   assert.match(admin, /response','refuse/);
   assert.match(admin, /https:\/\/wa\.me\//);
+  assert.match(admin, /window\.open\('about:blank','_blank'\)/, 'WhatsApp tab is opened synchronously from the confirmation click');
+  assert.match(admin, /whatsappWindow\.location\.href=messageData\.url/, 'the prepared wa.me link is opened automatically after assignment');
+  assert.match(admin, /Reste à percevoir/);
   assert.match(admin, /Appuyez sur Envoyer dans WhatsApp/);
   assert.match(admin, /Le mot de passe initial vous sera remis séparément/);
 });

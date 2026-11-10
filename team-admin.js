@@ -194,8 +194,11 @@
   function openMissionReview(pending) {
     state.pendingMission=pending;
     const {driver,reservation,mission,dailyEnabled,dailyAmount,alreadyHasPlan}=pending;
-    $('team-mission-review-content').innerHTML = `<div class="team-review-section"><h3>Client et réservation</h3>${reviewValue('Réservation',`${reservation.reference} — ${reservation.customer_name}`)}${reviewValue('Téléphone client',reservation.customer_phone)}${reviewValue('Trajet',[reservation.trip_from,reservation.trip_to].filter(Boolean).join(' → '))}${reviewValue('Adresse de rendez-vous',mission.handover_address)}</div><div class="team-review-section"><h3>Mission et chauffeur</h3>${reviewValue('Chauffeur',`${driver.name}${driver.login_name?' — '+driver.login_name:''}`)}${reviewValue('Type',missionTypeLabel(mission.mission_type))}${reviewValue('Début',dateTime(mission.starts_at))}${reviewValue('Fin',dateTime(mission.expires_at))}${reviewValue('Coût livraison',money(mission.custom_delivery_cost))}${reviewValue('Coût récupération',money(mission.custom_recovery_cost))}</div><div class="team-review-section"><h3>Consignes et paiements</h3>${reviewValue('Note chauffeur',mission.notes)}${reviewValue('Consignes',mission.driver_instructions)}${reviewValue('Échéancier quotidien',dailyEnabled?(alreadyHasPlan?'Déjà actif — conservé':`${money(dailyAmount)} par jour`):'Non activé')}</div><p class="muted">Après confirmation, la mission sera enregistrée avec le statut « À accepter ». Vous pourrez ensuite cliquer sur le bouton WhatsApp pour transmettre le message au chauffeur.</p>`;
+    const paid=Math.max(Number(reservation.deposit_amount||0),state.payments.filter(payment=>payment.reservation_id===reservation.id).reduce((sum,payment)=>sum+Number(payment.amount||0),0));
+    const balance=Math.max(0,Number(reservation.total_amount||0)-paid);
+    $('team-mission-review-content').innerHTML = `<div class="team-review-section"><h3>Client et réservation</h3>${reviewValue('Réservation',`${reservation.reference} — ${reservation.customer_name}`)}${reviewValue('Téléphone client',reservation.customer_phone)}${reviewValue('Trajet',[reservation.trip_from,reservation.trip_to].filter(Boolean).join(' → '))}${reviewValue('Adresse de rendez-vous',mission.handover_address)}</div><div class="team-review-section"><h3>Mission et chauffeur</h3>${reviewValue('Chauffeur',`${driver.name}${driver.login_name?' — '+driver.login_name:''}`)}${reviewValue('Type',missionTypeLabel(mission.mission_type))}${reviewValue('Début',dateTime(mission.starts_at))}${reviewValue('Fin',dateTime(mission.expires_at))}${reviewValue('Coût livraison',money(mission.custom_delivery_cost))}${reviewValue('Coût récupération',money(mission.custom_recovery_cost))}</div><div class="team-review-section"><h3>À percevoir et consignes</h3>${reviewValue('Total réservation',money(reservation.total_amount))}${reviewValue('Déjà payé',money(paid))}${reviewValue('Reste à percevoir',money(balance))}${reviewValue('Note chauffeur',mission.notes)}${reviewValue('Consignes',mission.driver_instructions)}${reviewValue('Échéancier quotidien',dailyEnabled?(alreadyHasPlan?'Déjà actif — conservé':`${money(dailyAmount)} par jour`):'Non activé')}</div><p class="muted">Après confirmation, la mission sera enregistrée dans le tableau chauffeur et WhatsApp s’ouvrira avec le message prérempli. Vous pourrez vérifier le message puis appuyer sur Envoyer.</p>`;
     $('team-mission-review-modal').hidden=false;
+    $('team-mission-review-confirm').focus();
   }
   async function createMission(event) {
     event.preventDefault();
@@ -218,10 +221,17 @@
     const pending=state.pendingMission;if(!pending)return;
     const {form,driver,reservation,mission,rawToken,dailyEnabled,dailyAmount,alreadyHasPlan}=pending;
     const button=$('team-mission-review-confirm'),message=$('team-mission-review-message');
+    // Open a blank tab synchronously in the confirmation click so popup blockers
+    // allow WhatsApp to be navigated there after the asynchronous Supabase save.
+    let whatsappWindow=null;
+    try { whatsappWindow=window.open('about:blank','_blank'); } catch (_) {}
+    if (whatsappWindow) { try { whatsappWindow.document.title='Préparation de WhatsApp…'; } catch (_) {} }
+    const closePendingWhatsApp=()=>{try{if(whatsappWindow&&!whatsappWindow.closed)whatsappWindow.close();}catch(_){}};
     button.disabled=true; message.textContent='Enregistrement de la mission…';
     try {
       const {data:created,error}=await db.rpc('assign_chauffeur_mission',{p_chauffeur_id:mission.chauffeur_id,p_reservation_id:mission.reservation_id,p_mission_type:mission.mission_type,p_custom_delivery_cost:mission.custom_delivery_cost,p_custom_recovery_cost:mission.custom_recovery_cost,p_starts_at:mission.starts_at,p_expires_at:mission.expires_at,p_handover_address:mission.handover_address,p_notes:mission.notes,p_driver_instructions:mission.driver_instructions,p_acceptance_token_hash:mission.acceptance_token_hash,p_acceptance_expires_at:mission.acceptance_expires_at});
       if (error) {
+        closePendingWhatsApp();
         const detail=error.code==='42501'||/row-level security|permission denied/i.test(error.message||'') ? 'Attribution bloquée par la sécurité Supabase : reconnectez-vous avec un super-administrateur actif.' : /column .* does not exist|function .* does not exist|could not find the function|schema cache/i.test(error.message||'') ? `La migration chauffeur n’est pas appliquée sur Supabase. Détail : ${error.message}` : `Attribution impossible : ${error.message}`;
         message.textContent=detail; return;
       }
@@ -232,10 +242,15 @@
         else { state.dues.push(...rows); dailyPlanReady=true; warning+=`${rows.length} échéance(s) quotidienne(s) créée(s). `; }
       } else if (dailyEnabled && alreadyHasPlan) warning+='L’échéancier déjà actif a été conservé. ';
       const messageData=makeWhatsAppMessage({...mission,id:created},reservation,driver,rawToken,dailyPlanReady);
+      if (whatsappWindow && messageData.url) {
+        try { whatsappWindow.location.href=messageData.url; } catch (_) { closePendingWhatsApp(); whatsappWindow=null; }
+      } else closePendingWhatsApp();
       closeMissionReview(); form.reset(); $('team-mission-start').value=''; $('team-mission-end').value=''; $('team-daily-fields').classList.add('hidden');
       await load();
-      show(`${warning}Cliquez sur « Ouvrir WhatsApp et envoyer » pour transmettre la mission.`,messageData.url);
-    } catch(error) { message.textContent=`Erreur technique : ${error?.message||error}`; }
+      show(whatsappWindow && messageData.url
+        ? `${warning}WhatsApp s’est ouvert avec le message prérempli. Vérifiez-le puis appuyez sur Envoyer.`
+        : `${warning}Le navigateur a bloqué l’ouverture automatique; utilisez le bouton ci-dessous pour ouvrir WhatsApp et transmettre la mission.`,messageData.url);
+    } catch(error) { closePendingWhatsApp(); message.textContent=`Erreur technique : ${error?.message||error}`; }
     finally { button.disabled=false; }
   }
   async function cancelMission(id) {
