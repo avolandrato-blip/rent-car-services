@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Espace équipe — Rent Car Service</title>
+  <link rel="stylesheet" href="style.css?v=20261110-team">
+  <style>
+    body{background:#f3f7fa}.team-shell{max-width:1180px;margin:0 auto;padding:28px 18px 52px}.team-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}.team-brand{display:flex;align-items:center;gap:13px}.team-brand img{width:54px;height:54px;object-fit:contain;border-radius:12px}.team-brand small,.muted{color:#607386}.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 26px}.team-metric{background:#fff;border:1px solid #dfe8ef;border-radius:15px;padding:16px;box-shadow:0 8px 24px #0b1f330b}.team-metric small{display:block;color:#718294;text-transform:uppercase;letter-spacing:.08em;font-size:11px}.team-metric strong{display:block;font-size:25px;color:#09223a;margin-top:7px}.team-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(310px,.65fr);gap:18px}.team-card{background:#fff;border:1px solid #dfe8ef;border-radius:16px;padding:20px;box-shadow:0 8px 24px #0b1f330b}.team-card h2{margin:0 0 14px;color:#09223a}.mission-list{display:grid;gap:12px}.mission-card{border:1px solid #e0e9ef;border-left:5px solid #0d5c8f;border-radius:12px;padding:14px;background:#fbfdff}.mission-card.completed{border-left-color:#16803c}.mission-card h3{margin:0 0 6px}.mission-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;color:#52677a;font-size:13px}.mission-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.btn{cursor:pointer}.empty{padding:20px;border:1px dashed #c9d6df;border-radius:12px;color:#6a7d8f;text-align:center}.hidden{display:none!important}.team-login{max-width:430px;margin:10vh auto;padding:0 18px}.team-login .team-card{padding:26px}.team-login h1{margin-top:0}.notice-error{color:#b42318;margin-top:10px}.notice-ok{color:#16803c;margin-top:10px}.mission-detail p{margin:7px 0}.mission-detail .finance{background:#f2f7fa;border-radius:11px;padding:12px;margin:12px 0}.mission-detail .finance strong{color:#09223a}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .full{grid-column:1/-1}.field label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd8e2;border-radius:9px;font:inherit;background:#fff}.signature-modal{position:fixed;inset:0;background:#0b1f3388;display:flex;align-items:center;justify-content:center;padding:15px;z-index:20}.signature-modal>div{background:#fff;border-radius:16px;padding:20px;max-width:620px;width:100%}.signature-canvas{width:100%;height:210px;border:1px solid #bdccd7;border-radius:10px;background:linear-gradient(to bottom,transparent calc(100% - 35px),#ccd5dd calc(100% - 34px),#ccd5dd calc(100% - 33px),transparent calc(100% - 32px)),#fff;touch-action:none}.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}@media(max-width:850px){.team-layout{grid-template-columns:1fr}.team-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.team-shell{padding:18px 12px 40px}.team-top{align-items:flex-start}.team-grid{gap:9px}.team-metric{padding:12px}.team-metric strong{font-size:21px}.mission-meta,.form-grid{grid-template-columns:1fr}.team-brand img{width:44px;height:44px}}
+  </style>
+</head>
+<body>
+  <main id="team-login" class="team-login">
+    <section class="team-card">
+      <div class="team-brand"><img src="images/logo.png" alt="Rent Car Service"><div><strong>Rent Car Service</strong><small> · Espace équipe</small></div></div>
+      <h1>Connexion chauffeur</h1>
+      <p class="muted">Utilisez votre prénom ou identifiant et votre mot de passe permanent.</p>
+      <form id="team-login-form" class="form-grid">
+        <div class="field full"><label for="team-login-name">Prénom / identifiant</label><input id="team-login-name" autocomplete="username" required></div>
+        <div class="field full"><label for="team-login-password">Mot de passe</label><input id="team-login-password" type="password" autocomplete="current-password" required></div>
+        <div class="field full"><button class="btn primary" type="submit">Se connecter</button></div>
+      </form>
+      <p id="team-login-error" class="notice-error" role="alert"></p>
+    </section>
+  </main>
+
+  <main id="team-app" class="team-shell hidden">
+    <header class="team-top"><div class="team-brand"><img src="images/logo.png" alt="Rent Car Service"><div><strong>Rent Car Service</strong><small id="team-driver-name"> · Espace équipe</small></div></div><button id="team-logout" class="btn outline">Se déconnecter</button></header>
+    <section class="team-grid" aria-label="Résumé"><div class="team-metric"><small>Missions actives</small><strong id="metric-active">0</strong></div><div class="team-metric"><small>Missions terminées</small><strong id="metric-completed">0</strong></div><div class="team-metric"><small>À encaisser</small><strong id="metric-balance">0 Ar</strong></div><div class="team-metric"><small>Signature client</small><strong id="metric-signed">0</strong></div></section>
+    <section class="team-layout"><div class="team-card"><h2>Missions actives</h2><div id="active-missions" class="mission-list"></div><h2 style="margin-top:26px">Missions terminées</h2><div id="completed-missions" class="mission-list"></div></div><aside class="team-card"><h2>Détail de la mission</h2><div id="mission-detail" class="mission-detail"><div class="empty">Sélectionnez une mission.</div></div></aside></section>
+  </main>
+
+  <div id="password-modal" class="signature-modal hidden"><div><h2>Choisir votre mot de passe personnel</h2><p class="muted">Le mot de passe initial doit être remplacé lors de la première connexion.</p><form id="change-password-form" class="form-grid"><div class="field full"><label for="new-password">Nouveau mot de passe</label><input id="new-password" type="password" minlength="8" required></div><div class="field full"><label for="new-password-confirm">Confirmation</label><input id="new-password-confirm" type="password" minlength="8" required></div><div class="field full"><button class="btn primary" type="submit">Enregistrer</button></div></form><p id="password-message" class="notice-error"></p></div></div>
+  <div id="signature-modal" class="signature-modal hidden"><div><h2>Signature du client</h2><p id="signature-client-label" class="muted"></p><canvas id="team-signature-canvas" class="signature-canvas"></canvas><div class="modal-actions"><button id="signature-clear" class="btn outline" type="button">Effacer</button><button id="signature-cancel" class="btn outline" type="button">Annuler</button><button id="signature-save" class="btn primary" type="button">Enregistrer la signature</button></div><p id="signature-message" class="notice-error"></p></div></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js?v=20261110-team"></script><script src="contract-terms.js?v=20261025-subarticles"></script><script src="document-theme.js?v=20261110-team"></script><script src="reference-models.js?v=20261110-team"></script><script src="team.js?v=20261110-team"></script>
+</body>
+</html>
