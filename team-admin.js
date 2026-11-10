@@ -118,7 +118,7 @@
     const el = $('team-mission-message');
     if (!el) return;
     el.hidden = false;
-    el.innerHTML = `${esc(message)}${whatsappUrl ? ` <a class="btn primary" href="${esc(whatsappUrl)}" target="_blank" rel="noopener noreferrer">Ouvrir WhatsApp et envoyer</a><br><small>WhatsApp s’ouvre avec le message prérempli. Appuyez sur Envoyer dans WhatsApp pour le transmettre.</small>` : ''}`;
+    el.innerHTML = `${esc(message)}${whatsappUrl ? ` <a class="btn primary" href="${esc(whatsappUrl)}" target="_blank" rel="noopener noreferrer">Ouvrir WhatsApp et envoyer</a> <a class="btn outline" href="https://web.whatsapp.com/" target="_blank" rel="noopener noreferrer">Ouvrir WhatsApp Web</a><br><small>WhatsApp s’ouvre avec le message prérempli. Appuyez sur Envoyer dans WhatsApp pour le transmettre.</small>` : ''}`;
   }
   function renderAccounts() {
     $('team-account-list').innerHTML = state.drivers.map(d => `<div class="card"><strong>${esc(d.name)}</strong> — ${d.auth_user_id ? `login : <b>${esc(d.login_name || 'configuré')}</b>` : '<span class="muted">aucun compte team</span>'}<button class="btn outline" style="margin-left:10px" data-provision-driver="${esc(d.id)}">${d.auth_user_id ? 'Réinitialiser le mot de passe' : 'Créer le compte team'}</button></div>`).join('') || '<div class="empty">Aucun chauffeur.</div>';
@@ -179,9 +179,8 @@
       `Répondre : refuser ${refuseUrl.href}`,
       'Après acceptation, ouvrez l’espace chauffeur pour faire l’état des lieux au départ et au retour.'
     ].filter(Boolean);
-    const whatsapp=new URL('https://api.whatsapp.com/send');
-    whatsapp.searchParams.set('phone',phone); whatsapp.searchParams.set('text',lines.join('\n'));
-    return {phone,url:whatsapp.href};
+    const text=encodeURIComponent(lines.join('\n'));
+    return {phone,url:`https://wa.me/${phone}?text=${text}`};
   }
   function reviewValue(label, value) {
     return `<div class="team-review-row"><span>${esc(label)}</span><strong>${esc(value || '—')}</strong></div>`;
@@ -274,8 +273,11 @@
     if(updateError)alert(updateError.message);
     if(typeof window.refreshAll==='function')await window.refreshAll();else await load();
   };
-  document.addEventListener('DOMContentLoaded', () => {
+  window.initTeamAdmin = async function initTeamAdmin() {
     addTab();
-    setTimeout(() => { if (document.getElementById('app-view')?.classList.contains('hidden')===false) load(); }, 800);
+    if (document.getElementById('app-view')?.classList.contains('hidden') === false) await load();
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    window.initTeamAdmin();
   });
 })();
