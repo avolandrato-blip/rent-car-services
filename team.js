@@ -84,18 +84,11 @@
   }
   function checklistSummary(row){
     if(!row)return '<p class="muted">État des lieux non enregistré.</p>';
-    const data=row.checklist||{},photos=row.photos||{};
-    return `<p>Argent : ${money(data.cash_remaining)} · Carburant : ${esc(data.fuel_percent??'—')} % · CIN : ${data.cin_seen?'vérifiée':'non confirmée'} · Permis : ${data.license_seen?'vérifié':'non confirmé'} · Conduite : ${esc({happy:'🙂 satisfaisante',neutral:'😐 à surveiller',dangerous:'⚠️ dangereuse'}[data.driver_behavior]||'—')}</p>${data.notes?`<p>Remarque : ${esc(data.notes)}</p>`:''}<div id="checklist-evidence-${esc(row.mission_id)}-${esc(row.phase)}" class="muted">Photos sécurisées — chargement…</div>`;
-  }
-  async function renderChecklistEvidence(row){
-    const target=$(`checklist-evidence-${row.mission_id}-${row.phase}`);if(!target)return;
-    const paths=Object.entries(row.photos||{});
-    if(!paths.length){target.textContent='Aucune photo jointe.';return;}
-    const results=await Promise.all(paths.map(async([name,path])=>{
-      const {data,error}=await db.storage.from('chauffeur-mission-evidence').createSignedUrl(path,3600);
-      return error?`<span>${esc(name)} (indisponible)</span>`:`<a href="${esc(data.signedUrl)}" target="_blank" rel="noopener noreferrer">${esc(name)}</a>`;
-    }));
-    target.innerHTML=`Photos : ${results.join(' · ')}`;
+    const data=row.checklist||{},photoChecks=data.photo_checks||{};
+    const labels={front:'avant',rear:'arrière',side:'côté / latéral',wheel:'jante',dashboard:'tableau de bord',client:'client devant la voiture',cin:'CIN',license:'permis'};
+    const checked=Object.entries(labels).filter(([key])=>photoChecks[key]).map(([,label])=>label);
+    const missing=Object.entries(labels).filter(([key])=>!photoChecks[key]).map(([,label])=>label);
+    return `<p>Argent : ${money(data.cash_remaining)} · Carburant : ${esc(data.fuel_percent??'—')} % · CIN : ${data.cin_seen?'vérifiée':'non confirmée'} · Permis : ${data.license_seen?'vérifié':'non confirmé'} · Conduite : ${esc({happy:'🙂 satisfaisante',neutral:'😐 à surveiller',dangerous:'⚠️ dangereuse'}[data.driver_behavior]||'—')}</p><p class="muted">Photos cochées : ${checked.length?esc(checked.join(', ')):'aucune'}${missing.length?` · À vérifier : ${esc(missing.join(', '))}`:''}</p>${data.notes?`<p>Remarque : ${esc(data.notes)}</p>`:''}`;
   }
   function dailyScheduleHtml(reservationId){
     const dues=state.dues.get(reservationId)||[];if(!dues.length)return '';
@@ -116,7 +109,6 @@
       ? `${statusControls}<button id="mission-payment" class="btn outline">Enregistrer un paiement</button><button id="mission-signature" class="btn outline">Faire signer le client</button><button id="mission-invoice" class="btn outline">Générer la facture</button><button id="mission-contract" class="btn outline">Générer le contrat</button>`
       : statusControls;
     $('mission-detail').innerHTML=`<h3>${esc(typeLabel(mission.mission_type))} — ${esc(reservation.reference||'Réservation')}</h3><p><b>Statut :</b> ${esc(statusLabel(mission.status))}<br><b>Client :</b> ${esc(reservation.customer_name||'—')}<br><b>Téléphone :</b> ${esc(reservation.customer_phone||'—')}<br><b>Adresse de rendez-vous :</b> ${esc(mission.handover_address||reservation.customer_address||'—')}<br><b>Trajet :</b> ${esc(reservation.trip_from||'—')} → ${esc(reservation.trip_to||'—')}<br><b>Véhicule :</b> ${esc(vehicle.name||vehicle.model||'—')} ${vehicle.registration_number?`(${esc(vehicle.registration_number)})`:''}<br><b>Location :</b> ${formatDate(reservation.start_at)} → ${formatDate(reservation.end_at)}<br><b>Mission :</b> ${formatDate(mission.starts_at)} → ${formatDate(mission.expires_at)}${reservation.notes?`<br><b>Note client :</b> ${esc(reservation.notes)}`:''}${mission.notes?`<br><b>Note interne :</b> ${esc(mission.notes)}`:''}${mission.driver_instructions?`<br><b>Consignes :</b> ${esc(mission.driver_instructions)}`:''}</p><div class="finance"><div>Total réservation : <strong>${money(reservation.total_amount)}</strong></div><div>Total déjà payé : <strong>${money(paidFor(reservation.id))}</strong></div><div>Reste à payer : <strong>${money(balanceFor(reservation))}</strong></div><div>Coût livraison : <strong>${money(mission.custom_delivery_cost)}</strong></div><div>Coût récupération : <strong>${money(mission.custom_recovery_cost)}</strong></div></div><div class="mission-actions">${actions}</div>${dailyScheduleHtml(reservation.id)}<h4>État des lieux au départ</h4>${checklistSummary(departure)}<h4>État des lieux au retour</h4>${checklistSummary(returnCheck)}<h4>Historique des paiements</h4>${payments.length?`<ul>${payments.map(payment=>`<li>${formatDate(payment.paid_at)} — ${money(payment.amount)} — ${esc(payment.method||'non précisé')} ${payment.due_date?`(échéance ${esc(payment.due_date)})`:''} ${payment.source==='chauffeur'?'(encaissé par vous)':''}</li>`).join('')}</ul>`:'<p class="muted">Aucun paiement enregistré.</p>'}<p class="muted">Signature client : ${isSigned(reservation.id)?'enregistrée':'non enregistrée'}</p>`;
-    if(departure)renderChecklistEvidence(departure);if(returnCheck)renderChecklistEvidence(returnCheck);
     $('mission-accept')?.addEventListener('click',()=>respondMission(mission,'accept'));
     $('mission-refuse')?.addEventListener('click',()=>respondMission(mission,'refuse'));
     $('mission-start')?.addEventListener('click',()=>openChecklist(mission,'departure'));
@@ -135,8 +127,8 @@
     if(data!==true)return alert(`Impossible de ${label} : la mission a expiré, a déjà reçu une réponse ou n’est pas associée à votre compte.`);
     await loadMissions();
   }
-  function photoInputMarkup(key,label,required){
-    return `<div class="checklist-photo"><label for="checklist-photo-${key}">${esc(label)}${required?' *':''}</label><input id="checklist-photo-${key}" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ${required?'required':''}><small class="muted">Photo prise ou choisie sur le téléphone; maximum 8 Mo.</small></div>`;
+  function photoCheckMarkup(key,label,checked){
+    return `<label class="checklist-photo"><input id="checklist-photo-${key}" type="checkbox" ${checked?'checked':''}> <span>${esc(label)}</span><small class="muted">Cochez après avoir pris la photo et envoyez-la sur WhatsApp.</small></label>`;
   }
   function openChecklist(mission,phase){
     state.checklistMission=mission;state.checklistPhase=phase;
@@ -152,18 +144,11 @@
     $('checklist-notes').value=existing?.checklist?.notes||'';
     document.querySelectorAll('input[name="driver-behavior"]').forEach(input=>input.checked=input.value===(existing?.checklist?.driver_behavior||''));
     $('checklist-documents').classList.toggle('hidden',!departure);
-    $('checklist-vehicle-photos').innerHTML=[['front','Avant'],['rear','Arrière'],['side','Côté / latéral'],['wheel','Jante'],['dashboard','Tableau de bord']].map(([key,label])=>photoInputMarkup(key,label,!existing?.photos?.[key])).join('');
-    $('checklist-document-photos').innerHTML=departure?[['cin','Photo CIN'],['license','Photo permis']].map(([key,label])=>photoInputMarkup(key,label,!existing?.photos?.[key])).join(''):'';
-    $('checklist-message').textContent=existing?'Un état des lieux existe déjà. Vous pouvez le compléter ou le remplacer. Les photos déjà enregistrées seront conservées si vous n’en sélectionnez pas de nouvelles.':'';
+    const photoChecks=existing?.checklist?.photo_checks||{};
+    $('checklist-vehicle-photos').innerHTML=[['front','Photo avant'],['rear','Photo arrière'],['side','Photo côté / latéral'],['wheel','Photo jante'],['dashboard','Photo tableau de bord'],['client','Photo du client devant la voiture']].map(([key,label])=>photoCheckMarkup(key,label,photoChecks[key])).join('');
+    $('checklist-document-photos').innerHTML=departure?[['cin','Photo CIN'],['license','Photo permis']].map(([key,label])=>photoCheckMarkup(key,label,photoChecks[key])).join(''):'';
+    $('checklist-message').textContent=existing?'Une checklist existe déjà. Vous pouvez la compléter ou la remplacer. Aucun fichier photo n’est conservé dans l’application.':'Les photos sont uniquement des rappels : cochez-les après les avoir envoyées sur WhatsApp.';
     $('checklist-modal').classList.remove('hidden');
-  }
-  function compressImage(file){
-    return new Promise((resolve,reject)=>{
-      if(file.size<=7*1024*1024&&['image/jpeg','image/png','image/webp'].includes(file.type))return resolve(file);
-      const image=new Image(),url=URL.createObjectURL(file);
-      image.onload=()=>{URL.revokeObjectURL(url);const scale=Math.min(1,1600/Math.max(image.width,image.height)),canvas=document.createElement('canvas');canvas.width=Math.round(image.width*scale);canvas.height=Math.round(image.height*scale);canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);canvas.toBlob(blob=>blob?resolve(new File([blob],'photo.jpg',{type:'image/jpeg'})):reject(new Error('Compression photo impossible.')),'image/jpeg',0.82);};
-      image.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Impossible de lire cette photo. Utilisez JPEG, PNG ou WebP.'));};image.src=url;
-    });
   }
   async function saveChecklist(event){
     event.preventDefault();
@@ -173,23 +158,15 @@
     const behavior=document.querySelector('input[name="driver-behavior"]:checked')?.value;
     const fuel=Number($('checklist-fuel').value),cash=Number($('checklist-cash').value);
     if(!behavior||!Number.isFinite(fuel)||fuel<0||fuel>100||!Number.isFinite(cash)||cash<0)return message.textContent='Vérifiez le niveau de carburant, le reste d’argent et l’appréciation de conduite.';
-    button.disabled=true;message.textContent='Enregistrement des photos et de la checklist…';
+    button.disabled=true;message.textContent='Enregistrement de la checklist…';
     try{
-      const user=await currentUser(),old=state.checklists.get(keyForChecklist(mission.id,phase)),photos={...(old?.photos||{})};
-      const keys=phase==='departure'?['front','rear','side','wheel','dashboard','cin','license']:['front','rear','side','wheel','dashboard'];
-      for(const key of keys){
-        const input=$(`checklist-photo-${key}`),file=input?.files?.[0];
-        if(!file){if(['front','rear','side','wheel','dashboard'].includes(key)&&!photos[key])throw new Error(`Ajoutez la photo requise : ${{front:'avant',rear:'arrière',side:'latérale',wheel:'jante',dashboard:'tableau de bord'}[key]}.`);if(phase==='departure'&&['cin','license'].includes(key)&&!photos[key])throw new Error(`Ajoutez la photo requise : ${key==='cin'?'CIN':'permis'}.`);continue;}
-        const compressed=await compressImage(file);
-        if(!['image/jpeg','image/png','image/webp'].includes(compressed.type)||compressed.size>8*1024*1024)throw new Error('La photo doit être en JPEG, PNG ou WebP et faire moins de 8 Mo.');
-        const extension=compressed.type==='image/png'?'png':compressed.type==='image/webp'?'webp':'jpg';
-        const path=`${user.id}/${mission.id}/${phase}/${key}-${crypto.randomUUID()}.${extension}`;
-        const upload=await db.storage.from('chauffeur-mission-evidence').upload(path,compressed,{upsert:false,contentType:compressed.type});
-        if(upload.error)throw upload.error;
-        photos[key]=path;
-      }
-      const checklist={cash_remaining:cash,fuel_percent:fuel,cin_seen:phase==='departure'?$('checklist-cin-seen').checked:Boolean(old?.checklist?.cin_seen),license_seen:phase==='departure'?$('checklist-license-seen').checked:Boolean(old?.checklist?.license_seen),driver_behavior:behavior,notes:$('checklist-notes').value.trim()};
-      const {error}=await db.from('chauffeur_mission_checklists').upsert({mission_id:mission.id,phase,submitted_by:user.id,checklist,photos,completed_at:new Date().toISOString()},{onConflict:'mission_id,phase'});
+      const user=await currentUser(),old=state.checklists.get(keyForChecklist(mission.id,phase));
+      const photoKeys=phase==='departure'?['front','rear','side','wheel','dashboard','client','cin','license']:['front','rear','side','wheel','dashboard','client'];
+      const photo_checks=Object.fromEntries(photoKeys.map(key=>[key,$(`checklist-photo-${key}`)?.checked===true]));
+      const missing=photoKeys.filter(key=>!photo_checks[key]);
+      if(missing.length)return message.textContent=`Cochez les rappels photo effectués : ${missing.map(key=>({front:'avant',rear:'arrière',side:'côté',wheel:'jante',dashboard:'tableau de bord',client:'client devant la voiture',cin:'CIN',license:'permis'}[key])).join(', ')}.`;
+      const checklist={cash_remaining:cash,fuel_percent:fuel,cin_seen:phase==='departure'?$('checklist-cin-seen').checked:Boolean(old?.checklist?.cin_seen),license_seen:phase==='departure'?$('checklist-license-seen').checked:Boolean(old?.checklist?.license_seen),driver_behavior:behavior,notes:$('checklist-notes').value.trim(),photo_checks};
+      const {error}=await db.from('chauffeur_mission_checklists').upsert({mission_id:mission.id,phase,submitted_by:user.id,checklist,photos:{},completed_at:new Date().toISOString()},{onConflict:'mission_id,phase'});
       if(error)throw error;
       const nextStatus=phase==='departure'?'in_progress':'completed';
       const update={status:nextStatus,updated_at:new Date().toISOString(),...(phase==='departure'?{started_at:new Date().toISOString()}:{completed_at:new Date().toISOString(),completed_by:user.id})};
