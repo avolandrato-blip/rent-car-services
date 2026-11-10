@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Réponse à une mission — Rent Car Service</title>
+  <link rel="stylesheet" href="style.css?v=20261110-team">
+  <style>
+    body{background:#f3f7fa}.action-shell{max-width:560px;margin:10vh auto;padding:18px}.action-card{background:#fff;border:1px solid #dfe8ef;border-radius:16px;padding:24px;box-shadow:0 8px 24px #0b1f330b}.action-card h1{margin-top:0;color:#09223a}.action-card p{color:#52677a;line-height:1.55}.action-result{min-height:24px;margin-top:14px}.action-ok{color:#16803c}.action-error{color:#b42318}.action-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{cursor:pointer}.hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <main class="action-shell">
+    <section class="action-card">
+      <div class="team-brand"><strong>Rent Car Service</strong><small> · Espace chauffeur</small></div>
+      <h1 id="action-title">Répondre à la mission</h1>
+      <p id="action-copy">Confirmez votre choix. Le lien ne sera utilisé qu’une seule fois et la réponse sera enregistrée dans votre tableau de bord.</p>
+      <div class="action-buttons">
+        <button id="action-confirm" class="btn primary" type="button">Confirmer ma réponse</button>
+        <a class="btn outline" href="team.html">Ouvrir l’espace chauffeur</a>
+      </div>
+      <p id="action-result" class="action-result" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js?v=20261110-team-workflow"></script>
+  <script src="team-action.js?v=20261110-workflow"></script>
+</body>
+</html>
