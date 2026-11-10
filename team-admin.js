@@ -3,7 +3,7 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = value => `${Number(value || 0).toLocaleString('fr-FR')} Ar`;
-  const state = { drivers: [], reservations: [], missions: [], payments: [], dues: [] };
+  const state = { drivers: [], reservations: [], missions: [], payments: [], dues: [], pendingMission: null };
   const dateTime = value => value ? new Date(value).toLocaleString('fr-FR', {dateStyle:'short',timeStyle:'short'}) : '—';
   const isoFromLocal = value => value ? new Date(value).toISOString() : null;
   const statusLabel = status => ({assigned:'À accepter',accepted:'Mission acceptée',refused:'Mission refusée',in_progress:'En cours',completed:'Terminée',cancelled:'Annulée',expired:'Expirée'}[status] || status);
@@ -23,6 +23,10 @@
     });
     $('team-mission-form').addEventListener('submit', createMission);
     $('team-missions-refresh').addEventListener('click', load);
+    if (!$('team-mission-review-modal')) document.body.insertAdjacentHTML('beforeend', `<div id="team-mission-review-modal" class="team-mission-review-backdrop" hidden><div class="team-mission-review" role="dialog" aria-modal="true" aria-labelledby="team-mission-review-title"><div class="section-head"><div><h2 id="team-mission-review-title">Récapitulatif de la mission</h2><p class="muted">Vérifiez les informations avant d’enregistrer la mission et d’ouvrir WhatsApp.</p></div><button id="team-mission-review-close" class="btn outline" type="button">Fermer</button></div><div id="team-mission-review-content" class="team-mission-review-content"></div><div class="team-mission-review-actions"><button id="team-mission-review-cancel" class="btn outline" type="button">Modifier</button><button id="team-mission-review-confirm" class="btn primary" type="button">Confirmer et préparer WhatsApp</button></div><p id="team-mission-review-message" class="notice-error" role="alert"></p></div></div>`);
+    $('team-mission-review-close').addEventListener('click', closeMissionReview);
+    $('team-mission-review-cancel').addEventListener('click', closeMissionReview);
+    $('team-mission-review-confirm').addEventListener('click', submitPendingMission);
     $('team-mission-driver').addEventListener('change', fillDriverRates);
     $('team-mission-reservation').addEventListener('change', fillReservationDefaults);
     $('team-daily-enabled').addEventListener('change', () => {
@@ -175,11 +179,27 @@
       `Répondre : refuser ${refuseUrl.href}`,
       'Après acceptation, ouvrez l’espace chauffeur pour faire l’état des lieux au départ et au retour.'
     ].filter(Boolean);
-    return {phone,url:`https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`};
+    const whatsapp=new URL('https://api.whatsapp.com/send');
+    whatsapp.searchParams.set('phone',phone); whatsapp.searchParams.set('text',lines.join('\n'));
+    return {phone,url:whatsapp.href};
+  }
+  function reviewValue(label, value) {
+    return `<div class="team-review-row"><span>${esc(label)}</span><strong>${esc(value || '—')}</strong></div>`;
+  }
+  function closeMissionReview() {
+    state.pendingMission = null;
+    const modal=$('team-mission-review-modal');
+    if (modal) modal.hidden=true;
+    const message=$('team-mission-review-message'); if(message)message.textContent='';
+  }
+  function openMissionReview(pending) {
+    state.pendingMission=pending;
+    const {driver,reservation,mission,dailyEnabled,dailyAmount,alreadyHasPlan}=pending;
+    $('team-mission-review-content').innerHTML = `<div class="team-review-section"><h3>Client et réservation</h3>${reviewValue('Réservation',`${reservation.reference} — ${reservation.customer_name}`)}${reviewValue('Téléphone client',reservation.customer_phone)}${reviewValue('Trajet',[reservation.trip_from,reservation.trip_to].filter(Boolean).join(' → '))}${reviewValue('Adresse de rendez-vous',mission.handover_address)}</div><div class="team-review-section"><h3>Mission et chauffeur</h3>${reviewValue('Chauffeur',`${driver.name}${driver.login_name?' — '+driver.login_name:''}`)}${reviewValue('Type',missionTypeLabel(mission.mission_type))}${reviewValue('Début',dateTime(mission.starts_at))}${reviewValue('Fin',dateTime(mission.expires_at))}${reviewValue('Coût livraison',money(mission.custom_delivery_cost))}${reviewValue('Coût récupération',money(mission.custom_recovery_cost))}</div><div class="team-review-section"><h3>Consignes et paiements</h3>${reviewValue('Note chauffeur',mission.notes)}${reviewValue('Consignes',mission.driver_instructions)}${reviewValue('Échéancier quotidien',dailyEnabled?(alreadyHasPlan?'Déjà actif — conservé':`${money(dailyAmount)} par jour`):'Non activé')}</div><p class="muted">Après confirmation, la mission sera enregistrée avec le statut « À accepter ». Vous pourrez ensuite cliquer sur le bouton WhatsApp pour transmettre le message au chauffeur.</p>`;
+    $('team-mission-review-modal').hidden=false;
   }
   async function createMission(event) {
     event.preventDefault();
-    const form=event.currentTarget;
     const start=$('team-mission-start').value, end=$('team-mission-end').value;
     if (!start || !end || new Date(end)<=new Date(start) || new Date(end)-new Date(start)>24*3600000) return show('La mission doit durer plus de 0 heure et 24 heures maximum. Pour une location plus longue, gardez une seule réservation et utilisez l’échéancier quotidien.');
     const driver=state.drivers.find(item=>item.id===$('team-mission-driver').value);
@@ -187,37 +207,37 @@
     if (!driver || !reservation) return show('Sélectionnez une réservation et un chauffeur.');
     if (!driver.auth_user_id || !driver.login_name) return show('Ce chauffeur n’a pas encore de compte team. Créez son compte avant de lui attribuer la mission.');
     if (!toWhatsAppNumber(driver.whatsapp || driver.phone)) return show('Aucun numéro WhatsApp valide n’est enregistré pour ce chauffeur. Corrigez sa fiche chauffeur avant l’attribution.');
-    const dailyEnabled=$('team-daily-enabled').checked;
-    const dailyAmount=Number($('team-daily-amount').value||0);
+    const dailyEnabled=$('team-daily-enabled').checked, dailyAmount=Number($('team-daily-amount').value||0);
     const alreadyHasPlan=state.dues.some(due=>due.reservation_id===reservation.id);
     if (dailyEnabled && !alreadyHasPlan && (!Number.isFinite(dailyAmount)||dailyAmount<=0)) return show('Saisissez un montant quotidien supérieur à zéro.');
     if (dailyEnabled && !alreadyHasPlan && dailyAmount*rentalDayCount(reservation)>Number(reservation.total_amount||0)) return show('Le montant quotidien multiplié par le nombre de jours dépasserait le total de la réservation. Ajustez le montant par jour avant de continuer.');
-    const rawToken=randomToken();
-    const tokenHash=await sha256Hex(rawToken);
+    const rawToken=randomToken(), tokenHash=await sha256Hex(rawToken);
     const mission={chauffeur_id:driver.id,reservation_id:reservation.id,mission_type:$('team-mission-type').value,custom_delivery_cost:Number($('team-mission-delivery-cost').value||0),custom_recovery_cost:Number($('team-mission-recovery-cost').value||0),starts_at:isoFromLocal(start),expires_at:isoFromLocal(end),acceptance_token_hash:tokenHash,acceptance_expires_at:isoFromLocal(end),handover_address:$('team-mission-address').value.trim()||reservation.customer_address||reservation.trip_from||reservation.trip_to||null,notes:$('team-mission-notes').value.trim()||null,driver_instructions:$('team-mission-instructions').value.trim()||null};
-    const {data:created,error}=await db.rpc('assign_chauffeur_mission',{p_chauffeur_id:mission.chauffeur_id,p_reservation_id:mission.reservation_id,p_mission_type:mission.mission_type,p_custom_delivery_cost:mission.custom_delivery_cost,p_custom_recovery_cost:mission.custom_recovery_cost,p_starts_at:mission.starts_at,p_expires_at:mission.expires_at,p_handover_address:mission.handover_address,p_notes:mission.notes,p_driver_instructions:mission.driver_instructions,p_acceptance_token_hash:mission.acceptance_token_hash,p_acceptance_expires_at:mission.acceptance_expires_at});
-    if (error) {
-      const detail=error.code==='42501'||/row-level security|permission denied/i.test(error.message||'')
-        ? 'Attribution bloquée par la sécurité Supabase : la session doit être celle d’un super-administrateur actif. Déconnectez-vous puis reconnectez-vous avec le compte administrateur; ne rendez pas la table publique.'
-        : /column .* does not exist|function .* does not exist|could not find the function|schema cache/i.test(error.message||'')
-          ? `La migration chauffeur n’est pas appliquée sur Supabase. Détail : ${error.message}`
-          : `Attribution impossible : ${error.message}`;
-      return show(detail);
-    }
-    let warning='Mission enregistrée dans le tableau de bord. ';
-    let dailyPlanReady=alreadyHasPlan;
-    if (dailyEnabled && !alreadyHasPlan) {
-      const rows=buildDailyDues(reservation,dailyAmount);
-      const scheduleResult=await db.from('reservation_daily_dues').upsert(rows,{onConflict:'reservation_id,due_date',ignoreDuplicates:true});
-      if (scheduleResult.error) warning+=`L’échéancier n’a pas pu être créé : ${scheduleResult.error.message}. `;
-      else { state.dues.push(...rows); dailyPlanReady=true; warning+=`${rows.length} échéance(s) quotidienne(s) créée(s). `; }
-    } else if (dailyEnabled && alreadyHasPlan) {
-      warning+='L’échéancier déjà actif a été conservé sans écraser les paiements saisis. ';
-    }
-    const messageData=makeWhatsAppMessage({...mission,id:created},reservation,driver,rawToken,dailyPlanReady);
-    form.reset(); $('team-mission-start').value=''; $('team-mission-end').value=''; $('team-daily-fields').classList.add('hidden');
-    await load();
-    show(`${warning}Le lien wa.me est prêt; vérifiez le texte puis appuyez sur Envoyer dans WhatsApp.`,messageData.url);
+    openMissionReview({form:event.currentTarget,driver,reservation,mission,rawToken,dailyEnabled,dailyAmount,alreadyHasPlan});
+  }
+  async function submitPendingMission() {
+    const pending=state.pendingMission;if(!pending)return;
+    const {form,driver,reservation,mission,rawToken,dailyEnabled,dailyAmount,alreadyHasPlan}=pending;
+    const button=$('team-mission-review-confirm'),message=$('team-mission-review-message');
+    button.disabled=true; message.textContent='Enregistrement de la mission…';
+    try {
+      const {data:created,error}=await db.rpc('assign_chauffeur_mission',{p_chauffeur_id:mission.chauffeur_id,p_reservation_id:mission.reservation_id,p_mission_type:mission.mission_type,p_custom_delivery_cost:mission.custom_delivery_cost,p_custom_recovery_cost:mission.custom_recovery_cost,p_starts_at:mission.starts_at,p_expires_at:mission.expires_at,p_handover_address:mission.handover_address,p_notes:mission.notes,p_driver_instructions:mission.driver_instructions,p_acceptance_token_hash:mission.acceptance_token_hash,p_acceptance_expires_at:mission.acceptance_expires_at});
+      if (error) {
+        const detail=error.code==='42501'||/row-level security|permission denied/i.test(error.message||'') ? 'Attribution bloquée par la sécurité Supabase : reconnectez-vous avec un super-administrateur actif.' : /column .* does not exist|function .* does not exist|could not find the function|schema cache/i.test(error.message||'') ? `La migration chauffeur n’est pas appliquée sur Supabase. Détail : ${error.message}` : `Attribution impossible : ${error.message}`;
+        message.textContent=detail; return;
+      }
+      let warning='Mission enregistrée dans le tableau de bord chauffeur. '; let dailyPlanReady=alreadyHasPlan;
+      if (dailyEnabled && !alreadyHasPlan) {
+        const rows=buildDailyDues(reservation,dailyAmount),scheduleResult=await db.from('reservation_daily_dues').upsert(rows,{onConflict:'reservation_id,due_date',ignoreDuplicates:true});
+        if (scheduleResult.error) warning+=`L’échéancier n’a pas pu être créé : ${scheduleResult.error.message}. `;
+        else { state.dues.push(...rows); dailyPlanReady=true; warning+=`${rows.length} échéance(s) quotidienne(s) créée(s). `; }
+      } else if (dailyEnabled && alreadyHasPlan) warning+='L’échéancier déjà actif a été conservé. ';
+      const messageData=makeWhatsAppMessage({...mission,id:created},reservation,driver,rawToken,dailyPlanReady);
+      closeMissionReview(); form.reset(); $('team-mission-start').value=''; $('team-mission-end').value=''; $('team-daily-fields').classList.add('hidden');
+      await load();
+      show(`${warning}Cliquez sur « Ouvrir WhatsApp et envoyer » pour transmettre la mission.`,messageData.url);
+    } catch(error) { message.textContent=`Erreur technique : ${error?.message||error}`; }
+    finally { button.disabled=false; }
   }
   async function cancelMission(id) {
     if (!confirm('Annuler cette mission ?')) return;

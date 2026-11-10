@@ -379,3 +379,13 @@ body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce
 .client-signature-modal[open] .invoice-client-signature-actions, .client-signature-modal.is-open .invoice-client-signature-actions { display: flex !important; visibility: visible !important; opacity: 1 !important; }
 .client-signature-modal[open] .invoice-client-signature-actions .btn, .client-signature-modal.is-open .invoice-client-signature-actions .btn { display: inline-flex !important; visibility: visible !important; opacity: 1 !important; }
 @media (max-width: 600px) { .client-signature-modal[open], .client-signature-modal.is-open { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } }
+
+/* Récapitulatif avant attribution d'une mission chauffeur */
+.team-mission-review-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(7,24,39,.72);backdrop-filter:blur(4px)}
+.team-mission-review-backdrop[hidden]{display:none}
+.team-mission-review{width:min(760px,100%);max-height:92vh;overflow:auto;padding:24px;border-radius:18px;background:#fff;color:#102d46;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.team-mission-review h2{margin:0 0 6px}.team-mission-review .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}
+.team-mission-review-content{display:grid;grid-template-columns:1fr 1fr;gap:14px}.team-review-section{padding:14px;border:1px solid #dfe8ef;border-radius:12px;background:#f8fbfd}.team-review-section:last-of-type{grid-column:1/-1}.team-review-section h3{margin:0 0 10px;font-size:15px}
+.team-review-row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:1px solid #e7eef3;font-size:13px}.team-review-row:last-child{border-bottom:0}.team-review-row span{color:#607386}.team-review-row strong{text-align:right;white-space:pre-wrap;overflow-wrap:anywhere}
+.team-mission-review-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid #dfe8ef}
+@media(max-width:620px){.team-mission-review{padding:18px}.team-mission-review-content{grid-template-columns:1fr}.team-review-section:last-of-type{grid-column:auto}.team-review-row{display:block}.team-review-row strong{display:block;text-align:left;margin-top:3px}.team-mission-review-actions .btn{width:100%}}
