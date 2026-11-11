@@ -21,7 +21,7 @@
       const title = $('page-title'); if (title) title.textContent = 'Missions chauffeur';
       load();
     });
-    $('team-mission-form').addEventListener('submit', createMission);
+    const missionForm=$('team-mission-form'); missionForm.noValidate=true; missionForm.addEventListener('submit', createMission);
     $('team-missions-refresh').addEventListener('click', load);
     if (!$('team-mission-review-modal')) document.body.insertAdjacentHTML('beforeend', `<div id="team-mission-review-modal" class="team-mission-review-backdrop" hidden><div class="team-mission-review" role="dialog" aria-modal="true" aria-labelledby="team-mission-review-title"><div class="section-head"><div><h2 id="team-mission-review-title">Récapitulatif de la mission</h2><p class="muted">Vérifiez les informations avant d’enregistrer la mission et d’ouvrir WhatsApp.</p></div><button id="team-mission-review-close" class="btn outline" type="button">Fermer</button></div><div id="team-mission-review-content" class="team-mission-review-content"></div><div class="team-mission-review-actions"><button id="team-mission-review-cancel" class="btn outline" type="button">Modifier</button><button id="team-mission-review-confirm" class="btn primary" type="button">Confirmer et préparer WhatsApp</button></div><p id="team-mission-review-message" class="notice-error" role="alert"></p></div></div>`);
     $('team-mission-review-close').addEventListener('click', closeMissionReview);
@@ -207,20 +207,37 @@
   }
   async function createMission(event) {
     event.preventDefault();
-    const start=$('team-mission-start').value, end=$('team-mission-end').value;
-    if (!start || !end || new Date(end)<=new Date(start) || new Date(end)-new Date(start)>24*3600000) return show('La mission doit durer plus de 0 heure et 24 heures maximum. Pour une location plus longue, gardez une seule réservation et utilisez l’échéancier quotidien.');
-    const driver=state.drivers.find(item=>item.id===$('team-mission-driver').value);
-    const reservation=state.reservations.find(item=>item.id===$('team-mission-reservation').value);
-    if (!driver || !reservation) return show('Sélectionnez une réservation et un chauffeur.');
-    if (!driver.auth_user_id || !driver.login_name) return show('Ce chauffeur n’a pas encore de compte team. Créez son compte avant de lui attribuer la mission.');
-    if (!toWhatsAppNumber(driver.whatsapp || driver.phone)) return show('Aucun numéro WhatsApp valide n’est enregistré pour ce chauffeur. Corrigez sa fiche chauffeur avant l’attribution.');
-    const dailyEnabled=$('team-daily-enabled').checked, dailyAmount=Number($('team-daily-amount').value||0);
-    const alreadyHasPlan=state.dues.some(due=>due.reservation_id===reservation.id);
-    if (dailyEnabled && !alreadyHasPlan && (!Number.isFinite(dailyAmount)||dailyAmount<=0)) return show('Saisissez un montant quotidien supérieur à zéro.');
-    if (dailyEnabled && !alreadyHasPlan && dailyAmount*rentalDayCount(reservation)>Number(reservation.total_amount||0)) return show('Le montant quotidien multiplié par le nombre de jours dépasserait le total de la réservation. Ajustez le montant par jour avant de continuer.');
-    const rawToken=randomToken(), tokenHash=await sha256Hex(rawToken);
-    const mission={chauffeur_id:driver.id,reservation_id:reservation.id,mission_type:$('team-mission-type').value,custom_delivery_cost:Number($('team-mission-delivery-cost').value||0),custom_recovery_cost:Number($('team-mission-recovery-cost').value||0),starts_at:isoFromLocal(start),expires_at:isoFromLocal(end),acceptance_token_hash:tokenHash,acceptance_expires_at:isoFromLocal(end),handover_address:$('team-mission-address').value.trim()||reservation.customer_address||reservation.trip_from||reservation.trip_to||null,notes:$('team-mission-notes').value.trim()||null,driver_instructions:$('team-mission-instructions').value.trim()||null};
-    openMissionReview({form:event.currentTarget,driver,reservation,mission,rawToken,dailyEnabled,dailyAmount,alreadyHasPlan});
+    const form=event.currentTarget;
+    const submitButton=event.submitter||form.querySelector('button[type="submit"]');
+    if (!form.checkValidity()) {
+      const invalidField=form.querySelector(':invalid');
+      show('Complétez les champs obligatoires : réservation, chauffeur, début et fin de mission.');
+      form.reportValidity();
+      invalidField?.focus();
+      return;
+    }
+    if (submitButton) submitButton.disabled=true;
+    show('Vérification des informations et préparation du récapitulatif…');
+    try {
+      const start=$('team-mission-start').value, end=$('team-mission-end').value;
+      if (!start || !end || new Date(end)<=new Date(start) || new Date(end)-new Date(start)>24*3600000) return show('La mission doit durer plus de 0 heure et 24 heures maximum. Pour une location plus longue, gardez une seule réservation et utilisez l’échéancier quotidien.');
+      const driver=state.drivers.find(item=>item.id===$('team-mission-driver').value);
+      const reservation=state.reservations.find(item=>item.id===$('team-mission-reservation').value);
+      if (!driver || !reservation) return show('Sélectionnez une réservation confirmée et un chauffeur disposant d’un compte team.');
+      if (!driver.auth_user_id || !driver.login_name) return show('Ce chauffeur n’a pas encore de compte team. Créez son compte dans la section Comptes team avant de lui attribuer la mission.');
+      if (!toWhatsAppNumber(driver.whatsapp || driver.phone)) return show('Aucun numéro WhatsApp valide n’est enregistré pour ce chauffeur. Corrigez sa fiche chauffeur avant l’attribution.');
+      const dailyEnabled=$('team-daily-enabled').checked, dailyAmount=Number($('team-daily-amount').value||0);
+      const alreadyHasPlan=state.dues.some(due=>due.reservation_id===reservation.id);
+      if (dailyEnabled && !alreadyHasPlan && (!Number.isFinite(dailyAmount)||dailyAmount<=0)) return show('Saisissez un montant quotidien supérieur à zéro.');
+      if (dailyEnabled && !alreadyHasPlan && dailyAmount*rentalDayCount(reservation)>Number(reservation.total_amount||0)) return show('Le montant quotidien multiplié par le nombre de jours dépasserait le total de la réservation. Ajustez le montant par jour avant de continuer.');
+      const rawToken=randomToken(), tokenHash=await sha256Hex(rawToken);
+      const mission={chauffeur_id:driver.id,reservation_id:reservation.id,mission_type:$('team-mission-type').value,custom_delivery_cost:Number($('team-mission-delivery-cost').value||0),custom_recovery_cost:Number($('team-mission-recovery-cost').value||0),starts_at:isoFromLocal(start),expires_at:isoFromLocal(end),acceptance_token_hash:tokenHash,acceptance_expires_at:isoFromLocal(end),handover_address:$('team-mission-address').value.trim()||reservation.customer_address||reservation.trip_from||reservation.trip_to||null,notes:$('team-mission-notes').value.trim()||null,driver_instructions:$('team-mission-instructions').value.trim()||null};
+      openMissionReview({form,driver,reservation,mission,rawToken,dailyEnabled,dailyAmount,alreadyHasPlan});
+    } catch(error) {
+      show(`Impossible de préparer le récapitulatif : ${error?.message||error}`);
+    } finally {
+      if (submitButton) submitButton.disabled=false;
+    }
   }
   async function submitPendingMission() {
     const pending=state.pendingMission;if(!pending)return;

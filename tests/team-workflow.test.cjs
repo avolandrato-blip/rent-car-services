@@ -10,6 +10,9 @@ test('l’attribution exige un compte chauffeur et prépare un lien wa.me avec a
   assert.match(admin, /\.rpc\('assign_chauffeur_mission'/);
   assert.match(admin, /driver\.auth_user_id/);
   assert.match(admin, /readyDrivers=activeDrivers\.filter/);
+  assert.match(admin, /missionForm\.noValidate=true/);
+  assert.match(admin, /form\.checkValidity\(\)/);
+  assert.match(admin, /Impossible de préparer le récapitulatif/);
   assert.match(admin, /chauffeur\(s\) prêt\(s\)/);
   assert.match(admin, /Aucune réservation confirmée — confirmez-la d’abord/);
   assert.match(admin, /acceptance_token_hash/);
