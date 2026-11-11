@@ -125,3 +125,12 @@ test('les boutons ont un relief 3D, un état pressé et respectent la réduction
   assert.match(css, /@media \(hover: hover\) and \(pointer: fine\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
+
+test('le formulaire empêche une heure de départ passée avant l’appel de réservation', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '..', 'enhancements.js'), 'utf8');
+  assert.match(source, /BOOKING_START_BUFFER_MS/);
+  assert.match(source, /startDate\.min = today/);
+  assert.match(source, /option\.disabled = startDate\.value === today/);
+  assert.match(source, /L’heure de départ choisie est déjà passée ou trop proche/);
+  assert.match(source, /startAt\.getTime\(\) <= Date\.now\(\) \+ BOOKING_START_BUFFER_MS/);
+});

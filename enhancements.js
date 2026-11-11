@@ -17,6 +17,35 @@
   }
 
   let currentBookingStep = 1;
+  const BOOKING_START_BUFFER_MS = 2 * 60 * 1000;
+
+  function localDateValue(date) {
+    const pad = value => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  function updateBookingDateConstraints() {
+    const startDate = $('booking-start-date');
+    const startTime = $('booking-start-time');
+    const endDate = $('booking-end-date');
+    if (!startDate || !startTime || !endDate) return;
+    const now = new Date();
+    const today = localDateValue(now);
+    startDate.min = today;
+    endDate.min = startDate.value && startDate.value >= today ? startDate.value : today;
+    const earliestAllowed = now.getTime() + BOOKING_START_BUFFER_MS;
+    [...startTime.options].forEach(option => {
+      if (!option.value) return;
+      const slot = new Date(`${startDate.value}T${option.value}`);
+      option.disabled = startDate.value === today && Number.isFinite(slot.getTime()) && slot.getTime() <= earliestAllowed;
+    });
+  }
+
+  function selectedBookingStart() {
+    const date = $('booking-start-date')?.value;
+    const time = $('booking-start-time')?.value;
+    return date && time ? new Date(`${date}T${time}`) : null;
+  }
 
   function setBookingStep(step) {
     currentBookingStep = step;
@@ -29,10 +58,20 @@
   function validateBookingStep(step) {
     const section = document.querySelector(`[data-booking-step="${step}"]`);
     if (!section) return true;
+    if (step === 1) {
+      updateBookingDateConstraints();
+      const startDateValue = $('booking-start-date')?.value;
+      const startTimeValue = $('booking-start-time')?.value;
+      const start = selectedBookingStart();
+      if (startDateValue && startTimeValue && start && Number.isFinite(start.getTime()) && start.getTime() <= Date.now() + BOOKING_START_BUFFER_MS) {
+        showBookingError('L’heure de départ choisie est déjà passée ou trop proche. Choisissez le prochain créneau disponible ou une date ultérieure.');
+        return false;
+      }
+    }
     const fields = [...section.querySelectorAll('input, select, textarea')].filter(field => !field.disabled && field.type !== 'hidden');
     for (const field of fields) { if (!field.checkValidity()) { field.reportValidity(); return false; } }
     if (step === 1) {
-      const start = $('booking-start-date')?.value && $('booking-start-time')?.value ? new Date(`${$('booking-start-date').value}T${$('booking-start-time').value}`) : null;
+      const start = selectedBookingStart();
       const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
       if (!start || !end || end <= start) { showBookingError('Veuillez sélectionner une période de location valide.'); return false; }
       const fleetId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(fleetId, start.toISOString(), end.toISOString());
@@ -178,6 +217,9 @@
     form.querySelectorAll('[data-next-step]').forEach(button => button.addEventListener('click', () => { const step = Number(button.closest('[data-booking-step]').dataset.bookingStep); if (validateBookingStep(step)) setBookingStep(Number(button.dataset.nextStep)); }));
     form.querySelectorAll('[data-prev-step]').forEach(button => button.addEventListener('click', () => setBookingStep(Number(button.dataset.prevStep))));
     ['booking-deposit','booking-payment-method','booking-mobile-provider'].forEach(id => $(id)?.addEventListener('input', updatePaymentProofVisibility));
+    $('booking-start-date')?.addEventListener('change', updateBookingDateConstraints);
+    $('booking-start-time')?.addEventListener('change', updateBookingDateConstraints);
+    updateBookingDateConstraints();
     $('booking-payment-method')?.addEventListener('change', updatePaymentProofVisibility);
     $('booking-mobile-provider')?.addEventListener('change', updateMobileMoneyAccount);
     setupBookingTermsGate(); updatePaymentProofVisibility(); setBookingStep(1);
@@ -200,8 +242,11 @@
     const startDate = $('booking-start-date')?.value, startTime = $('booking-start-time')?.value;
     const endDate = $('booking-end-date')?.value, endTime = $('booking-end-time')?.value;
     const start = startDate && startTime ? `${startDate}T${startTime}` : '', end = endDate && endTime ? `${endDate}T${endTime}` : '';
-    if (!vehicle || !start || !end || new Date(end) <= new Date(start)) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, new Date(start).toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
+    updateBookingDateConstraints();
+    const startAt = start ? new Date(start) : null;
+    if (!vehicle || !startAt || !Number.isFinite(startAt.getTime()) || !end || new Date(end) <= startAt) return showBookingError('Vérifiez le véhicule et les dates choisies.');
+    if (startAt.getTime() <= Date.now() + BOOKING_START_BUFFER_MS) return showBookingError('L’heure de départ choisie est déjà passée ou trop proche. Choisissez un créneau futur puis réessayez.');
+    const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, startAt.toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
     if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;
