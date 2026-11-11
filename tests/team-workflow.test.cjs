@@ -9,6 +9,9 @@ test('l’attribution exige un compte chauffeur et prépare un lien wa.me avec a
   const admin = read('team-admin.js');
   assert.match(admin, /\.rpc\('assign_chauffeur_mission'/);
   assert.match(admin, /driver\.auth_user_id/);
+  assert.match(admin, /readyDrivers=activeDrivers\.filter/);
+  assert.match(admin, /chauffeur\(s\) prêt\(s\)/);
+  assert.match(admin, /Aucune réservation confirmée — confirmez-la d’abord/);
   assert.match(admin, /acceptance_token_hash/);
   assert.match(admin, /team-action\.html/);
   assert.match(admin, /response','accept/);
