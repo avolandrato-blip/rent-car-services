@@ -3,29 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Rent Car Service propose la location de voitures avec ou sans chauffeur à Antananarivo et dans les provinces de Madagascar.">
-    <link rel="canonical" href="https://avolandrato-blip.github.io/rent-car-services/">
-    <meta property="og:title" content="Rent Car Service | Location de voiture à Antananarivo">
-    <meta property="og:description" content="Location de voitures avec ou sans chauffeur à Antananarivo et dans les provinces de Madagascar.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://avolandrato-blip.github.io/rent-car-services/">
     <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261111-individual-vehicle-uid"><link rel="stylesheet" href="client-harmony.css?v=20261110-3d-buttons-hero-cta">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="reviews.css?v=20261109-reviews-3">
 </head>
 <body>
 
 <header class="header">
     <div class="nav-container">
         <h1 id="brand-name">Rent Car Service</h1>
-        <button class="menu-burger" type="button" aria-label="Ouvrir le menu" aria-controls="nav-menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
+        <div class="menu-burger" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
         <nav id="nav-menu">
             <button onclick="openTab('home')">Accueil</button>
-            <button onclick="openTab('cars')">Nos véhicules</button>
-            <button onclick="openTab('terms')">Nos conditions</button>
+            <button onclick="openTab('cars')">Véhicules</button>
+            <button onclick="openTab('booking')">Réservation</button>
+            <button onclick="openTab('fun')">Médias & divertissement</button>
+            <button onclick="openTab('terms')">Conditions de location</button>
+            <button onclick="openTab('contact')" class="nav-special">Nous contacter</button>
         </nav>
     </div>
 </header>
@@ -37,33 +33,15 @@
                 <h2 id="hero-title">Chargement...</h2>
                 <p id="hero-slogan" class="slogan-top"></p>
                 
-                <p id="hero-desc" class="description-bottom"></p>
-                <div class="hero-btns" aria-label="Actions principales">
-                    <button type="button" class="btn btn-primary" onclick="openTab('booking')"><i class="fas fa-calendar-check" aria-hidden="true"></i> Réserver maintenant</button>
-                    <button type="button" class="btn btn-outline" onclick="openTab('cars')"><i class="fas fa-car" aria-hidden="true"></i> Voir les véhicules</button>
-                    <a id="hero-whatsapp" class="btn btn-whatsapp" href="#" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp" aria-hidden="true"></i> Demander un devis</a>
+                <div class="hero-btns">
+                    <button class="btn btn-primary" onclick="openTab('cars')"><i class="fas fa-car"></i> Voir les voitures</button>
+                    <a id="hero-whatsapp" href="#" target="_blank" class="btn btn-whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                 </div>
+
+                <p id="hero-desc" class="description-bottom"></p>
             </div>
         </div>
         
-        <section id="customer-reviews" class="container reviews-section hidden" aria-labelledby="customer-reviews-title">
-            <div class="reviews-heading"><div><span class="reviews-eyebrow">TÉMOIGNAGES CLIENTS</span><h2 id="customer-reviews-title" class="section-title">Les avis de nos clients</h2><p>Découvrez les retours partagés par nos clients.</p></div></div>
-            <div class="reviews-carousel" role="region" aria-roledescription="carrousel" aria-label="Avis clients">
-                <button id="reviews-prev" class="review-carousel-button" type="button" aria-label="Afficher l’avis précédent"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
-                <div class="reviews-viewport"><div id="reviews-track" class="reviews-track"></div></div>
-                <button id="reviews-next" class="review-carousel-button" type="button" aria-label="Afficher l’avis suivant"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
-            </div>
-            <div id="reviews-dots" class="reviews-dots" aria-label="Choisir un avis"></div>
-        </section>
-        <div class="container partner-intro">
-            <h2 class="section-title">Une mise en relation adaptée à votre besoin</h2>
-            <div class="partner-types">
-                <article class="partner-type"><span class="partner-type-code">B2C</span><h3>Professionnel → particulier</h3><p>Les particuliers recherchent un véhicule fiable proposé par un professionnel, avec des tarifs et des conditions clairs.</p></article>
-                <article class="partner-type"><span class="partner-type-code">P2P</span><h3>Particulier → particulier</h3><p>Un propriétaire peut proposer sa voiture à Rent Car Services. Nous étudions la demande, gérons l’annonce et suivons le contrat.</p></article>
-                <article class="partner-type"><span class="partner-type-code">B2B</span><h3>Professionnel → professionnel</h3><p>Les entreprises peuvent transmettre leurs besoins de véhicules, de volume, de durée et de trajet pour recevoir une offre adaptée.</p></article>
-            </div>
-            <div class="partner-actions"><button type="button" class="btn btn-primary" data-partner-open="vehicle-owner"><i class="fas fa-car"></i> Proposer mon véhicule</button><button type="button" class="btn btn-outline" data-partner-open="business-quote"><i class="fas fa-building"></i> Demander une offre entreprise</button></div>
-        </div>
         <div class="container">
             <h2 class="section-title">Les avantages de notre service</h2>
             <div id="features-grid" class="features-grid"></div>
@@ -74,22 +52,12 @@
         <div class="container">
             <h2 class="section-title">Notre flotte de véhicules</h2>
             <div class="fleet-controls" aria-label="Filtrer et trier les véhicules">
-                <label>Rechercher un véhicule<input id="fleet-search" type="search" placeholder="Nom, UID, marque ou modèle"></label>
-                <label>Type de transmission<select id="fleet-transmission"><option value="all">Toutes</option></select></label>
+                <label>Rechercher un véhicule<input id="fleet-search" type="search" placeholder="Nom, marque ou modèle"></label>
                 <label>Capacité<select id="fleet-seats"><option value="all">Toutes</option></select></label>
                 <label>Prix maximal par jour<input id="fleet-max-price" type="number" min="0" placeholder="Ex. 150000"></label>
                 <label>Ordre d’affichage<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
             </div>
             <div id="cars-grid" class="cars-grid"></div>
-        </div>
-        <div id="ads-slot-fleet" class="container ad-slot hidden" aria-label="Annonce"></div>
-    </section>
-
-    <section id="drivers" class="tab">
-        <div class="container">
-            <h2 class="section-title">Nos chauffeurs</h2>
-            <p class="muted">Choisissez un chauffeur selon sa disponibilité, son permis et les conditions incluses.</p>
-            <div id="drivers-grid" class="drivers-grid"></div>
         </div>
     </section>
 
@@ -98,8 +66,17 @@
             <h2 class="section-title">Demande de réservation en ligne</h2>
             <div class="booking-layout">
                 <div class="booking-panel">
+                    <h3>Vérifier la disponibilité</h3>
+                    <div class="date-range">
+                        <label>Véhicule<select id="availability-vehicle"><option value="all">Toutes les voitures</option></select></label>
+                        <label>Date de départ<input id="availability-start" type="date"></label>
+                        <label>Date de retour<input id="availability-end" type="date"></label>
+                    </div>
+                    <button class="btn btn-primary" onclick="checkAvailability()"><i class="fas fa-calendar-check"></i> Actualiser le calendrier</button>
+                    <div id="availability-list" class="availability-list"><p class="muted">Sélectionnez vos dates afin de consulter les disponibilités.</p></div>
+                </div>
+                <div class="booking-panel">
                     <h3>Demander une réservation</h3>
-                    <div id="ads-slot-booking" class="ad-slot ad-slot-booking hidden" aria-label="Annonce partenaire"></div>
                     <form id="booking-form" onsubmit="submitReservation(event)">
                         <div class="booking-progress" aria-label="Étapes de réservation">
                             <div class="booking-progress-step active" data-progress-step="1"><span>1</span><strong>Véhicule et dates</strong></div>
@@ -108,32 +85,34 @@
                             <div class="booking-progress-step" data-progress-step="4"><span>4</span><strong>Résumé et confirmation</strong></div>
                         </div>
                         <section class="booking-step active" data-booking-step="1">
-                            <h4>1. Véhicule, zone d’utilisation et période</h4>
-                            <p class="muted">Sélectionnez le véhicule, sa zone d’utilisation autour de Tana et la période souhaitée pour consulter le tarif estimatif.</p>
+                            <h4>1. Véhicule et période</h4>
+                            <p class="muted">Sélectionnez le véhicule et la période souhaitée pour consulter le tarif estimatif.</p>
                             <label>Véhicule<select id="booking-vehicle" required></select></label>
-                            <label>Zone d’utilisation du véhicule autour de Tana<select id="booking-distance-band" required><option value="0_30">Tana -&gt; 30 km</option><option value="30_100">Tana -&gt; 100 km</option><option value="100_200">Tana -&gt; 200 km</option><option value="over_200">Tana -&gt; +200 km</option></select><small id="booking-distance-note" class="field-note">La limite porte sur la distance du trajet aller vers la destination; le retour n’est pas compté une seconde fois.</small></label><div id="booking-distance-prices" class="booking-distance-prices" aria-live="polite" aria-label="Tarifs par palier"></div>
                             <div class="date-range">
                                 <label>Date de départ<input id="booking-start-date" type="date" required></label>
                                 <label>Heure de départ<select id="booking-start-time" required><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label>
                                 <label>Date de retour<input id="booking-end-date" type="date" required></label>
                                 <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
                             </div>
-                            <small id="booking-time-guidance" class="field-note">Les dates passées sont permises pour les régularisations. Pour un départ futur, prévoyez 2 heures d’avance.</small>
-                            <p id="booking-quote-mini" class="booking-mini-summary" role="status"><strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule et les dates pour afficher le tarif estimatif.</span></p>
+                            <div id="booking-mini-summary" class="booking-mini-summary" role="status" aria-live="polite">Choisissez une voiture et vos dates pour voir le récapitulatif financier.</div>
+                            <div id="booking-slot-status" class="booking-slot-status" role="status" aria-live="polite"></div>
                             <div class="booking-step-actions"><span></span><button type="button" class="btn btn-primary" data-next-step="2">Continuer</button></div>
                         </section>
                         <section class="booking-step" data-booking-step="2">
                             <h4>2. Informations client</h4>
-                            <p class="muted">Renseignez vos coordonnées pour que nous puissions confirmer votre demande.</p>
+                            <p class="muted">Renseignez vos informations exactement comme elles figurent sur vos documents officiels.</p>
                             <label>Nom et prénom<input id="booking-name" required placeholder="Saisissez votre nom et prénom"></label>
                             <label>Adresse<input id="booking-address" required placeholder="Saisissez votre adresse complète"></label>
                             <label>Téléphone<input id="booking-phone" required placeholder="Ex. 034 91 207 26"></label>
                             <label>Email<input id="booking-email" type="email" placeholder="votre@email.com"></label>
-                            <label>Numéro du permis de conduire (facultatif)<input id="booking-license" placeholder="Numéro du permis de conduire"></label>
-                            <div class="date-range"><label>Lieu de délivrance du permis (facultatif)<input id="booking-license-place" placeholder="Lieu de délivrance"></label><label>Date de délivrance du permis (facultatif)<input id="booking-license-date" type="date"></label></div>
-                            <label>Numéro de la CIN<input id="booking-cin" required placeholder="Numéro CIN"></label>
+                            <label>Numéro du permis de conduire<input id="booking-license" required placeholder="Numéro du permis de conduire"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
+                            <div class="date-range"><label>Lieu de délivrance du permis<input id="booking-license-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance du permis<input id="booking-license-date" type="date" required></label></div>
+                            <label>Photographie du permis — recto<input id="booking-license-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-license-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small><small class="field-note">Joignez une photographie nette et lisible du recto du permis.</small></label>
+                            <label>Numéro de la CIN<input id="booking-cin" required placeholder="Numéro CIN"><small class="field-note">Document à présenter lors de la remise du véhicule.</small></label>
                             <label>Type de document<select id="booking-cin-type" required><option value="false">Original</option><option value="true">Duplicata</option></select></label>
                             <div class="date-range"><label>Lieu de délivrance de la CIN<input id="booking-cin-place" required placeholder="Lieu de délivrance"></label><label>Date de délivrance de la CIN<input id="booking-cin-date" type="date" required></label></div>
+                            <fieldset class="identity-upload"><legend>Photographies de la CIN</legend><p class="field-note">Joignez des photographies nettes et lisibles. Elles sont stockées dans un espace privé et associées à votre contrat.</p><label>Photographie de la CIN — recto<input id="booking-cin-recto-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-cin-recto-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small></label><label>Photographie de la CIN — verso<input id="booking-cin-verso-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"><small>Caméra</small><input id="booking-cin-verso-gallery" type="file" accept="image/jpeg,image/png,image/webp"><small>Galerie / fichiers</small></label></fieldset>
+                            <label class="document-photo-field">Justificatif de domicile — facultatif<input id="booking-proof-of-address" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment"><small class="field-note">Facture d’eau, d’électricité, certificat de résidence ou document équivalent.</small></label>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="1">Retour</button><button type="button" class="btn btn-primary" data-next-step="3">Continuer</button></div>
                         </section>
                         <section class="booking-step" data-booking-step="3">
@@ -142,11 +121,13 @@
                             <input id="booking-rental-type" type="hidden" value="automatic">
                             <div class="date-range"><label>Itinéraire — lieu de départ<input id="booking-trip-from" required placeholder="Ville ou lieu de départ"></label><label>Itinéraire — destination<input id="booking-trip-to" required placeholder="Ville ou lieu d’arrivée"></label></div>
                             <div class="date-range"><label class="checkbox-line"><input id="booking-delivery" type="checkbox"> Livraison du véhicule — 20 000 Ar</label><label class="checkbox-line"><input id="booking-recovery" type="checkbox"> Récupération du véhicule — 20 000 Ar</label></div>
-                            <label class="checkbox-line"><input id="booking-driver" type="checkbox"><span id="booking-driver-label">Ajouter un chauffeur — supplément selon le véhicule</span></label>
+                            <label class="checkbox-line"><input id="booking-driver" type="checkbox"> Service avec chauffeur — 30 000 Ar / jour</label>
+                            <label id="booking-trip-rate-wrap" class="hidden">Tarif spécial par destination<select id="booking-trip-rate"><option value="">Choisir une destination</option></select></label>
                             <div class="date-range"><label>Acompte versé (Ar)<input id="booking-deposit" type="number" min="0" value="0" required></label><label>Mode de paiement<select id="booking-payment-method"><option value="">Aucun acompte versé</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></label></div>
                             <label>Code promotionnel — facultatif<input id="booking-promo" placeholder="Ex. RCS10"><small class="field-note">La remise éventuelle sera appliquée au total après validation du code.</small></label>
-                            <div id="mobile-money-fields" class="date-range hidden"><label>Service Mobile Money<select id="booking-mobile-provider"><option value="">Choisir le service</option><option value="orange_money">Orange Money</option><option value="mvola">Mvola</option></select></label><label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label><input id="booking-mobile-number" type="hidden"><div id="mobile-money-account" class="field-note mobile-money-account" role="status"></div></div>
-                            <p id="booking-quote" class="booking-result" role="status"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Pour un véhicule avec chauffeur, le prix du chauffeur est déjà inclus. Seuls les repas et l’hébergement du chauffeur restent à la charge du client. Un chauffeur supplémentaire peut être demandé selon disponibilité.</p>
+                            <div id="mobile-money-fields" class="date-range hidden"><label>Référence Mobile Money<input id="booking-mobile-reference" placeholder="Référence de transaction"></label><label>Numéro Mobile Money<input id="booking-mobile-number" placeholder="Ex. 034 91 207 26"></label></div>
+                            <fieldset id="payment-proof-field" class="identity-upload hidden"><legend>Justificatif de paiement Mobile Money</legend><p class="field-note">Ajoutez une capture d’écran ou une photographie lisible de la preuve de paiement. Ce justificatif est obligatoire pour un acompte Mobile Money.</p><label>Preuve de paiement<input id="booking-payment-proof" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"></label></fieldset>
+                            <p id="booking-quote" class="booking-result" role="status"></p><p id="booking-balance-note" class="booking-result"></p><p class="muted pricing-note">Le prix total exclut le carburant. Pour une location avec chauffeur, les repas et l’hébergement du chauffeur restent à la charge du client.</p>
                             <label>Informations complémentaires<textarea id="booking-notes" rows="3" placeholder="Précisez, si nécessaire, le lieu de prise en charge ou toute information utile."></textarea></label>
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="2">Retour</button><button type="button" class="btn btn-primary" data-next-step="4">Vérifier la demande</button></div>
                         </section>
@@ -154,10 +135,9 @@
                             <h4>4. Résumé et confirmation</h4>
                             <p class="muted">Vérifiez attentivement les informations ci-dessous avant l’envoi définitif.</p>
                             <div id="booking-summary" class="booking-summary"></div>
-                            <div class="booking-confirmation terms-gate"><label class="checkbox-line"><input id="booking-terms-consent" type="checkbox" required disabled> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label><button id="booking-read-terms" class="btn btn-outline terms-read-button" type="button">Lire les conditions (obligatoire)</button><small id="booking-terms-read-status" class="field-note" role="status">La case d’acceptation sera activée après lecture des conditions.</small></div>
-                            <div class="booking-client-signature-prompt"><p><strong>Signature du client — facultative avant l’envoi</strong><br>Vous pouvez l’enregistrer avec la réservation. Elle ne sera ajoutée à la facture et au contrat que si vous la confirmez à nouveau lorsque vous consulterez les documents.</p><button id="booking-client-signature-open" class="btn btn-outline" type="button">Ajouter ma signature</button><p id="booking-client-signature-state" class="field-note" role="status">Aucune signature enregistrée pour le moment.</p></div>
+                            <label class="checkbox-line booking-confirmation"><input id="booking-terms-consent" type="checkbox" required> Je confirme que les informations saisies sont exactes et j’accepte les conditions de location.</label>
                             <p class="muted booking-policy-note">Si aucun acompte n’est versé, la facture et le contrat seront transmis après réception et validation d’un acompte.</p>
-                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button id="booking-submit-button" class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
+                            <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
                         </section>
                     </form>
                     <p id="booking-result" class="booking-result" role="status"></p>
@@ -165,32 +145,13 @@
             </div>
             <div id="invoice-access-panel" class="booking-panel invoice-access-panel hidden">
                 <h3>Accéder à la facture et au contrat</h3>
-                <p class="muted">La facture et le contrat sont accessibles après validation de l’acompte par Rent Car Service. Les pièces d’identité fournies sont ajoutées en annexe au contrat généré après vérification de votre code. Si vous recevez un lien WhatsApp sécurisé, ouvrez-le : les documents s’affichent directement, sans saisie.</p>
+                <p class="muted">La facture et le contrat sont accessibles après validation de l’acompte par Rent Car Service. Le solde restant est payable lors de la remise du véhicule.</p>
                 <form id="invoice-access-form" onsubmit="verifyInvoiceOtp(event)">
                     <div class="date-range"><label>Référence de réservation<input id="invoice-reference" required placeholder="RCS-XXXXXXXX"></label><label>Téléphone<input id="invoice-phone" required></label><label>Code OTP<input id="invoice-otp" required inputmode="numeric" placeholder="Code reçu par WhatsApp"></label></div>
                     <button class="btn btn-primary" type="submit">Vérifier et télécharger les documents</button>
                 </form>
                 <p id="invoice-access-result" class="booking-result" role="status"></p>
-                <div id="invoice-access-document" class="invoice-access-document hidden"></div>
-                <button id="invoice-print-button" class="btn btn-outline hidden" type="button" onclick="window.print()">Imprimer / enregistrer en PDF</button>
             </div>
-            <dialog id="invoice-client-signature-modal" class="client-signature-modal" aria-labelledby="invoice-client-signature-title">
-                <section id="invoice-client-signature-panel" class="invoice-client-signature-panel" aria-labelledby="invoice-client-signature-title">
-                    <h3 id="invoice-client-signature-title">Signature du client</h3>
-                    <p id="invoice-client-signature-description">Dessinez votre signature si vous souhaitez l’enregistrer avec cette réservation.</p>
-                    <div id="invoice-client-signature-saved-preview" class="client-saved-signature hidden"></div>
-                    <button id="invoice-client-signature-use-saved" class="btn btn-outline hidden" type="button">Utiliser ma signature enregistrée</button>
-                    <label for="invoice-client-signature-canvas">Votre signature</label>
-                    <canvas id="invoice-client-signature-canvas" aria-label="Zone de dessin de la signature du client"></canvas>
-                    <label class="invoice-client-signature-consent"><input id="invoice-client-signature-consent" type="checkbox"> <span id="invoice-client-signature-consent-text">Je confirme enregistrer cette signature afin de pouvoir la proposer sur mes documents ultérieurement.</span></label>
-                    <div class="invoice-client-signature-actions">
-                        <button id="invoice-client-signature-clear" class="btn btn-outline" type="button">Refaire la signature</button>
-                        <button id="invoice-client-signature-decline" class="btn btn-outline" type="button">Continuer sans signer</button>
-                        <button id="invoice-client-signature-apply" class="btn btn-primary" type="button">Valider la signature</button>
-                    </div>
-                </section>
-            </dialog>
-            <p id="invoice-client-signature-status" class="booking-result" role="status" aria-live="polite"></p>
         </div>
     </section>
 
@@ -217,87 +178,10 @@
         </div>
     </section>
 </main>
-<div id="partner-modal" class="partner-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="partner-modal-title">
-    <section class="partner-modal">
-        <header class="partner-modal-header">
-            <div class="partner-modal-heading">
-                <span class="partner-modal-eyebrow" id="partner-modal-eyebrow">PARTENARIAT · VOTRE VÉHICULE</span>
-                <h2 id="partner-modal-title">Présentez-nous votre véhicule</h2>
-                <p id="partner-modal-subtitle">Nous étudions son potentiel et vous expliquons simplement la suite.</p>
-            </div>
-            <button type="button" class="partner-modal-close" data-partner-close aria-label="Fermer">&times;</button>
-        </header>
-        <div class="partner-trust-strip">
-            <span><i class="fas fa-bolt"></i> Réponse rapide</span>
-            <span><i class="fas fa-sliders"></i> Étude personnalisée</span>
-            <span><i class="fas fa-shield-halved"></i> Données traitées avec soin</span>
-        </div>
-        <div class="partner-modal-body">
-            <form id="partner-request-form" class="form-grid">
-                <input id="partner-request-type" type="hidden">
-                <div id="vehicle-owner-fields" class="partner-form-fields">
-                    <p class="muted">Décrivez votre véhicule et laissez-nous vos coordonnées. Après étude, nous vous recontacterons.</p>
-                    <div class="field"><label><i class="fas fa-car"></i> Marque *<input id="partner-make" required></label></div>
-                    <div class="field"><label><i class="fas fa-car-side"></i> Modèle *<input id="partner-model" required></label></div>
-                    <div class="field"><label><i class="fas fa-users"></i> Nombre de places *<input id="partner-seats" type="number" min="1" required></label></div>
-                    <div class="field"><label><i class="fas fa-gears"></i> Transmission *<input id="partner-transmission" required></label></div>
-                    <div class="field"><label><i class="fas fa-gas-pump"></i> Carburant *<input id="partner-fuel" required></label></div>
-                </div>
-                <div id="business-quote-fields" class="partner-form-fields hidden">
-                    <p class="muted">Indiquez le besoin de votre entreprise pour recevoir une proposition personnalisée.</p>
-                    <div class="field"><label><i class="fas fa-car"></i> Type de voiture *<input id="business-car-type" required></label></div>
-                    <div class="field"><label><i class="fas fa-users"></i> Nombre de places *<input id="business-seats" type="number" min="1" required></label></div>
-                    <div class="field"><label><i class="fas fa-layer-group"></i> Nombre de voitures *<input id="business-count" type="number" min="1" required></label></div>
-                    <div class="field"><label><i class="fas fa-calendar-days"></i> Durée en jours *<input id="business-days" type="number" min="1" required></label></div>
-                    <div class="field full"><label><i class="fas fa-route"></i> Trajet *<input id="business-route" required></label></div>
-                </div>
-                <div class="field"><label id="partner-name-label"><i class="fas fa-user"></i> Nom et prénom *<input id="partner-name" required></label></div>
-                <div class="field"><label><i class="fas fa-phone"></i> Téléphone / WhatsApp *<input id="partner-phone" required></label></div>
-                <div class="field"><label><i class="fas fa-envelope"></i> Email<input id="partner-email" type="email"></label></div>
-                <div id="business-company-wrap" class="field hidden"><label><i class="fas fa-building"></i> Nom de l’entreprise *<input id="business-company"></label></div>
-                <div class="field full"><label><i class="fas fa-message"></i> Message complémentaire<textarea id="partner-message" rows="3"></textarea></label></div>
-                <div class="field full partner-submit-row"><button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Envoyer ma demande <i class="fas fa-arrow-right"></i></button><p id="partner-request-result" class="booking-result" role="status"></p></div>
-            </form>
-            <aside class="partner-modal-sidecard">
-                <div class="partner-side-icon"><i id="partner-side-icon" class="fas fa-handshake"></i></div>
-                <h3 id="partner-side-title">Ensemble,<br><strong>allons plus loin</strong></h3>
-                <span class="partner-side-rule"></span>
-                <ul>
-                    <li><i class="fas fa-check-circle"></i><span id="partner-side-point-1">Accompagnement sur mesure</span></li>
-                    <li><i class="fas fa-check-circle"></i><span id="partner-side-point-2">Réponse rapide</span></li>
-                    <li><i class="fas fa-check-circle"></i><span id="partner-side-point-3">Solution adaptée à vos besoins</span></li>
-                </ul>
-            </aside>
-        </div>
-    </section>
-</div>
 
 <footer class="footer-fixed">
     <div class="container">
-        <div class="footer-marketing">
-            <div class="footer-marketing-brand">
-                <span class="footer-eyebrow">RENT CAR SERVICE</span>
-                <h2>Votre route commence ici.</h2>
-                <p>Des véhicules fiables à Antananarivo, avec ou sans chauffeur, pour vos déplacements professionnels, familiaux et touristiques à Madagascar.</p>
-            </div>
-            <div class="footer-marketing-points" aria-label="Nos engagements">
-                <div><i class="fas fa-shield-halved"></i><span><strong>Service fiable</strong><small>Véhicules contrôlés</small></span></div>
-                <div><i class="fas fa-tags"></i><span><strong>Tarifs clairs</strong><small>Prix communiqués avant départ</small></span></div>
-                <div><i class="fas fa-headset"></i><span><strong>Réponse rapide</strong><small>Conseils par WhatsApp</small></span></div>
-            </div>
-            <div class="footer-marketing-cta">
-                <button type="button" class="btn btn-primary" onclick="openTab('cars')">Voir les véhicules</button>
-                <a id="footer-whatsapp" class="btn btn-whatsapp" href="#" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Demander un devis</a>
-            </div>
-        </div>
         <div id="footer-info" class="footer-text"></div>
-        <nav class="footer-nav" aria-label="Liens complémentaires">
-            <button type="button" onclick="openTab('booking')">Réservation</button>
-            <button type="button" onclick="openTab('drivers')">Nos chauffeurs</button>
-            <a href="sell.html?v=20261103-sales-supabase">Vendre une voiture</a>
-            <button type="button" onclick="openTab('fun')">Médias &amp; divertissement</button>
-            <button type="button" onclick="openTab('contact')">Nous contacter</button><a href="confidentialite.html">Confidentialité</a>
-        </nav>
         <div id="social-links" class="social-footer"></div>
     </div>
 </footer>
@@ -308,16 +192,8 @@
 </a>
 
     <script src="supabase.js"></script>
-    <script src="document-theme.js?v=20261109-pdf-compact-v3"></script>
-    <script src="fleet-utils.js?v=20261111-individual-vehicle-uid"></script>
-    <script src="navigation.js?v=20260929-1"></script>
-    <script src="contract-terms.js?v=20261025-subarticles"></script>
-    <script src="script.js?v=20261111-individual-vehicle-uid"></script><script src="client-signature.js?v=20261109-explicit-signature-actions"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261111-vehicle-uid"></script>
-    <script src="enhancements.js?v=20261111-backdated-regularizations"></script>
-    <script src="partner-requests.js?v=20261108-partner-modal"></script>
-    <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>
-    <script src="morning-changes.js?v=20261009-1"></script>
-    <script src="chauffeurs.js?v=20260928-1"></script>
-    <script src="reviews.js?v=20261109-reviews-3"></script>
+    <script src="script.js?v=20260925-1457"></script>
+    <script src="enhancements.js?v=20260925-1457"></script>
+    <script src="morning-changes.js?v=20260925-1457"></script>
 </body>
 </html>
