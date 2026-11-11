@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
 
@@ -32,4 +33,30 @@ test('la fiche copiée réutilise le groupe et les données tarifaires', () => {
   for (const field of ['v-price-12h', 'v-price-24h', 'v-price-30-100', 'v-price-100-200', 'v-price-over-200', 'v-price', 'v-driver-fee', 'v-extra-driver-fee']) {
     assert.ok(admin.includes(`$('${field}').value=v.`), `valeur source préremplie : ${field}`);
   }
+});
+
+test('le même nom affiché reçoit un slug distinct pour chaque nouveau véhicule', () => {
+  const start = admin.indexOf('function uniqueVehicleSlug(');
+  const end = admin.indexOf('async function uploadVehiclePhotos', start);
+  assert.ok(start >= 0 && end > start, 'générateur de slug disponible');
+  const uuids = ['11111111111141118111111111111111', '22222222222242228222222222222222'];
+  const context = {
+    vehicles: [{ id: 'existing', name: 'Getz Manuelle', slug: 'getz-manuelle' }],
+    crypto: { randomUUID: () => uuids.shift() },
+  };
+  const generateSlug = vm.runInNewContext(`${admin.slice(start, end)}; uniqueVehicleSlug`, context);
+  const first = generateSlug('Getz Manuelle', '');
+  const second = generateSlug('Getz Manuelle', '');
+  assert.equal(first, 'getz-manuelle-11111111111141118111111111111111');
+  assert.equal(second, 'getz-manuelle-22222222222242228222222222222222');
+  assert.notEqual(first, second);
+  assert.match(admin, /Le nom affiché peut être identique à celui d’une autre voiture/);
+});
+
+test('la modification sans changement de nom conserve le slug déjà enregistré', () => {
+  const start = admin.indexOf('function uniqueVehicleSlug(');
+  const end = admin.indexOf('async function uploadVehiclePhotos', start);
+  const context = { vehicles: [{ id: 'car-1', name: 'Getz Manuelle', slug: 'getz-manuelle-ancien' }], crypto: { randomUUID: () => 'unused' } };
+  const generateSlug = vm.runInNewContext(`${admin.slice(start, end)}; uniqueVehicleSlug`, context);
+  assert.equal(generateSlug('Getz Manuelle', 'car-1'), 'getz-manuelle-ancien');
 });
