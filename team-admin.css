@@ -1,0 +1,327 @@
+.team-mission-review-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(6 20 34 / 74%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.team-mission-review-backdrop[hidden] {
+  display: none;
+}
+
+.team-mission-review {
+  box-sizing: border-box;
+  width: min(900px, 100%);
+  max-height: 92vh;
+  max-height: min(92dvh, 920px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #d8e2ea;
+  border-radius: 22px;
+  background: #f4f7fa;
+  color: #0b1f33;
+  box-shadow: 0 28px 90px rgb(0 0 0 / 38%);
+  scrollbar-color: #9aabb9 transparent;
+  scrollbar-width: thin;
+}
+
+.team-mission-review-header {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 26px 22px;
+  border-bottom: 4px solid #d9a441;
+  border-radius: 21px 21px 0 0;
+  background: linear-gradient(115deg, #0b1f33 0%, #0d5c8f 100%);
+  color: #fff;
+}
+
+.team-mission-review-heading {
+  min-width: 0;
+}
+
+.team-review-kicker {
+  display: inline-block;
+  margin-bottom: 7px;
+  color: #f4d68d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.team-mission-review-header h2 {
+  margin: 0;
+  color: #fff;
+  font: 700 clamp(21px, 2.5vw, 28px)/1.2 "Space Grotesk", sans-serif;
+  text-wrap: pretty;
+}
+
+.team-mission-review-header p {
+  max-width: 620px;
+  margin: 8px 0 0;
+  color: #e4edf4;
+  font-size: 14px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.team-mission-review-header .btn.outline {
+  flex: 0 0 auto;
+  min-width: 84px;
+  min-height: 44px;
+  border: 1px solid rgb(255 255 255 / 48%);
+  background: rgb(255 255 255 / 9%);
+  color: #fff;
+}
+
+.team-mission-review-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  padding: 20px 24px 16px;
+}
+
+.team-review-section {
+  min-width: 0;
+  padding: 17px 18px;
+  border: 1px solid #dce5ec;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 16px rgb(11 31 51 / 5%);
+}
+
+.team-review-section:nth-child(2) {
+  background: #fffaf0;
+  border-color: #eee0bd;
+}
+
+.team-review-section:last-of-type {
+  grid-column: 1 / -1;
+  background: #f8fbfd;
+}
+
+.team-review-section h3 {
+  margin: 0 0 11px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e3eaf0;
+  color: #0b1f33;
+  font: 700 16px/1.35 "Space Grotesk", sans-serif;
+  text-wrap: pretty;
+}
+
+.team-review-row {
+  display: grid;
+  grid-template-columns: minmax(120px, .8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #e9eef2;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.team-review-row:last-child {
+  border-bottom: 0;
+}
+
+.team-review-row span {
+  color: #52677b;
+}
+
+.team-review-row strong {
+  min-width: 0;
+  color: #102d46;
+  font-weight: 700;
+  text-align: right;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.team-review-row--balance {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e7cf8c;
+  border-radius: 12px;
+  background: #fff3cf;
+}
+
+.team-review-row--balance span,
+.team-review-row--balance strong {
+  color: #49370f;
+  font-weight: 800;
+}
+
+.team-review-row--balance strong {
+  font-size: 18px;
+}
+
+.team-mission-review-actions {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 24px;
+  padding: 16px 0 20px;
+  border-top: 1px solid #dce5ec;
+  background: #f4f7fa;
+}
+
+.team-mission-review-actions .btn {
+  min-height: 48px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+
+.team-mission-review-actions .btn.outline {
+  border: 1px solid #b9c8d4;
+  background: #fff;
+  color: #0b1f33;
+}
+
+.team-mission-review-actions .btn.primary {
+  border: 1px solid #c6932f;
+  background: #d9a441;
+  color: #0b1f33;
+  box-shadow: 0 4px 0 #a9771d;
+}
+
+.team-mission-review-actions .btn.primary:hover {
+  background: #e3b653;
+}
+
+.team-mission-review-actions .btn.primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #a9771d;
+}
+
+.team-mission-review-message {
+  margin: 0 24px 18px;
+  padding: 12px 14px;
+  border: 1px solid #efb6b2;
+  border-radius: 12px;
+  background: #fff2f1;
+  color: #8b1e17;
+  line-height: 1.45;
+}
+
+.team-mission-review :focus-visible {
+  outline: 3px solid #d9a441;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .team-mission-review-backdrop {
+    align-items: flex-end;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+  }
+
+  .team-mission-review {
+    width: 100%;
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top));
+    border-radius: 20px 20px 12px 12px;
+  }
+
+  .team-mission-review-header {
+    gap: 12px;
+    padding: 19px 16px 17px;
+    border-radius: 19px 19px 0 0;
+  }
+
+  .team-review-kicker {
+    margin-bottom: 5px;
+    font-size: 10px;
+  }
+
+  .team-mission-review-header h2 {
+    font-size: 21px;
+  }
+
+  .team-mission-review-header p {
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  .team-mission-review-header .btn.outline {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .team-mission-review-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px 12px 12px;
+  }
+
+  .team-review-section,
+  .team-review-section:last-of-type {
+    grid-column: auto;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .team-review-section h3 {
+    font-size: 15px;
+  }
+
+  .team-review-row {
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .team-review-row--balance strong {
+    font-size: 17px;
+  }
+
+  .team-mission-review-actions {
+    flex-direction: column;
+    gap: 9px;
+    margin: 0 12px;
+    padding: 13px 0 max(14px, env(safe-area-inset-bottom));
+  }
+
+  .team-mission-review-actions .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .team-mission-review-message {
+    margin: 0 12px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .team-mission-review-backdrop:not([hidden]) {
+    animation: team-review-backdrop-in 160ms ease-out both;
+  }
+
+  .team-mission-review-backdrop:not([hidden]) .team-mission-review {
+    animation: team-review-panel-in 180ms cubic-bezier(.2, .75, .2, 1) both;
+  }
+
+  @keyframes team-review-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes team-review-panel-in {
+    from { opacity: .88; transform: translateY(8px) scale(.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}

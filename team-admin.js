@@ -23,7 +23,7 @@
     });
     const missionForm=$('team-mission-form'); missionForm.noValidate=true; missionForm.addEventListener('submit', createMission);
     $('team-missions-refresh').addEventListener('click', load);
-    if (!$('team-mission-review-modal')) document.body.insertAdjacentHTML('beforeend', `<div id="team-mission-review-modal" class="team-mission-review-backdrop" hidden><div class="team-mission-review" role="dialog" aria-modal="true" aria-labelledby="team-mission-review-title"><div class="section-head"><div><h2 id="team-mission-review-title">Récapitulatif de la mission</h2><p class="muted">Vérifiez les informations avant d’enregistrer la mission et d’ouvrir WhatsApp.</p></div><button id="team-mission-review-close" class="btn outline" type="button">Fermer</button></div><div id="team-mission-review-content" class="team-mission-review-content"></div><div class="team-mission-review-actions"><button id="team-mission-review-cancel" class="btn outline" type="button">Modifier</button><button id="team-mission-review-confirm" class="btn primary" type="button">Confirmer et préparer WhatsApp</button></div><p id="team-mission-review-message" class="notice-error" role="alert"></p></div></div>`);
+    if (!$('team-mission-review-modal')) document.body.insertAdjacentHTML('beforeend', `<div id="team-mission-review-modal" class="team-mission-review-backdrop" hidden><section class="team-mission-review" role="dialog" aria-modal="true" aria-labelledby="team-mission-review-title"><header class="team-mission-review-header"><div class="team-mission-review-heading"><span class="team-review-kicker">MISSION À VALIDER</span><h2 id="team-mission-review-title">Récapitulatif de la mission</h2><p>Vérifiez les informations avant d’enregistrer la mission et d’ouvrir WhatsApp.</p></div><button id="team-mission-review-close" class="btn outline" type="button" aria-label="Fermer le récapitulatif">Fermer</button></header><div id="team-mission-review-content" class="team-mission-review-content"></div><div class="team-mission-review-actions"><button id="team-mission-review-cancel" class="btn outline" type="button">Modifier</button><button id="team-mission-review-confirm" class="btn primary" type="button">Confirmer et préparer WhatsApp</button></div><p id="team-mission-review-message" class="notice-error" role="alert"></p></section></div>`);
     $('team-mission-review-close').addEventListener('click', closeMissionReview);
     $('team-mission-review-cancel').addEventListener('click', closeMissionReview);
     $('team-mission-review-confirm').addEventListener('click', submitPendingMission);
@@ -195,7 +195,8 @@
     return {phone,url:`https://wa.me/${phone}?text=${text}`};
   }
   function reviewValue(label, value) {
-    return `<div class="team-review-row"><span>${esc(label)}</span><strong>${esc(value || '—')}</strong></div>`;
+    const emphasis=label==='Reste à percevoir'?' team-review-row--balance':'';
+    return `<div class="team-review-row${emphasis}"><span>${esc(label)}</span><strong>${esc(value || '—')}</strong></div>`;
   }
   function closeMissionReview() {
     state.pendingMission = null;

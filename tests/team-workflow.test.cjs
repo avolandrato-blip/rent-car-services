@@ -30,6 +30,23 @@ test('l’attribution exige un compte chauffeur et prépare un lien wa.me avec a
   assert.match(admin, /Le mot de passe initial vous sera remis séparément/);
 });
 
+test('le modal de mission utilise une palette admin et reste lisible sur mobile et ordinateur', () => {
+  const css = read('team-admin.css');
+  const adminHtml = read('admin.html');
+  const admin = read('team-admin.js');
+  assert.match(adminHtml, /team-admin\.css\?v=20261111-mission-review-polish/);
+  assert.match(css, /@media \(max-width: 640px\)/);
+  assert.match(css, /max-height: calc\(100dvh/);
+  assert.match(css, /safe-area-inset-bottom/);
+  assert.match(css, /#0b1f33/);
+  assert.match(css, /#0d5c8f/);
+  assert.match(css, /#d9a441/);
+  assert.match(css, /team-review-row--balance/);
+  assert.match(admin, /MISSION À VALIDER/);
+  assert.match(admin, /team-review-row--balance/);
+  assert.match(admin, /aria-modal="true"/);
+});
+
 test('le lien public attend un clic de confirmation et appelle le RPC à jeton à usage unique', () => {
   const action = read('team-action.js');
   assert.match(action, /history\.replaceState/);
