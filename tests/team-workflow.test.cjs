@@ -92,3 +92,29 @@ test('l’administration enregistre un règlement quotidien avec sa date d’éc
   assert.match(admin, /due_date:dueDate/);
   assert.match(admin, /reservation_daily_dues/);
 });
+
+test('le dashboard chauffeur enregistre le paiement dans un formulaire utilisable sur mobile', () => {
+  const team = read('team.js');
+  const html = read('team.html');
+  assert.match(html, /id="payment-form"/);
+  assert.match(html, /id="payment-due-date"/);
+  assert.match(html, /id="payment-amount"/);
+  assert.match(html, /team\.js\?v=20261111-payment-signature-recap/);
+  assert.match(team, /async function savePayment\(event\)/);
+  assert.match(team, /\.from\('payments'\)\.insert/);
+  assert.match(team, /Paiement non enregistré/);
+  assert.doesNotMatch(team, /prompt\(/);
+});
+
+test('le dashboard affiche le statut signé, les actions client et les montants détaillés à la clôture', () => {
+  const team = read('team.js');
+  const html = read('team.html');
+  assert.match(team, /isSigned = \(reservationId,mission=null\).*mission\?\.notes/);
+  assert.match(team, /Récapitulatif à communiquer au client/);
+  assert.match(team, /paymentSummaryHtml/);
+  assert.match(team, /Fin de mission — situation financière/);
+  assert.match(html, /checklist-payment-summary/);
+  const migration = read('supabase/migrations/20261111110317_team_dashboard_payment_signature_fixes.sql');
+  assert.match(migration, /status in \('assigned', 'accepted', 'in_progress'\)/);
+  assert.match(migration, /Signature client :/);
+});
