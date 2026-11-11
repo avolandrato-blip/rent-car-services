@@ -117,6 +117,30 @@
     return groups.sort((a, b) => a.displayName.localeCompare(b.displayName, 'fr'));
   }
 
+  function individualFleetVehicles(vehicles) {
+    return (vehicles || []).filter(vehicle => vehicle && vehicle.id).map(vehicle => ({
+      id: vehicle.id,
+      uid: vehicle.uid,
+      fleet_group: null,
+      label: vehicle.name || 'Véhicule',
+      displayName: vehicle.name || 'Véhicule',
+      units: [vehicle],
+      vehicle,
+      capacity: 1,
+      profileMismatch: false,
+      photos: vehiclePhotos(vehicle),
+      displayDescription: catchyDescription(vehicle),
+    })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'fr') || String(a.uid || a.id).localeCompare(String(b.uid || b.id), 'fr'));
+  }
+
+  function formatVehicleUid(vehicle) {
+    const uid = vehicle?.uid;
+    if (uid !== null && uid !== undefined && String(uid).trim() !== '') {
+      return `UID-${String(uid).trim().padStart(6, '0')}`;
+    }
+    return `UID-${String(vehicle?.id || 'INCONNU').replace(/-/g, '').toUpperCase()}`;
+  }
+
   function overlaps(start, end, item) {
     return new Date(item.start_at) < new Date(end) && new Date(item.end_at) > new Date(start);
   }
@@ -141,7 +165,7 @@
     return { totalCount, availableCount: availableUnits.length, availableUnits, isFull: availableUnits.length === 0 };
   }
 
-  const api = { normalizeFleetLabel, fleetProfileSignature, groupFleetVehicles, countAvailability, overlaps, contractCoversInterval, comparisonPrice, vehiclePhotos, catchyDescription };
+  const api = { normalizeFleetLabel, fleetProfileSignature, groupFleetVehicles, individualFleetVehicles, formatVehicleUid, countAvailability, overlaps, contractCoversInterval, comparisonPrice, vehiclePhotos, catchyDescription };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.RentCarFleet = api;
 })(typeof window !== 'undefined' ? window : globalThis);

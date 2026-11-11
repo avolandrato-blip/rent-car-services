@@ -217,15 +217,16 @@ function renderPublicCars() {
     const sort = document.getElementById('fleet-sort')?.value || 'price-asc';
     let cars = publicCars.filter(group => {
         const car = group.vehicle || group;
-        const haystack = `${car.name || car.nom || ''} ${car.make || ''} ${car.model || ''}`.toLowerCase();
+        const haystack = `${car.name || car.nom || ''} ${car.make || ''} ${car.model || ''} ${car.uid || ''}`.toLowerCase();
         return (!search || haystack.includes(search)) && (transmission === 'all' || car.transmission === transmission) && (seats === 'all' || String(car.seats ?? car.places) === seats) && Number(car.price_per_day || 0) <= maxPrice;
     });
-    cars.sort((a,b) => { const av=a.vehicle||a,bv=b.vehicle||b; return sort === 'popular' ? (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0) : sort === 'price-asc' ? Number(av.price_per_day||0)-Number(bv.price_per_day||0) : sort === 'price-desc' ? Number(bv.price_per_day||0)-Number(av.price_per_day||0) : String(a.displayName || av.name).localeCompare(String(b.displayName || bv.name), 'fr'); });
+    cars.sort((a,b) => { const av=a.vehicle||a,bv=b.vehicle||b; return sort === 'popular' ? (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0) : sort === 'price-asc' ? Number(av.price_per_day||0)-Number(bv.price_per_day||0) : sort === 'price-desc' ? Number(bv.price_per_day||0)-Number(av.price_per_day||0) : String(a.displayName || av.name).localeCompare(String(b.displayName || bv.name), 'fr') || String(av.uid || a.id || '').localeCompare(String(bv.uid || b.id || ''), 'fr'); });
     document.getElementById('cars-grid').innerHTML = cars.map(group => {
         const car = group.vehicle || group;
         const state = publicFleetState(group);
         const photos = Array.isArray(group.photos) && group.photos.length ? group.photos : (Array.isArray(car.photos) ? car.photos : (Array.isArray(car.image_urls) ? car.image_urls : []));
         const name = group.displayName || car.nom || car.name;
+        const uid = window.RentCarFleet?.formatVehicleUid?.(car) || `UID-${String(car.id || '').replace(/-/g, '').toUpperCase()}`;
         const description = group.displayDescription || car.description || (window.RentCarFleet?.catchyDescription?.(car) || 'Un véhicule confortable et prêt à vous accompagner.');
         const currentStatus = vehicleClientStatus(group);
         const currentStatusLabels = {
@@ -237,7 +238,7 @@ function renderPublicCars() {
         const [statusClass, statusLabel] = currentStatusLabels[currentStatus] || currentStatusLabels.unknown;
         const fleetId = group.id || car.id;
         const safeName = name.replace(/'/g, "\\'");
-        return `<div class="car-card" data-fleet-id="${fleetId}"><div class="car-gallery">${photos.map(photo => `<img src="${photo}" loading="lazy" alt="${name}">`).join('')}</div><div class="car-info"><h3>${name}</h3><p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p><div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : (car.prix || 'Sur devis')}</div><div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission || '—'}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant || car.fuel || '—'}</span><span><i class="fas fa-users"></i> ${car.places || car.seats || '—'}</span></div><p class="car-desc">${description}</p><button type="button" class="fleet-status-button fleet-status-button-card ${statusClass}" onclick="openBookingForFleet('${fleetId}','${safeName}')" aria-label="${name} : ${statusLabel}"><strong><i class="fas fa-circle-check"></i> ${statusLabel}</strong><span>Voir la disponibilité et réserver</span></button><div class="car-actions"><button class="btn btn-primary btn-reserve" ${state.available ? '' : 'disabled'} onclick="openBookingForVehicle('${fleetId}','${safeName}')"><i class="fas fa-calendar-check"></i> Réserver</button><button class="btn btn-outline btn-quote" onclick="openQuoteForVehicle('${fleetId}')"><i class="fas fa-file-invoice"></i> Devis</button><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/${encodeURIComponent(String(siteConfig.footer.telephone || '').replace(/\D/g, ''))}?text=${encodeURIComponent(`Bonjour, je souhaite un devis pour ${name}.`)}"><i class="fab fa-whatsapp"></i> WhatsApp</a></div></div></div>`
+        return `<div class="car-card" data-fleet-id="${fleetId}"><div class="car-gallery">${photos.map(photo => `<img src="${photo}" loading="lazy" alt="${name}">`).join('')}</div><div class="car-info"><h3>${name}</h3><small class="car-uid">${escapeFunHtml(uid)}</small><p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p><div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : (car.prix || 'Sur devis')}</div><div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission || '—'}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant || car.fuel || '—'}</span><span><i class="fas fa-users"></i> ${car.places || car.seats || '—'}</span></div><p class="car-desc">${description}</p><button type="button" class="fleet-status-button fleet-status-button-card ${statusClass}" onclick="openBookingForFleet('${fleetId}','${safeName}')" aria-label="${name} : ${statusLabel}"><strong><i class="fas fa-circle-check"></i> ${statusLabel}</strong><span>Voir la disponibilité et réserver</span></button><div class="car-actions"><button class="btn btn-primary btn-reserve" ${state.available ? '' : 'disabled'} onclick="openBookingForVehicle('${fleetId}','${safeName}')"><i class="fas fa-calendar-check"></i> Réserver</button><button class="btn btn-outline btn-quote" onclick="openQuoteForVehicle('${fleetId}')"><i class="fas fa-file-invoice"></i> Devis</button><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/${encodeURIComponent(String(siteConfig.footer.telephone || '').replace(/\D/g, ''))}?text=${encodeURIComponent(`Bonjour, je souhaite un devis pour ${name} (${uid}).`)}"><i class="fab fa-whatsapp"></i> WhatsApp</a></div></div></div>`
     }).join('') || '<p class="fleet-empty">Aucune voiture ne correspond à vos critères.</p>';
 }
 
@@ -249,13 +250,13 @@ async function loadCars() {
     let normalized = [];
     if (window.rentCarSupabase) {
         try {
-            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date,owner_phone,owner_whatsapp_enabled').order('price_per_day',{ascending:true}).order('name',{ascending:true});
+            const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,contract_start_date,contract_end_date,owner_phone,owner_whatsapp_enabled,uid').order('price_per_day',{ascending:true}).order('name',{ascending:true});
             if (!vehicleError && remoteCars?.length) normalized = remoteCars.map(car => ({...car,nom:car.name,prix:car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',pricing:{half_day:car.price_12h ? formatMGA(car.price_12h) : 'Sur devis',full_day:car.price_24h ? formatMGA(car.price_24h) : 'Sur devis'},places:car.seats,carburant:car.fuel || '—',photos:car.image_urls || []}));
             const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
             publicRentalCounts = (booked || []).reduce((acc,row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
         } catch (error) { console.warn('Chargement distant des voitures impossible.', error); }
     }
-    publicCars = window.RentCarFleet ? window.RentCarFleet.groupFleetVehicles(normalized) : normalized;
+    publicCars = window.RentCarFleet ? window.RentCarFleet.individualFleetVehicles(normalized) : normalized;
     const source = publicCars.map(group => group.vehicle || group);
     const transmissions = [...new Set(source.map(c => c.transmission).filter(v => v && v !== '—'))].sort();
     const seats = [...new Set(source.map(c => c.seats ?? c.places).filter(v => v && v !== '—'))].sort((a,b) => Number(a)-Number(b));
@@ -458,8 +459,9 @@ function publicBookingVehicleLabel(group) {
     const car = group?.vehicle || group || {};
     const name = group?.displayName || car.name || car.nom || 'Véhicule';
     const transmission = car.transmission || 'Transmission à confirmer';
+    const uid = window.RentCarFleet?.formatVehicleUid?.(car) || `UID-${String(car.id || '').replace(/-/g, '').toUpperCase()}`;
     const price = Number(car.price_per_day || 0) > 0 ? `${formatMGA(car.price_per_day)} / jour` : (car.prix || 'Sur devis');
-    return `${name} — ${transmission} — ${price}`;
+    return `${name} — ${uid} — ${transmission} — ${price}`;
 }
 
 function bookingVehicleRateForBand(group, bandValue) {
@@ -486,7 +488,7 @@ function refreshBookingVehicleOptions(preferredId = '') {
         if (rateB) return 1;
         const nameA = a?.displayName || a?.vehicle?.name || a?.name || '';
         const nameB = b?.displayName || b?.vehicle?.name || b?.name || '';
-        return String(nameA).localeCompare(String(nameB), 'fr');
+        return String(nameA).localeCompare(String(nameB), 'fr') || String(a?.uid || a?.vehicle?.uid || a?.id || '').localeCompare(String(b?.uid || b?.vehicle?.uid || b?.id || ''), 'fr');
     });
     const wantedId = preferredId || select.value || pendingBookingFleetId;
     const startDate = document.getElementById('booking-start-date')?.value;
@@ -503,7 +505,8 @@ function refreshBookingVehicleOptions(preferredId = '') {
         const price = rate ? `${formatMGA(rate)} / jour` : 'Sans tarif pour ce palier — sur devis';
         const slot = hasValidPeriod && bookingAvailabilityLoaded ? bookingSlotAvailability(group.id, start, end) : null;
         const availability = slot ? (slot.available ? ' — Disponible aux dates choisies' : ' — Indisponible aux dates choisies') : '';
-        const label = `${name} — ${price}${availability}`;
+        const uid = window.RentCarFleet?.formatVehicleUid?.(car) || `UID-${String(car.id || '').replace(/-/g, '').toUpperCase()}`;
+        const label = `${name} — ${uid} — ${price}${availability}`;
         return `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(label)}</option>`;
     }).join('')}`;
     if (allGroups.some(group => group.id === wantedId)) select.value = wantedId;
@@ -562,7 +565,7 @@ let pendingBookingFleetId = null;
 function usePublicCarsAsBookingFallback() {
     bookingVehicles = (publicCars || []).flatMap(group => group.units || [group.vehicle || group]).filter(Boolean);
     window.bookingVehicles = bookingVehicles;
-    window.bookingFleets = window.RentCarFleet ? window.RentCarFleet.groupFleetVehicles(bookingVehicles) : bookingVehicles.map(vehicle => ({ id: vehicle.id, displayName: vehicle.name || vehicle.nom, vehicle, units: [vehicle], capacity: 1 }));
+    window.bookingFleets = window.RentCarFleet ? window.RentCarFleet.individualFleetVehicles(bookingVehicles) : bookingVehicles.map(vehicle => ({ id: vehicle.id, uid: vehicle.uid, displayName: vehicle.name || vehicle.nom, vehicle, units: [vehicle], capacity: 1 }));
     refreshBookingVehicleOptions(pendingBookingFleetId);
 
     updateBookingQuote();
@@ -574,7 +577,7 @@ async function loadBookingData() {
     let result;
     try {
         result = await Promise.all([
-            db.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,fleet_group,contract_start_date,contract_end_date,owner_phone,owner_whatsapp_enabled').eq('status','available').order('name'),
+            db.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,contract_start_date,contract_end_date,owner_phone,owner_whatsapp_enabled,uid').eq('status','available').order('name'),
             db.from('public_fleet_busy_slots').select('vehicle_id,start_at,end_at,slot_type').limit(1000)
         ]);
     } catch (error) { console.warn('Supabase booking data unavailable:', error); usePublicCarsAsBookingFallback(); return; }
@@ -582,14 +585,14 @@ async function loadBookingData() {
     if (vehicleError) { console.warn('Supabase booking data unavailable:', vehicleError.message); usePublicCarsAsBookingFallback(); return; }
     bookingVehicles = vehicles || []; window.bookingVehicles = bookingVehicles;
     if (!publicCars.length && bookingVehicles.length) {
-        publicCars = window.RentCarFleet ? window.RentCarFleet.groupFleetVehicles(bookingVehicles) : bookingVehicles;
+        publicCars = window.RentCarFleet ? window.RentCarFleet.individualFleetVehicles(bookingVehicles) : bookingVehicles;
         const source = publicCars.map(group => group.vehicle || group);
         const transmissions = [...new Set(source.map(c => c.transmission).filter(Boolean))].sort();
         const seats = [...new Set(source.map(c => c.seats ?? c.places).filter(Boolean))].sort((a,b) => Number(a)-Number(b));
         document.getElementById('fleet-transmission') && (document.getElementById('fleet-transmission').innerHTML = '<option value="all">Toutes</option>' + transmissions.map(v => `<option value="${v}">${v}</option>`).join(''));
         document.getElementById('fleet-seats') && (document.getElementById('fleet-seats').innerHTML = '<option value="all">Toutes</option>' + seats.map(v => `<option value="${v}">${v} places</option>`).join(''));
     }
-    window.bookingFleets = window.RentCarFleet ? window.RentCarFleet.groupFleetVehicles(bookingVehicles) : bookingVehicles.map(vehicle => ({id:vehicle.id,displayName:vehicle.name,vehicle,units:[vehicle],capacity:1}));
+    window.bookingFleets = window.RentCarFleet ? window.RentCarFleet.individualFleetVehicles(bookingVehicles) : bookingVehicles.map(vehicle => ({id:vehicle.id,uid:vehicle.uid,displayName:vehicle.name,vehicle,units:[vehicle],capacity:1}));
     bookingReservations = (busySlots || []).filter(slot => slot.slot_type === 'pre_reserved' || slot.slot_type === 'reserved'); bookingMaintenance = (busySlots || []).filter(slot => slot.slot_type === 'maintenance');
     const now = new Date();
     if (busyError) {
@@ -605,7 +608,7 @@ async function loadBookingData() {
     }
     refreshBookingVehicleOptions(pendingBookingFleetId);
     const availabilityVehicle = document.getElementById('availability-vehicle');
-    if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${window.bookingFleets.map(group => `<option value="${group.id}">${group.displayName}</option>`).join('')}`;
+    if (availabilityVehicle) availabilityVehicle.innerHTML = `<option value="all">Toutes les voitures</option>${window.bookingFleets.map(group => { const car = group.vehicle || group; return `<option value="${escapeFunHtml(group.id)}">${escapeFunHtml(group.displayName)} — ${escapeFunHtml(window.RentCarFleet?.formatVehicleUid?.(car) || car.uid || '')}</option>`; }).join('')}`;
      window.updateClientDriverLabel?.(); window.bookingSlotAvailability = bookingSlotAvailability; window.getBookingFleet = id => (window.bookingFleets || []).find(group => group.id === id); ['booking-start-date','booking-end-date','booking-start-time','booking-end-time'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars)); updateBookingQuote(); renderLiveFleetButtons(); renderPublicCars();
 }
 
@@ -634,7 +637,7 @@ function renderLiveFleetButtons() {
     target.innerHTML = groups.map(group => {
         const car = group.vehicle || group;
         const [className, label] = labels[vehicleClientStatus(group)] || labels.unknown;
-        return `<button type="button" class="fleet-status-button ${className}" onclick="openBookingForFleet('${group.id}','${String(group.displayName || car.name || '').replace(/'/g, "\\'")}')"><strong>${group.displayName || car.name || 'Véhicule'}</strong><span>${label}</span></button>`;
+        return `<button type="button" class="fleet-status-button ${className}" onclick="openBookingForFleet('${group.id}','${String(group.displayName || car.name || '').replace(/'/g, "\\'")}')"><strong>${group.displayName || car.name || 'Véhicule'}</strong><small>${escapeFunHtml(window.RentCarFleet?.formatVehicleUid?.(car) || `UID-${String(car.id || '').replace(/-/g, '').toUpperCase()}`)}</small><span>${label}</span></button>`;
     }).join('') || '<p class="muted live-fleet-empty">Aucun véhicule actif pour le moment.</p>';
     const updated = document.getElementById('live-fleet-updated');
     if (updated && bookingAvailabilityUpdatedAt) updated.textContent = `Statut vérifié à ${bookingAvailabilityUpdatedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;

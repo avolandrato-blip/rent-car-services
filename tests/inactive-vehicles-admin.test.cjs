@@ -13,9 +13,9 @@ test('les véhicules inactifs restent consultables dans l’administration', () 
   assert.match(admin, /setVehicleStatus/);
 });
 
-test('les véhicules inactifs restent masqués du site client', () => {
-  const script = read('script.js');
-  assert.match(script, /from\('vehicles'\)/);
-  assert.match(script, /\.neq\('status','inactive'\)/);
-  assert.match(script, /\.neq\('status','contract_ended'\)/);
+test('les véhicules inactifs et terminés restent masqués du site client par la vue publique', () => {
+  const migration = read('supabase/migrations/20261111160731_individual_public_fleet_uid.sql');
+  assert.match(read('script.js'), /from\('public_fleet_vehicles'\)/);
+  assert.match(migration, /WHERE status = 'available'/);
+  assert.match(migration, /contract_end_date IS NULL OR contract_end_date >=/);
 });

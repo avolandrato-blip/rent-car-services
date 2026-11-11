@@ -79,7 +79,7 @@
       const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
       if (!start || !end || end <= start) { showBookingError('Veuillez sélectionner une période de location valide.'); return false; }
       const fleetId = $('booking-vehicle')?.value; const slot = window.bookingSlotAvailability?.(fleetId, start.toISOString(), end.toISOString());
-      if (slot && !slot.available) { showBookingError('Créneau complet : aucune voiture de cette flotte n’est disponible pour toute la période choisie. Sélectionnez d’autres dates.'); return false; }
+      if (slot && !slot.available) { showBookingError('Ce véhicule n’est pas disponible sur toute la période choisie. Sélectionnez un autre véhicule ou d’autres dates.'); return false; }
       if (slot?.available) window.clearStaleBookingAvailabilityError?.();
     }
     if (step === 3) {
@@ -252,7 +252,7 @@
     const nowMs = Date.now();
     if (startAt.getTime() > nowMs && startAt.getTime() <= nowMs + BOOKING_START_BUFFER_MS) return showBookingError('Pour un départ futur, prévoyez au moins deux heures d’avance. Choisissez un créneau ultérieur puis réessayez.');
     const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, startAt.toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
-    if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
+    if (!candidateUnits.length) return showBookingError('Ce véhicule vient d’être réservé ou est en maintenance. Actualisez les disponibilités ou choisissez un autre véhicule.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
     const ownerMode = !!window.bookingOwnerMode;
     const quote = calculateBookingQuote(vehicle, start, end, $('booking-rental-type').value);

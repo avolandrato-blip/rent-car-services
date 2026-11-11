@@ -19,7 +19,7 @@
 
   function vehicleLabel(vehicle, duplicate = false) {
     const name = vehicleBaseName(vehicle);
-    const distinguisher = vehicle.registration_number || String(vehicle.id || '').slice(0, 8).toUpperCase();
+    const distinguisher = vehicle.uid !== null && vehicle.uid !== undefined ? `UID-${String(vehicle.uid).padStart(6, '0')}` : (vehicle.registration_number || String(vehicle.id || '').slice(0, 8).toUpperCase());
     return duplicate && distinguisher ? `${name} — ${distinguisher}` : name;
   }
 

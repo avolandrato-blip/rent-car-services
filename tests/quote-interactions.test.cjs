@@ -16,7 +16,7 @@ test('le bouton Devis peut résoudre une carte représentant un groupe de véhic
 test('le devis public affiche un modal responsive et signale les erreurs de génération', () => {
   const script = read('quote-interactions.js');
   const page = read('index.html');
-  assert.match(page, /quote-interactions\.js\?v=20261031-1/);
+  assert.match(page, /quote-interactions\.js\?v=20261111-vehicle-uid/);
   assert.match(script, /public-quote-backdrop/);
   assert.match(script, /@media\(max-width:560px\)/);
   assert.match(script, /Le devis n’a pas pu être créé/);
