@@ -126,11 +126,13 @@ test('les boutons ont un relief 3D, un état pressé et respectent la réduction
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test('le formulaire impose une marge de deux heures avant le départ', () => {
+test('les régularisations antidatées sont permises et les départs futurs gardent deux heures de marge', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'enhancements.js'), 'utf8');
-  assert.match(source, /BOOKING_START_BUFFER_MS = 2 \* 60 \* 60 \* 1000/);
-  assert.match(source, /const earliestAllowed = now\.getTime\(\) \+ BOOKING_START_BUFFER_MS/);
-  assert.match(source, /option\.disabled = startDate\.value === today/);
-  assert.match(source, /Le départ doit être prévu au moins deux heures/);
-  assert.match(source, /startAt\.getTime\(\) <= Date\.now\(\) \+ BOOKING_START_BUFFER_MS/);
+  const migration = fs.readFileSync(path.resolve(__dirname, '..', '20261111_allow_backdated_public_reservations.sql'), 'utf8');
+  assert.match(source, /startDate\.removeAttribute\('min'\)/);
+  assert.match(source, /start\.getTime\(\) > nowMs && start\.getTime\(\) <= nowMs \+ BOOKING_START_BUFFER_MS/);
+  assert.match(source, /startAt\.getTime\(\) > nowMs && startAt\.getTime\(\) <= nowMs \+ BOOKING_START_BUFFER_MS/);
+  assert.match(source, /Pour un départ futur, prévoyez au moins deux heures/);
+  assert.match(migration, /v_old_clause text := ' or v_start < now\(\)'/);
+  assert.match(migration, /execute v_definition/);
 });

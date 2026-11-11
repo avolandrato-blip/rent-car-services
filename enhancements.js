@@ -31,13 +31,16 @@
     if (!startDate || !startTime || !endDate) return;
     const now = new Date();
     const today = localDateValue(now);
-    startDate.min = today;
-    endDate.min = startDate.value && startDate.value >= today ? startDate.value : today;
-    const earliestAllowed = now.getTime() + BOOKING_START_BUFFER_MS;
+    startDate.removeAttribute('min');
+    if (startDate.value) endDate.min = startDate.value;
+    else endDate.removeAttribute('min');
+    const nowMs = now.getTime();
+    const earliestFutureStart = nowMs + BOOKING_START_BUFFER_MS;
     [...startTime.options].forEach(option => {
       if (!option.value) return;
       const slot = new Date(`${startDate.value}T${option.value}`);
-      option.disabled = startDate.value === today && Number.isFinite(slot.getTime()) && slot.getTime() <= earliestAllowed;
+      const slotTime = slot.getTime();
+      option.disabled = startDate.value === today && Number.isFinite(slotTime) && slotTime > nowMs && slotTime <= earliestFutureStart;
     });
   }
 
@@ -63,8 +66,9 @@
       const startDateValue = $('booking-start-date')?.value;
       const startTimeValue = $('booking-start-time')?.value;
       const start = selectedBookingStart();
-      if (startDateValue && startTimeValue && start && Number.isFinite(start.getTime()) && start.getTime() <= Date.now() + BOOKING_START_BUFFER_MS) {
-        showBookingError('Le départ doit être prévu au moins deux heures à partir de maintenant. Choisissez un créneau ultérieur.');
+      const nowMs = Date.now();
+      if (startDateValue && startTimeValue && start && Number.isFinite(start.getTime()) && start.getTime() > nowMs && start.getTime() <= nowMs + BOOKING_START_BUFFER_MS) {
+        showBookingError('Pour un départ futur, prévoyez au moins deux heures d’avance. Choisissez un créneau ultérieur.');
         return false;
       }
     }
@@ -245,7 +249,8 @@
     updateBookingDateConstraints();
     const startAt = start ? new Date(start) : null;
     if (!vehicle || !startAt || !Number.isFinite(startAt.getTime()) || !end || new Date(end) <= startAt) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    if (startAt.getTime() <= Date.now() + BOOKING_START_BUFFER_MS) return showBookingError('Le départ doit être prévu au moins deux heures à partir de maintenant. Choisissez un créneau ultérieur puis réessayez.');
+    const nowMs = Date.now();
+    if (startAt.getTime() > nowMs && startAt.getTime() <= nowMs + BOOKING_START_BUFFER_MS) return showBookingError('Pour un départ futur, prévoyez au moins deux heures d’avance. Choisissez un créneau ultérieur puis réessayez.');
     const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, startAt.toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
     if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
@@ -312,7 +317,7 @@
     if (typeof loadBookingData === 'function') await loadBookingData();
   }
 
-  function reservationErrorMessage(error) { const raw = String(error?.message || ''); const known = raw.includes('Price changed') ? 'Le tarif a changé depuis l’ouverture du formulaire. Actualisez la page puis vérifiez le total.' : raw.includes('Duration requires a quote') ? 'Cette durée est disponible uniquement sur devis.' : raw.includes('Province pricing requires a quote') ? 'Cette zone est disponible uniquement sur devis.' : raw.includes('Province zone unavailable') ? 'Cette zone n’est pas disponible pour ce véhicule.' : raw.includes('Vehicle unavailable') ? 'Ce véhicule n’est plus disponible pour cette période.' : raw.includes('Invalid booking dates') ? 'Les dates de réservation sont invalides ou déjà passées.' : raw.includes('Terms acceptance required') ? 'Veuillez cocher l’acceptation des conditions.' : raw.includes('Payment method required') ? 'Veuillez sélectionner le mode de paiement de l’acompte.' : raw.includes('Invalid deposit amount') ? 'Le montant de l’acompte est invalide.' : 'Impossible d’enregistrer la réservation. Actualisez la page puis réessayez.'; return known; }
+  function reservationErrorMessage(error) { const raw = String(error?.message || ''); const known = raw.includes('Price changed') ? 'Le tarif a changé depuis l’ouverture du formulaire. Actualisez la page puis vérifiez le total.' : raw.includes('Duration requires a quote') ? 'Cette durée est disponible uniquement sur devis.' : raw.includes('Province pricing requires a quote') ? 'Cette zone est disponible uniquement sur devis.' : raw.includes('Province zone unavailable') ? 'Cette zone n’est pas disponible pour ce véhicule.' : raw.includes('Vehicle unavailable') ? 'Ce véhicule n’est plus disponible pour cette période.' : raw.includes('Invalid booking dates') ? 'La période est invalide : le retour doit être après le départ.' : raw.includes('Terms acceptance required') ? 'Veuillez cocher l’acceptation des conditions.' : raw.includes('Payment method required') ? 'Veuillez sélectionner le mode de paiement de l’acompte.' : raw.includes('Invalid deposit amount') ? 'Le montant de l’acompte est invalide.' : 'Impossible d’enregistrer la réservation. Actualisez la page puis réessayez.'; return known; }
   function showBookingError(message) { const result = $('booking-result'); result.className = 'booking-result booking-error'; result.textContent = message; }
 
   function enhanceReturnPanel() {
