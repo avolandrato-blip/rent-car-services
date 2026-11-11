@@ -17,6 +17,7 @@
   }
 
   let currentBookingStep = 1;
+  const BOOKING_START_BUFFER_MS = 2 * 60 * 60 * 1000;
 
   function localDateValue(date) {
     const pad = value => String(value).padStart(2, '0');
@@ -32,7 +33,7 @@
     const today = localDateValue(now);
     startDate.min = today;
     endDate.min = startDate.value && startDate.value >= today ? startDate.value : today;
-    const earliestAllowed = now.getTime();
+    const earliestAllowed = now.getTime() + BOOKING_START_BUFFER_MS;
     [...startTime.options].forEach(option => {
       if (!option.value) return;
       const slot = new Date(`${startDate.value}T${option.value}`);
@@ -62,8 +63,8 @@
       const startDateValue = $('booking-start-date')?.value;
       const startTimeValue = $('booking-start-time')?.value;
       const start = selectedBookingStart();
-      if (startDateValue && startTimeValue && start && Number.isFinite(start.getTime()) && start.getTime() <= Date.now()) {
-        showBookingError('L’heure de départ choisie est déjà passée. Choisissez un créneau futur ou une date ultérieure.');
+      if (startDateValue && startTimeValue && start && Number.isFinite(start.getTime()) && start.getTime() <= Date.now() + BOOKING_START_BUFFER_MS) {
+        showBookingError('Le départ doit être prévu au moins deux heures à partir de maintenant. Choisissez un créneau ultérieur.');
         return false;
       }
     }
@@ -244,7 +245,7 @@
     updateBookingDateConstraints();
     const startAt = start ? new Date(start) : null;
     if (!vehicle || !startAt || !Number.isFinite(startAt.getTime()) || !end || new Date(end) <= startAt) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    if (startAt.getTime() <= Date.now()) return showBookingError('L’heure de départ choisie est déjà passée. Choisissez un créneau futur puis réessayez.');
+    if (startAt.getTime() <= Date.now() + BOOKING_START_BUFFER_MS) return showBookingError('Le départ doit être prévu au moins deux heures à partir de maintenant. Choisissez un créneau ultérieur puis réessayez.');
     const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, startAt.toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
     if (!candidateUnits.length) return showBookingError('Toutes les voitures de cette flotte viennent d’être réservées ou sont en maintenance. Actualisez les disponibilités.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');

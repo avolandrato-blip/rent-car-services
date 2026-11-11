@@ -126,13 +126,11 @@ test('les boutons ont un relief 3D, un état pressé et respectent la réduction
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test('le formulaire rejette les départs passés sans imposer de marge supplémentaire', () => {
+test('le formulaire impose une marge de deux heures avant le départ', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'enhancements.js'), 'utf8');
-  assert.doesNotMatch(source, /BOOKING_START_BUFFER_MS/);
-  assert.match(source, /startDate\.min = today/);
-  assert.match(source, /const earliestAllowed = now\.getTime\(\)/);
+  assert.match(source, /BOOKING_START_BUFFER_MS = 2 \* 60 \* 60 \* 1000/);
+  assert.match(source, /const earliestAllowed = now\.getTime\(\) \+ BOOKING_START_BUFFER_MS/);
   assert.match(source, /option\.disabled = startDate\.value === today/);
-  assert.match(source, /L’heure de départ choisie est déjà passée/);
-  assert.match(source, /startAt\.getTime\(\) <= Date\.now\(\)/);
-  assert.doesNotMatch(source, /Date\.now\(\)\s*\+/);
+  assert.match(source, /Le départ doit être prévu au moins deux heures/);
+  assert.match(source, /startAt\.getTime\(\) <= Date\.now\(\) \+ BOOKING_START_BUFFER_MS/);
 });
