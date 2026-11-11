@@ -99,7 +99,7 @@ test('le dashboard chauffeur enregistre le paiement dans un formulaire utilisabl
   assert.match(html, /id="payment-form"/);
   assert.match(html, /id="payment-due-date"/);
   assert.match(html, /id="payment-amount"/);
-  assert.match(html, /team\.js\?v=20261111-payment-signature-recap/);
+  assert.match(html, /team\.js\?v=20261111-team-contract-signatures/);
   assert.match(team, /async function savePayment\(event\)/);
   assert.match(team, /\.from\('payments'\)\.insert/);
   assert.match(team, /Paiement non enregistré/);

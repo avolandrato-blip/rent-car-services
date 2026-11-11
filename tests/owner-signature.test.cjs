@@ -91,16 +91,39 @@ test('une signature confirmée est rendue dans les deux documents administratifs
     alert() {},
   });
   const signature = 'data:image/png;base64,aGVsbG8=';
-  await fakeWindow.printDocument('r1', 'invoice', signature);
-  await fakeWindow.printDocument('r1', 'contract', signature);
+  const clientSignature = 'data:image/png;base64,Y2xpZW50';
+  await fakeWindow.printDocument('r1', 'invoice', signature, clientSignature);
+  await fakeWindow.printDocument('r1', 'contract', signature, clientSignature);
   assert.equal(windows.length, 2);
   assert.match(windows[0].html, /owner-invoice-signature/);
   assert.match(windows[0].html, /owner-stamp\.png/);
   assert.match(windows[0].html, /src="data:image\/png;base64,aGVsbG8="/);
+  assert.match(windows[0].html, /src="data:image\/png;base64,Y2xpZW50"/);
   assert.match(windows[1].html, /document-contract/);
   assert.match(windows[1].html, /owner-stamp\.png/);
   assert.match(windows[1].html, /src="data:image\/png;base64,aGVsbG8="/);
+  assert.match(windows[1].html, /document-client-signature-image/);
+  assert.match(windows[1].html, /src="data:image\/png;base64,Y2xpZW50"/);
   assert.match(windows[1].html, /Le locataire/);
+});
+
+test('le contrat chauffeur récupère les signatures privées via un RPC limité à sa mission', () => {
+  const team = read('team.js');
+  const html = read('team.html');
+  const template = read('reference-models.js');
+  const migration = read('supabase/migrations/20261111111421_team_contract_signature_rpc.sql');
+  assert.match(team, /get_chauffeur_mission_contract_signatures/);
+  assert.match(team, /signatures\.lessor_signature_data/);
+  assert.match(team, /signatures\.client_signature_data/);
+  assert.match(team, /window\.open\('',\s*'_blank'\)/);
+  assert.match(html, /reference-models\.js\?v=20261111-team-contract-signatures/);
+  assert.match(template, /clientSignatureDataUrl = ''/);
+  assert.match(template, /document-client-signature-image/);
+  assert.match(migration, /security definer/i);
+  assert.match(migration, /chauffeur\.auth_user_id = auth\.uid\(\)/);
+  assert.match(migration, /mission\.status in \('assigned', 'accepted', 'in_progress'\)/);
+  assert.match(migration, /revoke all on function public\.get_chauffeur_mission_contract_signatures\(uuid\) from public, anon/i);
+  assert.doesNotMatch(migration, /grant select on public\.(reservation_client_signatures|admin_signature_settings)/i);
 });
 
 test('le dialogue de signature client est réutilisé à la réservation et aux documents', () => {

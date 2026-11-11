@@ -235,11 +235,23 @@
     }catch(error){message.className='notice-error';message.textContent=`Paiement non enregistré : ${error?.message||error}`;}
     finally{button.disabled=false;}
   }
-  function printMission(mission,kind){
+  async function printMission(mission,kind){
     const reservation={...(state.reservations.get(mission.reservation_id)||{})},vehicle={...(state.vehicles.get(reservation.vehicle_id)||{})};
     window.reservations=[reservation];window.vehicles=[vehicle];window.paidFor=item=>paidFor(item.id);
     if(typeof window.printDocument!=='function')return alert('Générateur de documents indisponible.');
-    window.printDocument(reservation.id,kind,'');
+    const printTab=window.open('','_blank');
+    if(!printTab)return alert('Autorisez les fenêtres pop-up pour générer le document.');
+    printTab.document.write('<!doctype html><html lang="fr"><meta charset="utf-8"><title>Préparation du contrat</title><body>Chargement des signatures…</body></html>');
+    try{
+      const {data,error}=await db.rpc('get_chauffeur_mission_contract_signatures',{p_mission_id:mission.id});
+      if(error)throw error;
+      const signatures=Array.isArray(data)?data[0]:data;
+      if(!signatures)throw new Error('Cette mission n’est pas accessible avec votre compte chauffeur.');
+      await window.printDocument(reservation.id,kind,signatures.lessor_signature_data||'',signatures.client_signature_data||'',printTab);
+    }catch(error){
+      printTab.close();
+      alert(`Impossible de charger les signatures du contrat : ${error?.message||error}`);
+    }
   }
   function setupCanvas(){
     const canvas=$('team-signature-canvas');if(!canvas)return;
