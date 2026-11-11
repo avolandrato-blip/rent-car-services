@@ -12,6 +12,9 @@ test('l’attribution exige un compte chauffeur et prépare un lien wa.me avec a
   assert.match(admin, /readyDrivers=activeDrivers\.filter/);
   assert.match(admin, /missionForm\.noValidate=true/);
   assert.match(admin, /form\.checkValidity\(\)/);
+  assert.match(admin, /team-daily-amount.*disabled/);
+  assert.match(admin, /team-daily-amount'\)\.disabled=!enabled/);
+  assert.match(admin, /Le champ « \$\{label\} » \$\{issue\}/);
   assert.match(admin, /Impossible de préparer le récapitulatif/);
   assert.match(admin, /chauffeur\(s\) prêt\(s\)/);
   assert.match(admin, /Aucune réservation confirmée — confirmez-la d’abord/);
