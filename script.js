@@ -209,9 +209,12 @@ function publicFleetState(group) {
     return { label: result.availableCount === 0 ? 'Aucune disponibilité' : 'Disponible', available: result.availableCount > 0, availableCount: result.availableCount, totalCount: result.totalCount };
 }
 
+function getClientVehicleName(vehicle) {
+    const source = vehicle?.model || vehicle?.name || vehicle?.nom || 'Véhicule';
+    return String(source).trim().toUpperCase();
+}
 function renderPublicCars() {
     const search = (document.getElementById('fleet-search')?.value || '').trim().toLowerCase();
-    const transmission = document.getElementById('fleet-transmission')?.value || 'all';
     const seats = document.getElementById('fleet-seats')?.value || 'all';
     const maxPrice = Number(document.getElementById('fleet-max-price')?.value || Infinity);
     const sort = document.getElementById('fleet-sort')?.value || 'price-asc';
@@ -243,7 +246,7 @@ function renderPublicCars() {
 }
 
 function bindPublicCarFilters() {
-    ['fleet-search','fleet-transmission','fleet-seats','fleet-max-price','fleet-sort'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars));
+    ['fleet-search','fleet-seats','fleet-max-price','fleet-sort'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars));
 }
 
 async function loadCars() {
