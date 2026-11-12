@@ -29,8 +29,19 @@ test('la signature enregistrée est privée et réservée aux super-administrate
 
 test('chaque facture ou contrat admin appose automatiquement la signature enregistrée sans confirmation', () => {
   const operations = read('admin-operations.js');
-  assert.match(operations, /window\.printDocument\(id, kind, savedSignature\)/);
-  assert.match(operations, /signatureState\.error \|\| !savedSignature/);
+  assert.match(operations, /rpc\('get_admin_reservation_document_signatures'/);
+  assert.match(operations, /signatures\?\.lessor_signature_data/);
+  assert.match(operations, /signatures\?\.client_signature_data/);
+  assert.match(operations, /window\.printDocument\(id, kind, savedSignature, clientSignature, printTab\)/);
+  assert.match(operations, /window\.open\('', '_blank'\)/);
+  assert.match(operations, /signatureState\.error/);
+  const migration = read('supabase/migrations/20261112124500_admin_document_signatures.sql');
+  assert.match(migration, /security definer/i);
+  assert.match(migration, /public\.is_super_admin\(\)/);
+  assert.match(migration, /reservation_client_signatures/);
+  assert.match(migration, /admin_signature_settings/);
+  assert.match(migration, /revoke all on function public\.get_admin_reservation_document_signatures\(uuid\) from public, anon/i);
+  assert.match(migration, /grant execute on function public\.get_admin_reservation_document_signatures\(uuid\) to authenticated/i);
   assert.doesNotMatch(operations, /Ajouter votre signature à/);
   assert.match(operations, /Faire signer par le client/);
   assert.match(operations, /window\.sendCustomerSignatureLink/);
@@ -51,7 +62,9 @@ test('le gabarit administratif appose la signature du loueur sur contrat et fact
   assert.match(template, /safeOwnerSignature/);
   assert.match(template, /owner-stamp\.png/);
   assert.match(template, /document-owner-stamp-image/);
-  assert.match(template, /document-owner-signature/);
+  assert.match(template, /document-owner-signature-image/);
+  assert.match(template, /document-owner-signature-slot/);
+  assert.match(template, /document-owner-stamp-image/);
   assert.match(template, /owner-invoice-signature/);
   assert.match(template, /const signatureCards = tenantSignatureCard \+ ownerSignatureCard/);
   assert.match(template, /document-signature-line/);

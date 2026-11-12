@@ -38,24 +38,31 @@
     });
   }
 
-  function printPreviewDocument(id, kind) {
+  async function printPreviewDocument(id, kind) {
+    const status = $('admin-preview-status');
+    let printTab = null;
     try {
       if (typeof window.printDocument !== 'function') throw new Error('Fonction d’impression indisponible.');
       const signatureState = window.getLessorSignatureState?.() || {};
-      const status = $('admin-preview-status');
-      if (signatureState.loading) {
-        if (status) { status.hidden = false; status.textContent = 'La signature enregistrée est encore en cours de chargement. Réessayez dans un instant.'; }
-        return;
+      if (signatureState.loading) throw new Error('La signature enregistrée est encore en cours de chargement. Réessayez dans un instant.');
+      if (signatureState.error) throw new Error(`Signature du loueur indisponible : ${signatureState.error}`);
+      printTab = window.open('', '_blank');
+      if (!printTab) throw new Error('Autorisez les fenêtres surgissantes pour GitHub Pages puis réessayez.');
+      printTab.document.write('<!doctype html><html lang="fr"><meta charset="utf-8"><title>Préparation du document</title><body>Chargement des signatures…</body></html>');
+      const { data, error } = await window.rentCarSupabase.rpc('get_admin_reservation_document_signatures', { p_reservation_id: id });
+      if (error) throw error;
+      const signatures = Array.isArray(data) ? data[0] : data;
+      const savedSignature = signatures?.lessor_signature_data || window.getLessorSignatureForPrint?.() || '';
+      if (!savedSignature) throw new Error('Votre signature permanente est introuvable. Vérifiez le panneau Signature puis réessayez.');
+      const clientSignature = signatures?.client_signature_data || '';
+      await window.printDocument(id, kind, savedSignature, clientSignature, printTab);
+      if (!clientSignature && status) {
+        status.hidden = false;
+        status.textContent = 'Document généré, mais aucune signature client temporaire n’est enregistrée pour cette réservation. Utilisez « Faire signer par le client » puis régénérez le document.';
       }
-      const savedSignature = window.getLessorSignatureForPrint?.() || '';
-      if (signatureState.error || !savedSignature) {
-        if (status) { status.hidden = false; status.textContent = 'Votre signature enregistrée est indisponible. Le document n’a pas été généré sans votre signature ; vérifiez le panneau Signature puis réessayez.'; }
-        return;
-      }
-      window.printDocument(id, kind, savedSignature);
     } catch (error) {
-      const status = $('admin-preview-status');
-      if (status) { status.hidden = false; status.textContent = `Impossible d’ouvrir le document : ${error.message || 'fenêtre bloquée'}. Autorisez les fenêtres surgissantes pour GitHub Pages puis réessayez.`; }
+      printTab?.close();
+      if (status) { status.hidden = false; status.textContent = `Impossible de générer le document avec les signatures : ${error.message || 'erreur inattendue'}.`; }
       console.error('Document print failed:', error);
     }
   }
