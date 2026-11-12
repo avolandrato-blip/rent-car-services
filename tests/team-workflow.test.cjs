@@ -86,6 +86,19 @@ test('la migration protège les liens, les échéances et les photos privées, e
   assert.match(hardening, /chauffeur_missions_responded_by_idx/);
 });
 
+test('les missions acceptées restent lisibles et le chauffeur peut saisir un acompte avant le départ', () => {
+  const sql = read('supabase/migrations/20261111134500_fix_driver_dashboard_payments_signature.sql');
+  assert.match(sql, /reservations_chauffeur_read/);
+  assert.match(sql, /vehicles_chauffeur_read/);
+  assert.match(sql, /m.status IN \('assigned', 'accepted', 'in_progress', 'completed'\)/);
+  assert.match(sql, /payments_chauffeur_insert/);
+  assert.match(sql, /m.expires_at >= now\(\)/);
+  assert.doesNotMatch(sql, /now\(\) between m\.starts_at and m\.expires_at/i);
+  assert.match(sql, /save_chauffeur_reservation_signature/);
+  assert.match(sql, /get_chauffeur_mission_signature_status/);
+  assert.match(sql, /c.auth_user_id = auth.uid\(\)/);
+});
+
 test('l’administration enregistre un règlement quotidien avec sa date d’échéance', () => {
   const admin = read('team-admin.js');
   assert.match(admin, /window\.recordPayment = async function/);
