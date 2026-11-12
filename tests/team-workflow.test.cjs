@@ -87,7 +87,7 @@ test('la migration protège les liens, les échéances et les photos privées, e
 });
 
 test('les missions acceptées restent lisibles et le chauffeur peut saisir un acompte avant le départ', () => {
-  const sql = read('supabase/migrations/20261111134500_fix_driver_dashboard_payments_signature.sql');
+  const sql = read('supabase/migrations/20261111104826_fix_driver_dashboard_payments_signature.sql');
   assert.match(sql, /reservations_chauffeur_read/);
   assert.match(sql, /vehicles_chauffeur_read/);
   assert.match(sql, /m.status IN \('assigned', 'accepted', 'in_progress', 'completed'\)/);
