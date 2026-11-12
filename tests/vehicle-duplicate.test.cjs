@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+const morning = fs.readFileSync(path.join(__dirname, '..', 'morning-changes.js'), 'utf8');
 
 test('la table Voitures propose une action Dupliquer', () => {
   assert.match(admin, /window\.duplicateVehicle\('\$\{v\.id\}'\)/);
@@ -51,6 +52,19 @@ test('le même nom affiché reçoit un slug distinct pour chaque nouveau véhicu
   assert.equal(second, 'getz-manuelle-22222222222242228222222222222222');
   assert.notEqual(first, second);
   assert.match(admin, /Le nom affiché peut être identique à celui d’une autre voiture/);
+});
+
+test('le gestionnaire admin actif préserve le slug en édition et génère un slug distinct à la création', () => {
+  assert.match(morning, /event\.stopImmediatePropagation\(\)/);
+  assert.match(morning, /const payload = \{\.\.\.\(id \? \{\} : \{slug:uniqueNewVehicleSlug\(name\)\}\),name,/);
+  assert.match(morning, /if \(result\.error\) return alert\(result\.error\.message\)/);
+  const start = morning.indexOf('function uniqueNewVehicleSlug(');
+  const end = morning.indexOf('async function editVehicleForm', start);
+  assert.ok(start >= 0 && end > start, 'générateur actif pour les nouvelles fiches');
+  const context = { window: { vehicles: [{ slug: 'getz' }] }, crypto: { randomUUID: () => '11111111-1111-4111-8111-111111111111' } };
+  const generateSlug = vm.runInNewContext(`${morning.slice(start, end)}; uniqueNewVehicleSlug`, context);
+  assert.equal(generateSlug('GETZ'), 'getz-11111111111141118111111111111111');
+  assert.match(admin, /morning-changes\.js\?v=20261112-stable-vehicle-slug/);
 });
 
 test('la modification d’une voiture, y compris un renommage de casse, conserve le slug stable', () => {
