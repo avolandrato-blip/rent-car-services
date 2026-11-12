@@ -34,6 +34,15 @@ test('les cartes client, la recherche et les choix de réservation exposent le U
   assert.match(read('index.html'), /20261111-individual-vehicle-uid/);
 });
 
+test('le catalogue rend les voitures si le filtre transmission est absent', () => {
+  const script = read('script.js');
+  assert.match(script, /const transmissionFilter = document\.getElementById\('fleet-transmission'\)\?\.value \|\| 'all'/);
+  assert.match(script, /transmissionFilter === 'all' \|\| car\.transmission === transmissionFilter/);
+  assert.doesNotMatch(script, /\btransmission === 'all'/);
+  assert.match(script, /fleet-sort','fleet-transmission'/);
+  assert.match(read('index.html'), /script\.js\?v=20261112-fix-empty-catalogue/);
+});
+
 test('les réservations et disponibilités portent sur une seule unité physique par UID', () => {
   const items = individualFleetVehicles([car('vehicle-1', 17), car('vehicle-2', 18)]);
   const result = countAvailability(items[0], '2026-11-12T07:00:00Z', '2026-11-13T07:00:00Z', [
