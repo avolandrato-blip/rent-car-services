@@ -53,10 +53,11 @@ test('le même nom affiché reçoit un slug distinct pour chaque nouveau véhicu
   assert.match(admin, /Le nom affiché peut être identique à celui d’une autre voiture/);
 });
 
-test('la modification sans changement de nom conserve le slug déjà enregistré', () => {
+test('la modification d’une voiture, y compris un renommage de casse, conserve le slug stable', () => {
   const start = admin.indexOf('function uniqueVehicleSlug(');
   const end = admin.indexOf('async function uploadVehiclePhotos', start);
   const context = { vehicles: [{ id: 'car-1', name: 'Getz Manuelle', slug: 'getz-manuelle-ancien' }], crypto: { randomUUID: () => 'unused' } };
   const generateSlug = vm.runInNewContext(`${admin.slice(start, end)}; uniqueVehicleSlug`, context);
   assert.equal(generateSlug('Getz Manuelle', 'car-1'), 'getz-manuelle-ancien');
+  assert.equal(generateSlug('GETZ', 'car-1'), 'getz-manuelle-ancien');
 });
