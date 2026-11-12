@@ -1,0 +1,44 @@
+/* Navigation d’accueil admin : les rubriques restent montées mais sont atteintes par les tuiles. */
+#app-view.shell{display:block;min-height:100vh}
+#app-view .sidebar{display:none}
+#app-view .main{max-width:1500px;padding:28px clamp(16px,3.5vw,56px) 56px}
+#app-view .topbar{margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+#app-view .topbar-actions{align-items:center}
+.dashboard-home-button:not([hidden]){display:inline-flex;align-items:center}
+.dashboard-welcome{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin:4px 0 20px}
+.dashboard-welcome h2{font:700 clamp(23px,3vw,32px) "Space Grotesk";margin:5px 0 4px}
+.dashboard-welcome p{margin:0;color:var(--muted)}
+.dashboard-date{border:1px solid #e8d7b5;background:#fffaf0;color:#805b19;border-radius:999px;padding:10px 15px;font-size:13px;font-weight:700;white-space:nowrap}
+.dashboard-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:30px}
+.dashboard-metric{min-width:0;min-height:122px;padding:18px;text-align:left;border:1px solid var(--line);border-radius:15px;background:#fff;color:var(--navy);box-shadow:0 6px 18px #0b1f3308;display:flex;flex-direction:column;justify-content:center}
+.dashboard-metric>span{color:var(--muted);font-size:12px;font-weight:700;line-height:1.35}
+.dashboard-metric>strong{font:700 clamp(21px,2vw,29px) "Space Grotesk";margin:7px 0 3px;color:var(--blue);overflow-wrap:anywhere}
+.dashboard-metric>small{font-size:11px;color:var(--muted);line-height:1.4}
+button.dashboard-metric-action{cursor:pointer;font:inherit;transition:border-color .16s ease,transform .16s ease,box-shadow .16s ease}
+.dashboard-metric-action:hover,.dashboard-group-main:hover{border-color:#cda344;box-shadow:0 10px 24px #0b1f3314;transform:translateY(-2px)}
+.dashboard-metric-action:focus-visible,.dashboard-group button:focus-visible,.dashboard-manage button:focus-visible,.dashboard-home-button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.dashboard-section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin:0 0 13px}
+.dashboard-section-head h2{font:700 23px "Space Grotesk";margin:3px 0 0}
+.dashboard-section-head>span{color:var(--muted);font-size:13px}
+.dashboard-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.dashboard-group{min-width:0;padding:10px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 18px #0b1f3308}
+.dashboard-group-main{width:100%;min-height:92px;padding:12px 10px;display:grid;grid-template-columns:54px minmax(0,1fr) 28px;align-items:center;gap:12px;text-align:left;background:#fff;border:1px solid transparent;border-radius:12px;color:var(--navy);cursor:pointer;box-shadow:none!important;transform:none!important;transition:background .16s ease,border-color .16s ease!important}
+.dashboard-group-main:hover{background:#f8fafc;transform:none!important;filter:none!important}
+.dashboard-icon{display:grid;place-items:center;width:50px;height:50px;border-radius:15px;background:#edf4f8;color:var(--blue);font:700 20px "Space Grotesk"}
+.dashboard-group-main strong{display:block;font:700 16px "Space Grotesk";line-height:1.25}
+.dashboard-group-main small{display:block;color:var(--muted);font-size:12px;line-height:1.4;margin-top:5px}
+.dashboard-arrow{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#f1f5f8;color:var(--blue);font-size:22px;line-height:1}
+.dashboard-shortcuts{display:flex;flex-wrap:wrap;gap:6px;padding:10px 5px 3px;border-top:1px solid #edf1f4}
+.dashboard-shortcuts button,.dashboard-manage button{min-height:36px;padding:7px 10px;border:1px solid #e6ecf1;border-radius:9px;background:#f6f8fa;color:#31495c;font:600 12px "DM Sans",sans-serif;cursor:pointer;box-shadow:none!important;transform:none!important;transition:background .15s ease,border-color .15s ease,color .15s ease!important}
+.dashboard-shortcuts button:hover,.dashboard-manage button:hover{background:#edf4f8;border-color:#c7d9e5;color:var(--blue);filter:none!important}
+.dashboard-manage-head{margin-top:28px}
+.dashboard-manage{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.dashboard-manage button{min-height:54px;font-size:13px;text-align:left;padding:10px 12px}
+.dashboard-calendar{margin-top:28px}
+.dashboard-calendar .section-head{align-items:center}
+.dashboard-calendar .section-head p{margin:0;color:var(--muted);font-size:13px}
+.dashboard-calendar .section-head h2{margin-bottom:4px}
+.dashboard-calendar .filters{margin-top:14px}
+@media(max-width:1100px){.dashboard-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboard-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-manage{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:680px){#app-view .main{padding:16px 12px 36px}.topbar{align-items:flex-start}.topbar h1{font-size:24px}.topbar-actions{justify-content:flex-end}.topbar-actions .btn{min-height:42px;padding:9px 10px;font-size:12px}.dashboard-welcome{align-items:flex-start;flex-direction:column;gap:10px}.dashboard-date{padding:8px 12px}.dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:24px}.dashboard-metric{min-height:108px;padding:13px}.dashboard-metric>span{font-size:11px}.dashboard-metric>small{font-size:10px}.dashboard-groups{grid-template-columns:1fr;gap:10px}.dashboard-group-main{min-height:78px;grid-template-columns:46px minmax(0,1fr) 24px;gap:10px}.dashboard-icon{width:44px;height:44px}.dashboard-group-main strong{font-size:15px}.dashboard-shortcuts button{min-height:40px}.dashboard-section-head{align-items:flex-start;flex-direction:column;gap:4px}.dashboard-section-head h2{font-size:21px}.dashboard-manage{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-manage button{min-height:46px;font-size:12px}.dashboard-calendar .section-head{flex-direction:row;align-items:center}.dashboard-calendar .section-head .btn{min-height:42px}}
+@media(prefers-reduced-motion:reduce){.dashboard-metric-action,.dashboard-group-main,.dashboard-shortcuts button,.dashboard-manage button{transition:none!important}}
