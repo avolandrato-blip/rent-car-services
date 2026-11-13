@@ -112,7 +112,7 @@ test('le dashboard chauffeur enregistre le paiement dans un formulaire utilisabl
   assert.match(html, /id="payment-form"/);
   assert.match(html, /id="payment-due-date"/);
   assert.match(html, /id="payment-amount"/);
-  assert.match(html, /team\.js\?v=20261111-team-contract-signatures/);
+  assert.match(html, /team\.js\?v=20261113-return-damage-checklists/);
   assert.match(team, /async function savePayment\(event\)/);
   assert.match(team, /\.from\('payments'\)\.insert/);
   assert.match(team, /Paiement non enregistré/);
@@ -130,4 +130,20 @@ test('le dashboard affiche le statut signé, les actions client et les montants 
   const migration = read('supabase/migrations/20261111110317_team_dashboard_payment_signature_fixes.sql');
   assert.match(migration, /status in \('assigned', 'accepted', 'in_progress'\)/);
   assert.match(migration, /Signature client :/);
+});
+
+
+test('les fiches chauffeur de restitution et de dégradation sont signées, checklistées et persistées', () => {
+  const team = read('team.js');
+  const html = read('team.html');
+  assert.match(team, /mission\.mission_type\);/);
+  assert.match(team, /Fiche de restitution/);
+  assert.match(team, /Fiche de dégradation/);
+  assert.match(team, /recoveryFuelPercent/);
+  assert.match(team, /client_signature_data:signatures\.client_signature_data/);
+  assert.match(team, /lessor_signature_data:signatures\.lessor_signature_data/);
+  assert.match(team, /\.from\('chauffeur_mission_checklists'\)\.upsert/);
+  for (const level of ['0', '1/4', '1/3', '1/2', '3/4', '1/1']) assert.ok(html.includes(`value="${level}"`));
+  assert.match(html, /damage-parts/);
+  assert.match(html, /damage-photos/);
 });

@@ -47,3 +47,17 @@ button.dashboard-metric-action{cursor:pointer;font:inherit;transition:border-col
 #app-view.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
 #app-view .sidebar{display:block}
 @media(max-width:900px){#app-view.shell{display:block}#app-view .sidebar{display:block}}
+
+/* Dashboard à tuiles uniquement : le menu latéral est masqué sur ordinateur et mobile. */
+#app-view.shell{display:block;min-height:100vh}
+#app-view .sidebar{display:none}
+#app-view .main{max-width:1500px;width:100%;margin:0 auto;padding:28px clamp(16px,3.5vw,56px) 56px;box-sizing:border-box}
+.dashboard-metric:nth-child(1){border-top:3px solid var(--blue);background:linear-gradient(150deg,#f1f7fb 0%,#fff 48%)}
+.dashboard-metric:nth-child(2){border-top:3px solid #16803c;background:linear-gradient(150deg,#eff9f2 0%,#fff 48%)}
+.dashboard-metric:nth-child(3){border-top:3px solid var(--gold);background:linear-gradient(150deg,#fff9eb 0%,#fff 48%)}
+.dashboard-metric:nth-child(4){border-top:3px solid #9b5a34;background:linear-gradient(150deg,#fbf3ee 0%,#fff 48%)}
+.dashboard-metric:nth-child(5){border-top:3px solid #59768d;background:linear-gradient(150deg,#f2f6f9 0%,#fff 48%)}
+.dashboard-group:nth-child(6n+1) .dashboard-icon{background:#e8f1f7;color:#0d5c8f}.dashboard-group:nth-child(6n+2) .dashboard-icon{background:#edf7ee;color:#287647}.dashboard-group:nth-child(6n+3) .dashboard-icon{background:#fff5df;color:#946a15}.dashboard-group:nth-child(6n+4) .dashboard-icon{background:#f2edfa;color:#66508a}.dashboard-group:nth-child(6n+5) .dashboard-icon{background:#eaf6f4;color:#267369}.dashboard-group:nth-child(6n) .dashboard-icon{background:#fbefeb;color:#9b5137}
+.dashboard-group:nth-child(6n+1){border-top:2px solid #b7d0df}.dashboard-group:nth-child(6n+2){border-top:2px solid #b9d9c2}.dashboard-group:nth-child(6n+3){border-top:2px solid #ead5a8}.dashboard-group:nth-child(6n+4){border-top:2px solid #d4c6e9}.dashboard-group:nth-child(6n+5){border-top:2px solid #b7dbd5}.dashboard-group:nth-child(6n){border-top:2px solid #e2c2b7}
+.dashboard-shortcuts .dashboard-shortcut-primary{background:#0d5c8f;color:#fff;border-color:#0d5c8f}.dashboard-shortcuts .dashboard-shortcut-primary:hover{background:#0b1f33;color:#fff;border-color:#0b1f33}
+@media(max-width:680px){.dashboard-shortcuts .dashboard-shortcut-primary{width:100%;text-align:center;min-height:44px}}

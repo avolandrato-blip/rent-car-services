@@ -4,7 +4,7 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = value => `${Number(value || 0).toLocaleString('fr-FR')} Ar`;
   const slug = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 40) || 'chauffeur';
-  const state = {driver:null,missions:[],selected:null,reservations:new Map(),vehicles:new Map(),payments:new Map(),dues:new Map(),checklists:new Map(),drawing:false,hasInk:false,checklistMission:null,checklistPhase:null,paymentMission:null};
+  const state = {driver:null,missions:[],selected:null,reservations:new Map(),vehicles:new Map(),payments:new Map(),dues:new Map(),checklists:new Map(),drawing:false,hasInk:false,checklistMission:null,checklistPhase:null,paymentMission:null,returnDocMission:null,returnDocKind:null};
   const formatDate = value => value ? new Date(value).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}) : '—';
   const typeLabel = type => ({delivery:'Livraison',recovery:'Récupération',delivery_and_recovery:'Livraison + récupération'}[type] || type);
   const statusLabel = status => ({assigned:'À accepter',accepted:'Mission acceptée',refused:'Mission refusée',in_progress:'En cours',completed:'Terminée',cancelled:'Annulée',expired:'Expirée'}[status] || status);
@@ -115,9 +115,13 @@
         ? '<button id="mission-start" class="btn primary">Faire l’état des lieux de départ</button>'
         : mission.status==='in_progress'
           ? '<button id="mission-complete" class="btn primary">Terminer la mission — état des lieux de retour</button>' : '';
+    const hasRecovery=['recovery','delivery_and_recovery'].includes(mission.mission_type);
+    const hasSavedReturn=Boolean(returnCheck?.checklist?.restitution_form),hasSavedDamage=Boolean(returnCheck?.checklist?.degradation_form);
+    const returnDocs=hasRecovery&&mission.status==='in_progress'?'<button id="mission-restitution-form" class="btn outline">Fiche de restitution</button><button id="mission-degradation-form" class="btn outline">Fiche de dégradation</button>':'';
+    const savedReturnDocs=hasRecovery&&mission.status==='completed'?`${hasSavedReturn?'<button id="mission-restitution-print" class="btn outline">Réimprimer restitution</button>':''}${hasSavedDamage?'<button id="mission-degradation-print" class="btn outline">Réimprimer dégradation</button>':''}`:'';
     const actions=['assigned','accepted','in_progress'].includes(mission.status)
-      ? `${statusControls}<button id="mission-payment" class="btn outline">Enregistrer un paiement</button><button id="mission-signature" class="btn outline">Faire signer le client</button><button id="mission-invoice" class="btn outline">Générer la facture</button><button id="mission-contract" class="btn outline">Générer le contrat</button>`
-      : statusControls;
+      ? `${statusControls}<button id="mission-payment" class="btn outline">Enregistrer un paiement</button><button id="mission-signature" class="btn outline">Faire signer le client</button><button id="mission-invoice" class="btn outline">Générer la facture</button><button id="mission-contract" class="btn outline">Générer le contrat</button>${returnDocs}`
+      : `${statusControls}${savedReturnDocs}`;
     const title=mission.status==='completed'?'Fin de mission — situation financière':'Situation financière';
     $('mission-detail').innerHTML=`<h3>${esc(typeLabel(mission.mission_type))} — ${esc(reservation.reference||'Réservation')}</h3><p><b>Statut :</b> ${esc(statusLabel(mission.status))}<br><b>Client :</b> ${esc(reservation.customer_name||'—')}<br><b>Téléphone :</b> ${esc(reservation.customer_phone||'—')}<br><b>Adresse de rendez-vous :</b> ${esc(mission.handover_address||reservation.customer_address||'—')}<br><b>Trajet :</b> ${esc(reservation.trip_from||'—')} → ${esc(reservation.trip_to||'—')}<br><b>Véhicule :</b> ${esc(vehicle.name||vehicle.model||'—')} ${vehicle.registration_number?`(${esc(vehicle.registration_number)})`:''}<br><b>Location :</b> ${formatDate(reservation.start_at)} → ${formatDate(reservation.end_at)}<br><b>Mission :</b> ${formatDate(mission.starts_at)} → ${formatDate(mission.expires_at)}${reservation.notes?`<br><b>Note client :</b> ${esc(reservation.notes)}`:''}${mission.notes?`<br><b>Note interne :</b> ${esc(mission.notes)}`:''}${mission.driver_instructions?`<br><b>Consignes :</b> ${esc(mission.driver_instructions)}`:''}</p>${clientRecapHtml(mission,reservation,departure)}<div class="finance"><div>Total réservation : <strong>${money(reservation.total_amount)}</strong></div><div>Total déjà payé : <strong>${money(paidFor(reservation.id))}</strong></div><div>Reste à payer : <strong>${money(balanceFor(reservation))}</strong></div><div>Coût livraison : <strong>${money(mission.custom_delivery_cost)}</strong></div><div>Coût récupération : <strong>${money(mission.custom_recovery_cost)}</strong></div></div><div class="mission-actions">${actions}</div>${dailyScheduleHtml(reservation.id)}<h4>État des lieux au départ</h4>${checklistSummary(departure)}<h4>État des lieux au retour</h4>${checklistSummary(returnCheck)}<h4>${title}</h4>${paymentSummaryHtml(reservation,payments)}<p class="muted">Signature client : ${isSigned(reservation.id,mission)?'enregistrée':'non enregistrée'}</p>`;
     $('mission-accept')?.addEventListener('click',()=>respondMission(mission,'accept'));
@@ -128,6 +132,10 @@
     $('mission-signature')?.addEventListener('click',()=>openSignature(mission));
     $('mission-invoice')?.addEventListener('click',()=>printMission(mission,'invoice'));
     $('mission-contract')?.addEventListener('click',()=>printMission(mission,'contract'));
+    $('mission-restitution-form')?.addEventListener('click',()=>openRecoveryDocument(mission,'restitution'));
+    $('mission-degradation-form')?.addEventListener('click',()=>openRecoveryDocument(mission,'degradation'));
+    $('mission-restitution-print')?.addEventListener('click',()=>printStoredRecoveryDocument(mission,'restitution'));
+    $('mission-degradation-print')?.addEventListener('click',()=>printStoredRecoveryDocument(mission,'degradation'));
     if(scroll)$('mission-detail').scrollIntoView({behavior:'smooth',block:'start'});
   }
   async function respondMission(mission,response){
@@ -178,7 +186,7 @@
       const photo_checks=Object.fromEntries(photoKeys.map(key=>[key,$(`checklist-photo-${key}`)?.checked===true]));
       const missing=photoKeys.filter(key=>!photo_checks[key]);
       if(missing.length){message.textContent=`Cochez les rappels photo effectués : ${missing.map(key=>({front:'avant',rear:'arrière',side:'côté',wheel:'jante',dashboard:'tableau de bord',client:'client devant la voiture',cin:'CIN',license:'permis'}[key])).join(', ')}.`;return;}
-      const checklist={cash_remaining:cash,fuel_percent:fuel,cin_seen:phase==='departure'?$('checklist-cin-seen').checked:Boolean(old?.checklist?.cin_seen),license_seen:phase==='departure'?$('checklist-license-seen').checked:Boolean(old?.checklist?.license_seen),driver_behavior:behavior,notes:$('checklist-notes').value.trim(),photo_checks};
+      const checklist={...(old?.checklist||{}),cash_remaining:cash,fuel_percent:fuel,cin_seen:phase==='departure'?$('checklist-cin-seen').checked:Boolean(old?.checklist?.cin_seen),license_seen:phase==='departure'?$('checklist-license-seen').checked:Boolean(old?.checklist?.license_seen),driver_behavior:behavior,notes:$('checklist-notes').value.trim(),photo_checks};
       const {error}=await db.from('chauffeur_mission_checklists').upsert({mission_id:mission.id,phase,submitted_by:user.id,checklist,photos:{},completed_at:new Date().toISOString()},{onConflict:'mission_id,phase'});
       if(error)throw error;
       const nextStatus=phase==='departure'?'in_progress':'completed';
@@ -189,6 +197,108 @@
       await loadMissions();
     }catch(error){message.textContent=`Enregistrement impossible : ${error?.message||error}`;}
     finally{button.disabled=false;}
+  }
+  const recoveryFuelPercent={'0':0,'1/4':25,'1/3':33,'1/2':50,'3/4':75,'1/1':100};
+  function openRecoveryDocument(mission,kind){
+    const reservation=state.reservations.get(mission.reservation_id)||{};
+    if(!isSigned(reservation.id,mission)){alert('Faites d’abord signer le client avec « Faire signer le client », puis ouvrez la fiche.');openSignature(mission);return;}
+    state.returnDocMission=mission;state.returnDocKind=kind;
+    const data=state.checklists.get(keyForChecklist(mission.id,'return'))?.checklist||{};
+    $('recovery-document-kind').value=kind;
+    const isRest=kind==='restitution';
+    $('recovery-document-title').textContent=isRest?'Fiche de restitution':'Fiche de constat de dégradation';
+    $('recovery-document-intro').textContent=`${reservation.customer_name||'Client'} — ${reservation.reference||'Réservation'} — signature client enregistrée. Le document imprimé inclura la signature permanente et le tampon du loueur.`;
+    $('restitution-fields').classList.toggle('hidden',!isRest);$('degradation-fields').classList.toggle('hidden',isRest);
+    $('recovery-document-message').textContent='';
+    if(isRest){
+      const saved=data.restitution_form||{};
+      $('restitution-fuel-status').value=saved.fuel_status||'';$('restitution-fuel-level').value=saved.fuel_level||'';
+      $('restitution-odometer').value=saved.odometer??'';$('restitution-keys').value=saved.keys_returned??'';$('restitution-notes').value=saved.notes||'';
+      for(const id of ['return-check-exterior','return-check-interior','return-check-tires','return-check-accessories','return-check-photos'])$(id).checked=Boolean(saved.checks?.[id]);
+    }else{
+      const saved=data.degradation_form||{};
+      for(const id of ['body','glass','wheels','interior','accessories'])$(`damage-${id}`).value=saved.items?.[id]||'unchecked';
+      $('degradation-description').value=saved.description||'';$('damage-compared').checked=Boolean(saved.compared);$('damage-photos').checked=Boolean(saved.photos_taken);$('damage-client-informed').checked=Boolean(saved.client_informed);
+      $('damage-parts').value=saved.costs?.parts??0;$('damage-labor').value=saved.costs?.labor??0;$('damage-other').value=saved.costs?.other??0;$('damage-client-observation').value=saved.client_observation||'';
+    }
+    $('recovery-document-modal').classList.remove('hidden');
+  }
+  function escapeDoc(value){return esc(value||'—').replace(/\n/g,'<br>');}
+  function recoveryDocumentHtml(mission,kind,data,signatures){
+    const reservation=state.reservations.get(mission.reservation_id)||{},vehicle=state.vehicles.get(reservation.vehicle_id)||{};
+    const ref=String(reservation.reference||mission.id).replace(/[^A-Za-z0-9_-]+/g,'_');
+    const isRest=kind==='restitution',filePrefix=isRest?'RESTIT':'DEGRAD';
+    const title=isRest?'FICHE DE RESTITUTION DU VÉHICULE':'FICHE DE CONSTAT DE DÉGRADATION';
+    const statusLabels={unchecked:'Non vérifié',ok:'Aucun dommage observé',preexisting:'Dommage préexistant',new:'Dommage nouveau observé',uncertain:'À confirmer / contesté'};
+    const lessor=signatures?.lessor_signature_data||'',client=signatures?.client_signature_data||'';
+    const stampUrl=new URL('images/owner-stamp.png',location.href).href;
+    let body='';
+    if(isRest){
+      const checks=data.checks||{};
+      body=`<h2>Carburant et relevés</h2><p>État : <strong>${escapeDoc(data.fuel_status==='ok'?'OK':'NOK')}</strong> · Niveau au retour : <strong>${escapeDoc(data.fuel_level)}</strong></p><p>Kilométrage au retour : ${escapeDoc(data.odometer)} km · Clés restituées : ${escapeDoc(data.keys_returned)}</p><h2>Checklist de restitution</h2><ul><li>Carrosserie et éclairage : ${checks['return-check-exterior']?'Vérifiés':'Non confirmés'}</li><li>Habitacle : ${checks['return-check-interior']?'Vérifié':'Non confirmé'}</li><li>Pneus et jantes : ${checks['return-check-tires']?'Vérifiés':'Non confirmés'}</li><li>Clés et accessoires : ${checks['return-check-accessories']?'Vérifiés':'Non confirmés'}</li><li>Photos : ${checks['return-check-photos']?'Prises / envoyées':'Non confirmées'}</li></ul><h2>Réserves et observations</h2><div class="doc-box">${escapeDoc(data.notes)}</div>`;
+    }else{
+      const items=data.items||{},names={body:'Carrosserie',glass:'Vitres et éclairage',wheels:'Pneus et jantes',interior:'Intérieur et sellerie',accessories:'Clés, accessoires, documents'};
+      const rows=Object.entries(names).map(([key,label])=>`<tr><td>${label}</td><td>${statusLabels[items[key]]||'Non vérifié'}</td></tr>`).join('');
+      const costs=data.costs||{},total=Number(costs.parts||0)+Number(costs.labor||0)+Number(costs.other||0);
+      body=`<h2>Checklist du constat</h2><table><thead><tr><th>Élément</th><th>Constat</th></tr></thead><tbody>${rows}</tbody></table><p>Comparaison avec l’état de départ : ${data.compared?'effectuée':'non confirmée'} · Photos : ${data.photos_taken?'prises / envoyées':'non confirmées'} · Client informé : ${data.client_informed?'oui':'non confirmé'}</p><h2>Description et localisation</h2><div class="doc-box">${escapeDoc(data.description)}</div><h2>Estimation des coûts</h2><p>Pièces / réparation : ${money(costs.parts)}<br>Main-d’œuvre : ${money(costs.labor)}<br>Autres frais justifiés : ${money(costs.other)}<br><strong>Total estimatif : ${money(total)}</strong></p><h2>Observations / réserves du client</h2><div class="doc-box">${escapeDoc(data.client_observation)}</div>`;
+    }
+    const signatureImage=(src,alt)=>src?`<img src="${src}" alt="${alt}">`:'<p>Image de signature indisponible</p>';
+    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${filePrefix}_RCS_${ref}</title><style>body{font:14px Arial,sans-serif;line-height:1.5;color:#182b3a;max-width:850px;margin:24px auto;padding:30px}header{border-bottom:3px solid #d9a441;padding-bottom:14px;margin-bottom:18px}h1{font-size:22px;margin:0}h2{font-size:16px;color:#0d5c8f;border-bottom:1px solid #d9e1e8;padding-bottom:5px;margin-top:24px}.box{padding:12px;border:1px solid #cbd5df;border-radius:8px;min-height:45px;white-space:pre-wrap}table{border-collapse:collapse;width:100%}td,th{padding:8px;border:1px solid #ccd7df;text-align:left}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:45px}.signatures>div{min-height:175px;border-top:1px solid #8292a0;padding-top:8px}.signatures img{display:block;max-width:175px;max-height:90px;object-fit:contain;margin:12px auto}.stamp{max-width:100px!important;max-height:100px!important}.legal{font-size:11px;color:#526577;border-left:3px solid #d9a441;padding:8px 12px}@media print{body{margin:0 auto;padding:0}.signatures{break-inside:avoid}}@media(max-width:600px){body{padding:12px}.signatures{gap:12px}}</style></head><body><article><header><h1>${title}</h1><p>Document : ${filePrefix}_RCS_${ref}</p></header><p><strong>Client :</strong> ${esc(reservation.customer_name||'—')}<br><strong>Téléphone :</strong> ${esc(reservation.customer_phone||'—')}<br><strong>Véhicule :</strong> ${esc(vehicle.make||'')} ${esc(vehicle.model||vehicle.name||'—')} ${vehicle.registration_number?`— ${esc(vehicle.registration_number)}`:''}<br><strong>Réservation :</strong> ${esc(reservation.reference||'—')}<br><strong>Fin de location :</strong> ${esc(formatDate(reservation.end_at))}<br><strong>Constat :</strong> ${esc(new Date().toLocaleString('fr-FR'))}</p>${body}<p class="legal">Ce document décrit les observations consignées au moment du constat. La signature du client atteste la prise de connaissance du document; elle ne vaut pas, à elle seule, reconnaissance de responsabilité ou acceptation d’un montant contesté. Les estimations restent à justifier et peuvent être accompagnées de réserves.</p><div class="signatures"><div><strong>CLIENT — prise de connaissance</strong><p>${esc(reservation.customer_name||'')}</p>${signatureImage(client,'Signature du client')}</div><div><strong>LOUEUR</strong><p>ANDRIANASOLO Volandrato</p>${signatureImage(lessor,'Signature permanente du loueur')}<img class="stamp" src="${stampUrl}" alt="Tampon Rent Car Service"></div></div></article><script>window.addEventListener('load',()=>setTimeout(()=>window.print(),300));<\/script></body></html>`;
+  }
+  async function finishRecoveryDocumentPrint(printTab,mission,kind,data){
+    const {data:rows,error}=await db.rpc('get_chauffeur_mission_contract_signatures',{p_mission_id:mission.id});
+    if(error)throw error;
+    const signatures=Array.isArray(rows)?rows[0]:rows;
+    if(!signatures?.lessor_signature_data||!signatures?.client_signature_data)throw new Error('Signature du loueur ou du client indisponible. Vérifiez les signatures avant de générer le document.');
+    printTab.document.open();printTab.document.write(recoveryDocumentHtml(mission,kind,data,signatures));printTab.document.close();
+    return signatures;
+  }
+  async function saveRecoveryDocument(event){
+    event.preventDefault();
+    const mission=state.returnDocMission,kind=$('recovery-document-kind').value;
+    if(!mission||!['restitution','degradation'].includes(kind))return;
+    const reservation=state.reservations.get(mission.reservation_id)||{};
+    if(!isSigned(reservation.id,mission)){ $('recovery-document-message').textContent='La signature du client est nécessaire. Fermez cette fiche et utilisez « Faire signer le client ». ';return;}
+    const printTab=window.open('','_blank');
+    if(!printTab){$('recovery-document-message').textContent='Autorisez les fenêtres contextuelles pour imprimer le document.';return;}
+    printTab.document.write('<!doctype html><html lang="fr"><meta charset="utf-8"><title>Préparation du document</title><body>Préparation de la fiche signée…</body></html>');
+    const button=$('recovery-document-save'),message=$('recovery-document-message');button.disabled=true;message.textContent='Enregistrement sécurisé et préparation du document…';
+    try{
+      const {data:signatureRows,error:signatureError}=await db.rpc('get_chauffeur_mission_contract_signatures',{p_mission_id:mission.id});
+      if(signatureError)throw signatureError;const signatures=Array.isArray(signatureRows)?signatureRows[0]:signatureRows;
+      if(!signatures?.lessor_signature_data||!signatures?.client_signature_data)throw new Error('La signature du client ou du loueur est indisponible.');
+      const existing=state.checklists.get(keyForChecklist(mission.id,'return'))?.checklist||{};
+      let documentData;
+      if(kind==='restitution'){
+        const level=$('restitution-fuel-level').value,odometer=$('restitution-odometer').value,keys=$('restitution-keys').value;
+        if(!$('restitution-fuel-status').value||!level||odometer===''||keys==='')throw new Error('Renseignez le statut carburant, le niveau, le kilométrage et les clés.');
+        documentData={fuel_status:$('restitution-fuel-status').value,fuel_level:level,odometer:Number(odometer),keys_returned:Number(keys),notes:$('restitution-notes').value.trim(),checks:Object.fromEntries(['return-check-exterior','return-check-interior','return-check-tires','return-check-accessories','return-check-photos'].map(id=>[id,$(id).checked])),client_signature_data:signatures.client_signature_data,lessor_signature_data:signatures.lessor_signature_data};
+      }else{
+        const description=$('degradation-description').value.trim();
+        if(!description)throw new Error('Décrivez le constat ou indiquez explicitement « Aucun dommage observé ».');
+        if(['body','glass','wheels','interior','accessories'].some(id=>$(`damage-${id}`).value==='unchecked'))throw new Error('Renseignez le statut de chaque zone inspectée (intacte, préexistante, nouvelle ou à confirmer).');
+        const parts=Number($('damage-parts').value||0),labor=Number($('damage-labor').value||0),other=Number($('damage-other').value||0);
+        if([parts,labor,other].some(value=>!Number.isFinite(value)||value<0))throw new Error('Vérifiez les montants saisis.');
+        documentData={items:Object.fromEntries(['body','glass','wheels','interior','accessories'].map(id=>[id,$(`damage-${id}`).value])),description,compared:$('damage-compared').checked,photos_taken:$('damage-photos').checked,client_informed:$('damage-client-informed').checked,costs:{parts,labor,other},client_observation:$('damage-client-observation').value.trim(),client_signature_data:signatures.client_signature_data,lessor_signature_data:signatures.lessor_signature_data};
+      }
+      const percent=kind==='restitution'?recoveryFuelPercent[documentData.fuel_level]:(Number(existing.fuel_percent)||0);
+      const photoChecks={front:false,rear:false,side:false,wheel:false,dashboard:false,client:false,...(existing.photo_checks||{})};
+      const merged={...existing,fuel_percent:percent,cash_remaining:existing.cash_remaining??0,driver_behavior:existing.driver_behavior||'neutral',photo_checks,[`${kind}_form`]:documentData};
+      const user=await currentUser();
+      const {error}=await db.from('chauffeur_mission_checklists').upsert({mission_id:mission.id,phase:'return',submitted_by:user.id,checklist:merged,photos:{},completed_at:new Date().toISOString()},{onConflict:'mission_id,phase'});
+      if(error)throw error;
+      state.checklists.set(keyForChecklist(mission.id,'return'),{mission_id:mission.id,phase:'return',checklist:merged,completed_at:new Date().toISOString()});
+      printTab.document.open();printTab.document.write(recoveryDocumentHtml(mission,kind,documentData,signatures));printTab.document.close();
+      message.textContent='Fiche enregistrée. Le document signé a été préparé; choisissez « Enregistrer en PDF » dans l’impression.';
+      $('recovery-document-modal').classList.add('hidden');selectMission(mission.id,false);
+    }catch(error){printTab.close();message.textContent=`Enregistrement impossible : ${error?.message||error}`;}
+    finally{button.disabled=false;}
+  }
+  function printStoredRecoveryDocument(mission,kind){
+    const data=state.checklists.get(keyForChecklist(mission.id,'return'))?.checklist?.[`${kind}_form`];
+    if(!data?.client_signature_data||!data?.lessor_signature_data)return alert('Les signatures ou les données de cette fiche sont indisponibles.');
+    const printTab=window.open('','_blank');if(!printTab)return alert('Autorisez les fenêtres contextuelles pour imprimer le document.');
+    printTab.document.write(recoveryDocumentHtml(mission,kind,data,{client_signature_data:data.client_signature_data,lessor_signature_data:data.lessor_signature_data}));printTab.document.close();
   }
   function dueOptionsFor(reservationId){
     const dues=state.dues.get(reservationId)||[],payments=state.payments.get(reservationId)||[];
@@ -293,6 +403,7 @@
   document.addEventListener('DOMContentLoaded',async()=>{
     $('team-login-form').addEventListener('submit',login);$('team-logout').addEventListener('click',logout);$('change-password-form').addEventListener('submit',changePassword);
     $('checklist-form').addEventListener('submit',saveChecklist);$('checklist-cancel').addEventListener('click',()=>$('checklist-modal').classList.add('hidden'));
+    $('recovery-document-form').addEventListener('submit',saveRecoveryDocument);$('recovery-document-cancel').addEventListener('click',()=>$('recovery-document-modal').classList.add('hidden'));
     $('payment-form').addEventListener('submit',savePayment);$('payment-cancel').addEventListener('click',()=>$('payment-modal').classList.add('hidden'));$('payment-due-date').addEventListener('change',()=>updatePaymentExpected(true));
     $('signature-clear').addEventListener('click',clearSignature);$('signature-cancel').addEventListener('click',()=>$('signature-modal').classList.add('hidden'));$('signature-save').addEventListener('click',saveSignature);
     const {data}=await db.auth.getSession();if(data.session){try{await boot();}catch(error){$('team-login-error').textContent=error.message;}}
