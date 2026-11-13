@@ -129,7 +129,7 @@ test('le contrat chauffeur récupère les signatures privées via un RPC limité
   assert.match(team, /signatures\.lessor_signature_data/);
   assert.match(team, /signatures\.client_signature_data/);
   assert.match(team, /window\.open\('',\s*'_blank'\)/);
-  assert.match(html, /reference-models\.js\?v=20261113-return-form-signatures/);
+  assert.match(html, /reference-models\.js\?v=20261113-export-name-standard/);
   assert.match(template, /clientSignatureDataUrl = ''/);
   assert.match(template, /document-client-signature-image/);
   assert.match(migration, /security definer/i);

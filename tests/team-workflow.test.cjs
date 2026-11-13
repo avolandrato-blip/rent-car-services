@@ -112,7 +112,7 @@ test('le dashboard chauffeur enregistre le paiement dans un formulaire utilisabl
   assert.match(html, /id="payment-form"/);
   assert.match(html, /id="payment-due-date"/);
   assert.match(html, /id="payment-amount"/);
-  assert.match(html, /team\.js\?v=20261113-return-damage-signatures/);
+  assert.match(html, /team\.js\?v=20261113-export-name-standard/);
   assert.match(team, /async function savePayment\(event\)/);
   assert.match(team, /\.from\('payments'\)\.insert/);
   assert.match(team, /Paiement non enregistré/);
@@ -163,4 +163,21 @@ test('admin et chauffeur capturent ou joignent les signatures par défaut et con
   assert.match(team, /client_signature_data:signatures\.client_signature_data/);
   assert.match(team, /lessor_signature_data:signatures\.lessor_signature_data/);
   assert.match(teamHtml, /envoyées via WhatsApp/);
+});
+
+
+test('tous les noms de documents PDF suivent TYPE_REF_AAAAMMJJ côté admin et chauffeur', () => {
+  const documents = read('reference-models.js');
+  const team = read('team.js');
+  const adminEnhancements = read('admin-enhancements.js');
+  const adminHtml = read('admin.html');
+  const teamHtml = read('team.html');
+  assert.match(documents, /window\.RentCarExportFilename = exportFilename/);
+  assert.match(documents, /exportFilename\(isInvoice \? 'FACT' : 'CONT', r\.reference\)/);
+  assert.match(documents, /exportFilename\(prefix, r\.reference, p\.recorded_at/);
+  assert.match(team, /RentCarExportFilename\(filePrefix,reservation\.reference\|\|mission\.id,data\.recorded_at/);
+  assert.match(team, /<title>\$\{filename\}<\/title>/);
+  assert.match(adminEnhancements, /RentCarExportFilename\('DEVIS',q\.reference\)/);
+  assert.match(adminHtml, /reference-models\.js\?v=20261113-export-name-standard/);
+  assert.match(teamHtml, /team\.js\?v=20261113-export-name-standard/);
 });
