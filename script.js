@@ -784,6 +784,65 @@ function renderBookingDistancePrices(vehicle) {
     panel.hidden = false;
     panel.innerHTML = `<div class="booking-distance-prices-title"><strong>Tarifs de ${escapeFunHtml(vehicle.name || vehicle.nom || 'la voiture choisie')}</strong><span>Choisissez un palier pour voir le prix correspondant.</span></div><ul class="booking-distance-price-list">${rows}</ul><small class="booking-distance-price-note">Prix de location hors options et autres frais éventuels. Le palier sélectionné est encadré.</small>`;
 }
+function getBookingSegments() {
+    const startDate = document.getElementById('booking-start-date')?.value;
+    const startTime = document.getElementById('booking-start-time')?.value || '07:00';
+    const endDate = document.getElementById('booking-end-date')?.value;
+    const endTime = document.getElementById('booking-end-time')?.value || '18:00';
+    const segments = [];
+    if (startDate && endDate) segments.push({ start: `${startDate}T${startTime}`, end: `${endDate}T${endTime}` });
+    if (document.getElementById('booking-multi-period-enabled')?.checked) {
+        document.querySelectorAll('.booking-extra-period').forEach(row => {
+            const sd = row.querySelector('[data-period-start-date]')?.value;
+            const st = row.querySelector('[data-period-start-time]')?.value || '07:00';
+            const ed = row.querySelector('[data-period-end-date]')?.value;
+            const et = row.querySelector('[data-period-end-time]')?.value || '18:00';
+            if (sd && ed) segments.push({ start: `${sd}T${st}`, end: `${ed}T${et}` });
+        });
+    }
+    return segments;
+}
+function renderBookingPeriodRows() {
+    const enabled = document.getElementById('booking-multi-period-enabled')?.checked;
+    const container = document.getElementById('booking-extra-periods');
+    const add = document.getElementById('booking-add-period');
+    if (!container || !add) return;
+    container.classList.toggle('hidden', !enabled);
+    add.classList.toggle('hidden', !enabled);
+    if (!enabled) { container.innerHTML = ''; updateBookingQuote(); return; }
+    if (!container.children.length) addBookingPeriod();
+    updateBookingQuote();
+}
+function addBookingPeriod() {
+    const container = document.getElementById('booking-extra-periods');
+    if (!container || container.children.length >= 19) return;
+    const index = container.children.length + 2;
+    const row = document.createElement('div');
+    row.className = 'booking-extra-period';
+    row.dataset.periodIndex = String(index);
+    row.innerHTML = `<div class="booking-extra-period-title"><strong>Période ${index}</strong><button type="button" class="btn btn-link booking-remove-period">Supprimer</button></div><div class="date-range"><label>Date de départ<input data-period-start-date type="date" required></label><label>Heure de départ<select data-period-start-time><option value="07:00">07h00</option><option value="19:00">19h00</option></select></label><label>Date de retour<input data-period-end-date type="date" required></label><label>Heure de retour<select data-period-end-time><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label></div>`;
+    container.appendChild(row);
+    row.querySelectorAll('input,select').forEach(el => el.addEventListener('input', updateBookingQuote));
+    row.querySelector('.booking-remove-period')?.addEventListener('click', () => { row.remove(); [...container.children].forEach((item, i) => item.querySelector('strong').textContent = `Période ${i + 2}`); updateBookingQuote(); });
+}
+function getBookingQuotes(vehicle) {
+    if (!vehicle) return { segments: [], total: 0, requiresQuote: false, quoteReason: '' };
+    const rentalType = document.getElementById('booking-rental-type')?.value;
+    const rawSegments = getBookingSegments();
+    const segments = rawSegments.map(period => ({ ...period, quote: calculateBookingQuote(vehicle, period.start, period.end, rentalType) }));
+    const invalid = segments.find(item => !(new Date(item.end) > new Date(item.start)));
+    if (invalid) return { segments, total: 0, invalid: true, requiresQuote: false, quoteReason: '' };
+    const requiresQuote = segments.some(item => item.quote.requiresQuote);
+    const options = segments.length
+        ? Number(segments[0].quote.delivery || 0) + Number(segments[0].quote.recovery || 0) + segments.reduce((sum, item) => sum + Number(item.quote.chauffeur || 0), 0)
+        : 0;
+    const rental = segments.reduce((sum, item) => sum + Number(item.quote.rentalAmount || 0), 0);
+    return { segments, rental, options, total: rental + options, requiresQuote, quoteReason: segments.find(item => item.quote.quoteReason)?.quoteReason || '' };
+}
+function formatBookingPeriod(period) {
+    const start = new Date(period.start), end = new Date(period.end);
+    return `${start.toLocaleDateString('fr-FR')} ${start.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})} → ${end.toLocaleDateString('fr-FR')} ${end.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}`;
+}
 function calculateBookingQuote(vehicle, start, end, rentalType) {
     const hours = (new Date(end) - new Date(start)) / 3600000;
     const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
@@ -823,45 +882,33 @@ function calculateBookingQuote(vehicle, start, end, rentalType) {
 function updateBookingQuote() {
     const selectedGroup = (window.bookingFleets || []).find(item => item.id === document.getElementById('booking-vehicle')?.value);
     const vehicle = selectedGroup?.vehicle || bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle')?.value);
-    const startDate = document.getElementById('booking-start-date')?.value, endDate = document.getElementById('booking-end-date')?.value;
-    const startTime = document.getElementById('booking-start-time')?.value, endTime = document.getElementById('booking-end-time')?.value;
     const quote = document.getElementById('booking-quote');
     const mini = document.getElementById('booking-quote-mini');
     const submit = document.getElementById('booking-submit-button');
     const driverOptionLabel = document.getElementById('booking-driver-label');
     if (driverOptionLabel) {
         const driverRate = vehicle ? Number(vehicle.driver_mode === 'with_driver' ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000)) : 30000;
-        driverOptionLabel.textContent = vehicle?.driver_mode === 'with_driver'
-            ? `Ajouter un chauffeur supplémentaire${driverRate ? ` — ${formatMGA(driverRate)} / jour` : ' — sur devis'}`
-            : `Ajouter un chauffeur — ${formatMGA(driverRate)} / jour`;
+        driverOptionLabel.textContent = vehicle?.driver_mode === 'with_driver' ? `Ajouter un chauffeur supplémentaire${driverRate ? ` — ${formatMGA(driverRate)} / jour` : ' — sur devis'}` : `Ajouter un chauffeur — ${formatMGA(driverRate)} / jour`;
     }
     renderBookingDistancePrices(vehicle);
-    if (!vehicle || !startDate || !endDate || !startTime || !endTime || new Date(`${endDate}T${endTime}`) <= new Date(`${startDate}T${startTime}`)) {
+    const aggregate = getBookingQuotes(vehicle);
+    if (!vehicle || !aggregate.segments.length || aggregate.invalid) {
         if (quote) quote.textContent = '';
-        if (mini) mini.innerHTML = '<strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule, la zone d’utilisation et les dates.</span>';
-        const bandNote = document.getElementById('booking-distance-note');
-        const switchNotice = document.getElementById('booking-vehicle')?.dataset.bandSwitchNotice;
-        if (bandNote && switchNotice) bandNote.textContent = `${switchNotice} La limite porte sur le trajet aller uniquement.`;
+        if (mini) mini.innerHTML = '<strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule et des périodes valides.</span>';
         if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
         return;
     }
-    const q = calculateBookingQuote(vehicle, `${startDate}T${startTime}`, `${endDate}T${endTime}`, document.getElementById('booking-rental-type')?.value);
-    const distanceLabel = customerDistanceBandLabel(vehicle, q.distanceBand);
-    const deposit = Number(document.getElementById('booking-deposit')?.value || 0);
-    const bandNote = document.getElementById('booking-distance-note');
-    const switchNotice = document.getElementById('booking-vehicle')?.dataset.bandSwitchNotice;
-    if (bandNote) bandNote.textContent = `${q.requiresQuote ? `${distanceLabel} — ${q.quoteReason}. Vous pouvez envoyer une demande de devis.` : `${distanceLabel} — tarif journalier applicable, durée flexible.`}${switchNotice ? ` ${switchNotice}` : ''}`;
-    if (q.requiresQuote) {
-        if (quote) quote.textContent = `${distanceLabel} — ${q.quoteReason}. La demande sera transmise à Rent Car Service pour établir le prix.`;
-        if (mini) mini.innerHTML = '<strong>Demande de devis</strong><span>Le bouton ci-dessous enverra quand même votre demande.</span>';
+    if (aggregate.requiresQuote) {
+        if (quote) quote.textContent = `${aggregate.quoteReason}. La demande sera transmise à Rent Car Service pour établir le prix.`;
+        if (mini) mini.innerHTML = `<strong>Demande de devis</strong><span>${aggregate.segments.length} période(s) sélectionnée(s).</span>`;
         if (submit) submit.innerHTML = '<i class="fas fa-file-invoice"></i> Demander un devis';
-        const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = 'Montant : sur devis. Aucun acompte ne peut être enregistré avant validation du devis.';
         return;
     }
-    const promoState = promoEligibility(q), promoDiscount = promoState.discount, finalTotal = Math.max(0, q.total - promoDiscount);
-    const quoteText = `${q.distanceBand === '0_30' ? `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.rentalAmount)}` : `Zone d’utilisation (${distanceLabel}) : ${formatMGA(q.bandRate)} / jour × ${q.days} jour(s)`} + options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : promoState.valid ? '' : ` — ${promoState.message}`} = ${formatMGA(finalTotal)}. Le chauffeur est inclus lorsque le véhicule est proposé avec chauffeur ; repas et hébergement restent exclus. Acompte : ${formatMGA(deposit)}. Reste à payer : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
-    if (quote) quote.textContent = quoteText;
-    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${q.days} jour(s) · Zone : ${distanceLabel} · Location ${formatMGA(q.rentalAmount)} · Options ${formatMGA(q.delivery + q.recovery + q.chauffeur)}${q.chauffeur ? ' · chauffeur supplémentaire inclus dans les options' : ''}</span>`;
+    const promoState = promoEligibility(aggregate.segments[0].quote), promoDiscount = promoState.discount, finalTotal = Math.max(0, aggregate.total - promoDiscount);
+    const deposit = Number(document.getElementById('booking-deposit')?.value || 0);
+    const periods = aggregate.segments.map((item, i) => `${i + 1}. ${formatBookingPeriod(item)}`).join(' · ');
+    if (quote) quote.textContent = `${periods} — location ${formatMGA(aggregate.rental)} + options ${formatMGA(aggregate.options)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Acompte : ${formatMGA(deposit)}. Reste : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
+    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${aggregate.segments.length} période(s) · ${periods}</span>`;
     const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = `Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
 }
@@ -888,105 +935,41 @@ async function submitReservation(event) {
     event.preventDefault();
     const result = document.getElementById('booking-result');
     const vehicle = bookingVehicles.find(item => item.id === document.getElementById('booking-vehicle').value);
-    const startDate = document.getElementById('booking-start-date').value;
-    const startTime = document.getElementById('booking-start-time').value;
-    const endDate = document.getElementById('booking-end-date').value;
-    const endTime = document.getElementById('booking-end-time').value;
-    const start = startDate && startTime ? `${startDate}T${startTime}` : '';
-    const end = endDate && endTime ? `${endDate}T${endTime}` : '';
-    if (!vehicle || new Date(end) <= new Date(start)) {
-        result.className = 'booking-result booking-error';
-        result.textContent = 'Vérifiez le véhicule et les dates choisies.';
-        return;
+    const aggregate = getBookingQuotes(vehicle);
+    if (!vehicle || !aggregate.segments.length || aggregate.invalid) { result.className = 'booking-result booking-error'; result.textContent = 'Vérifiez le véhicule et toutes les périodes choisies.'; return; }
+    for (const item of aggregate.segments) {
+        if (getVehicleAvailability(vehicle.id, item.start, item.end) !== 'available') { result.className = 'booking-result booking-error'; result.textContent = `Le véhicule est indisponible sur la période ${formatBookingPeriod(item)}.`; return; }
     }
-    const availability = getVehicleAvailability(vehicle.id, start, end);
-    if (availability !== 'available') {
-        result.className = 'booking-result booking-error';
-        result.textContent = `Cette voiture est ${availabilityLabel(availability).toLowerCase()} sur cette période.`;
-        return;
-    }
-    const rentalType = document.getElementById('booking-rental-type').value;
-    const quote = calculateBookingQuote(vehicle, start, end, rentalType);
     const deposit = Math.max(0, Number(document.getElementById('booking-deposit').value || 0));
-    if (deposit > quote.total) { result.className = 'booking-result booking-error'; result.textContent = 'L’acompte ne peut pas dépasser le montant total.'; return; }
+    const promoState = promoEligibility(aggregate.segments[0].quote), promoDiscount = promoState.discount;
+    const totalAmount = Math.max(0, aggregate.total - promoDiscount);
+    if (deposit > totalAmount) { result.className = 'booking-result booking-error'; result.textContent = 'L’acompte ne peut pas dépasser le montant total.'; return; }
     const paymentMethod = document.getElementById('booking-payment-method').value || null;
     if (deposit > 0 && !paymentMethod) { result.className = 'booking-result booking-error'; result.textContent = 'Sélectionnez le mode de paiement de l’acompte.'; return; }
     if (!document.getElementById('booking-terms-consent')?.checked) { result.className = 'booking-result booking-error'; result.textContent = 'Lisez et acceptez les conditions de location avant d’envoyer la réservation.'; return; }
-    const days = quote.days;
+    const first = aggregate.segments[0].quote;
     const signatureData = window.getBookingClientSignature?.() || '';
-    const payload = {
-        vehicle_id: vehicle.id,
-        customer_name: document.getElementById('booking-name').value.trim(),
-        customer_phone: document.getElementById('booking-phone').value.trim(),
-        customer_email: document.getElementById('booking-email').value.trim() || null,
-        customer_address: document.getElementById('booking-address').value.trim(),
-        customer_license: document.getElementById('booking-license').value.trim(),
-        license_acquired_place: document.getElementById('booking-license-place').value.trim(),
-        license_acquired_at: document.getElementById('booking-license-date').value || null,
-        customer_cin: document.getElementById('booking-cin').value.trim(),
-        cin_is_duplicate: document.getElementById('booking-cin-type').value === 'true',
-        cin_acquired_place: document.getElementById('booking-cin-place').value.trim(),
-        cin_acquired_at: document.getElementById('booking-cin-date').value || null,
-        start_at: new Date(start).toISOString(),
-        end_at: new Date(end).toISOString(),
-        with_driver: vehicle.driver_mode === 'with_driver' || document.getElementById('booking-driver').checked,
-        extra_driver_requested: Boolean(document.getElementById('booking-driver').checked),
-        rental_type: rentalType,
-        rate_12h: quote.rate12,
-        rate_24h: quote.rate24,
-        daily_rate: quote.rate12,
-        days,
-        trip_from: document.getElementById('booking-trip-from').value.trim(),
-        trip_to: document.getElementById('booking-trip-to').value.trim(),
-        province_zone: quote.provinceZone,
-        delivery_fee: quote.delivery,
-        recovery_fee: quote.recovery,
-        chauffeur_fee: quote.chauffeur,
-        extra_fees: quote.delivery + quote.recovery,
-        total_amount: Math.max(0, quote.total - (activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0)),
-        promo_code: document.getElementById('booking-promo')?.value.trim().toUpperCase() || null,
-        promo_discount: activePromo ? (activePromo.discount_type === 'percent' ? quote.total * Number(activePromo.discount_value) / 100 : Number(activePromo.discount_value)) : 0,
-        deposit_amount: deposit,
-        payment_method: paymentMethod,
-        mobile_reference: document.getElementById('booking-mobile-reference').value.trim() || null,
-        mobile_number: document.getElementById('booking-mobile-number').value.trim() || null,
-        notes: document.getElementById('booking-notes').value.trim() || null,
-        distance_band: document.getElementById('booking-distance-band').value || '0_30',
-        distance_km: null,
-        delivery_requested: Boolean(document.getElementById('booking-delivery').checked),
-        recovery_requested: Boolean(document.getElementById('booking-recovery').checked),
-        quote_requested: Boolean(quote.requiresQuote),
-        quote_reason: quote.quoteReason || null,
-        terms_accepted_at: new Date().toISOString()
+    const basePayload = {
+        vehicle_id: vehicle.id, customer_name: document.getElementById('booking-name').value.trim(), customer_phone: document.getElementById('booking-phone').value.trim(), customer_email: document.getElementById('booking-email').value.trim() || null, customer_address: document.getElementById('booking-address').value.trim(), customer_license: document.getElementById('booking-license').value.trim(), license_acquired_place: document.getElementById('booking-license-place').value.trim(), license_acquired_at: document.getElementById('booking-license-date').value || null, customer_cin: document.getElementById('booking-cin').value.trim(), cin_is_duplicate: document.getElementById('booking-cin-type').value === 'true', cin_acquired_place: document.getElementById('booking-cin-place').value.trim(), cin_acquired_at: document.getElementById('booking-cin-date').value || null,
+        with_driver: vehicle.driver_mode === 'with_driver' || document.getElementById('booking-driver').checked, extra_driver_requested: Boolean(document.getElementById('booking-driver').checked), rental_type: document.getElementById('booking-rental-type').value, rate_12h: first.rate12, rate_24h: first.rate24, daily_rate: first.rate12, trip_from: document.getElementById('booking-trip-from').value.trim(), trip_to: document.getElementById('booking-trip-to').value.trim(), province_zone: first.provinceZone, delivery_fee: first.delivery, recovery_fee: first.recovery, chauffeur_fee: first.chauffeur, extra_fees: first.delivery + first.recovery, total_amount: totalAmount, promo_code: document.getElementById('booking-promo')?.value.trim().toUpperCase() || null, promo_discount: promoDiscount, deposit_amount: deposit, payment_method: paymentMethod, mobile_reference: document.getElementById('booking-mobile-reference').value.trim() || null, mobile_number: document.getElementById('booking-mobile-number').value.trim() || null, notes: document.getElementById('booking-notes').value.trim() || null, distance_band: document.getElementById('booking-distance-band').value || '0_30', distance_km: null, delivery_requested: Boolean(document.getElementById('booking-delivery').checked), recovery_requested: Boolean(document.getElementById('booking-recovery').checked), quote_requested: Boolean(aggregate.requiresQuote), quote_reason: aggregate.quoteReason || null, terms_accepted_at: new Date().toISOString()
     };
-    const { data: created, error } = await window.rentCarSupabase.rpc('create_public_distance_reservation', { p_payload: payload });
-    if (error) {
-        result.className = 'booking-result booking-error';
-        result.textContent = 'Impossible d’enregistrer la demande pour le moment. Contactez-nous par WhatsApp.';
-        console.error(error);
-        return;
-    }
+    const segments = aggregate.segments.map((item, index) => ({ start_at: new Date(item.start).toISOString(), end_at: new Date(item.end).toISOString(), total_amount: Math.max(0, Number(item.quote.rentalAmount || 0) + Number(item.quote.chauffeur || 0) + (index === 0 ? Number(item.quote.delivery || 0) + Number(item.quote.recovery || 0) - promoDiscount : 0)) }));
+    const rpcName = segments.length > 1 ? 'create_public_multi_period_reservation' : 'create_public_distance_reservation';
+    const rpcPayload = segments.length > 1 ? { ...basePayload, segments } : { ...basePayload, start_at: segments[0].start_at, end_at: segments[0].end_at };
+    const { data: created, error } = await window.rentCarSupabase.rpc(rpcName, { p_payload: rpcPayload });
+    if (error) { result.className = 'booking-result booking-error'; result.textContent = 'Impossible d’enregistrer la demande. Vérifiez les disponibilités ou contactez-nous par WhatsApp.'; console.error(error); return; }
     const data = Array.isArray(created) ? created[0] : created;
-    if (!data?.id || !data?.reference) { result.className = 'booking-result booking-error'; result.textContent = 'La réservation n’a pas pu être confirmée. Contactez-nous par WhatsApp.'; return; }
+    const reservationId = data?.id || data?.reservation_ids?.[0];
+    const reference = data?.reference || data?.group_reference;
+    if (!reservationId || !reference) { result.className = 'booking-result booking-error'; result.textContent = 'La réservation n’a pas pu être confirmée. Contactez-nous par WhatsApp.'; return; }
     let signatureSaveFailed = false;
-    if (signatureData) {
-        const { data: signatureSaved, error: signatureError } = await window.rentCarSupabase.rpc('save_public_reservation_signature', {
-            p_reservation_id: data.id,
-            p_reference: data.reference,
-            p_phone: payload.customer_phone,
-            p_signature_data: signatureData
-        });
-        signatureSaveFailed = Boolean(signatureError || signatureSaved !== true);
-        if (signatureError) console.error('Client signature was not stored:', signatureError);
+    if (signatureData && segments.length === 1) {
+        const { data: signatureSaved, error: signatureError } = await window.rentCarSupabase.rpc('save_public_reservation_signature', { p_reservation_id: reservationId, p_reference: reference, p_phone: basePayload.customer_phone, p_signature_data: signatureData });
+        signatureSaveFailed = Boolean(signatureError || signatureSaved !== true); if (signatureError) console.error('Client signature was not stored:', signatureError);
     }
-    result.className = 'booking-result booking-success';
-    result.textContent = `${deposit > 0 ? `Réservation ${data.reference} enregistrée. L’acompte sera vérifié par Rent Car Service.` : `Demande ${data.reference} enregistrée. La réservation sera confirmée après validation de l’acompte.`}${signatureSaveFailed ? ' Votre réservation est bien enregistrée, mais votre signature ne l’a pas été ; vous pourrez signer les documents plus tard après validation de l’acompte.' : ''}`;
-    document.getElementById('booking-form').reset(); activePromo = null;
-    window.clearBookingClientSignature?.();
-    await loadBookingData();
+    result.className = 'booking-result booking-success'; result.textContent = `${deposit > 0 ? `Réservation groupée ${reference} enregistrée.` : `Demande groupée ${reference} enregistrée.`} ${segments.length > 1 ? `${segments.length} périodes ont été enregistrées.` : ''} La demande sera confirmée après validation.${signatureSaveFailed ? ' Votre signature pourra être ajoutée plus tard.' : ''}`;
+    document.getElementById('booking-form').reset(); activePromo = null; document.getElementById('booking-extra-periods').innerHTML = ''; document.getElementById('booking-extra-periods').classList.add('hidden'); document.getElementById('booking-add-period').classList.add('hidden'); window.clearBookingClientSignature?.(); await loadBookingData();
 }
-
-
 async function verifyInvoiceOtp(event, credentials) {
     event?.preventDefault?.();
     const result = document.getElementById('invoice-access-result');
@@ -1084,6 +1067,7 @@ document.getElementById('booking-distance-band')?.addEventListener('change', () 
 });
 
 
+document.getElementById('booking-multi-period-enabled')?.addEventListener('change', renderBookingPeriodRows); document.getElementById('booking-add-period')?.addEventListener('click', () => { addBookingPeriod(); updateBookingQuote(); });
 function syncRentalTimes() {
     const type = document.getElementById('booking-rental-type')?.value;
     const start = document.getElementById('booking-start-time'), end = document.getElementById('booking-end-time');

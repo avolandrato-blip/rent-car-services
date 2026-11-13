@@ -12,7 +12,7 @@
     <title>Rent Car Service | Location de voiture à Antananarivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20261111-individual-vehicle-uid"><link rel="stylesheet" href="client-harmony.css?v=20261110-3d-buttons-hero-cta">
+    <link rel="stylesheet" href="style.css?v=20261113-multi-periods"><link rel="stylesheet" href="client-harmony.css?v=20261110-3d-buttons-hero-cta">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="reviews.css?v=20261109-reviews-3">
 </head>
@@ -118,6 +118,14 @@
                                 <label>Heure de retour<select id="booking-end-time" required><option value="18:00">18h00</option><option value="06:00">06h00</option></select></label>
                             </div>
                             <small id="booking-time-guidance" class="field-note">Les dates passées sont permises pour les régularisations. Pour un départ futur, prévoyez 2 heures d’avance.</small>
+                            <div class="booking-multi-period" aria-labelledby="booking-multi-period-title">
+                                <div class="booking-multi-period-head">
+                                    <div><strong id="booking-multi-period-title">Plusieurs dates de location</strong><small class="field-note">Ajoutez des dates isolées ou des périodes continues. Le véhicule reste disponible entre deux périodes.</small></div>
+                                    <label class="checkbox-line"><input id="booking-multi-period-enabled" type="checkbox"> Activer plusieurs périodes</label>
+                                </div>
+                                <div id="booking-extra-periods" class="booking-extra-periods hidden" aria-live="polite"></div>
+                                <button id="booking-add-period" class="btn btn-outline hidden" type="button"><i class="fas fa-plus"></i> Ajouter une date ou une période</button>
+                            </div>
                             <p id="booking-quote-mini" class="booking-mini-summary" role="status"><strong>Récapitulatif du prix</strong><span>Sélectionnez le véhicule et les dates pour afficher le tarif estimatif.</span></p>
                             <div class="booking-step-actions"><span></span><button type="button" class="btn btn-primary" data-next-step="2">Continuer</button></div>
                         </section>
@@ -311,7 +319,7 @@
     <script src="fleet-utils.js?v=20261111-individual-vehicle-uid"></script>
     <script src="navigation.js?v=20260929-1"></script>
     <script src="contract-terms.js?v=20261025-subarticles"></script>
-    <script src="script.js?v=20261112-fix-empty-catalogue"></script><script src="client-signature.js?v=20261113-signature-retention"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261111-vehicle-uid"></script>
+    <script src="script.js?v=20261113-multi-periods"></script><script src="client-signature.js?v=20261113-signature-retention"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261111-vehicle-uid"></script>
     <script src="enhancements.js?v=20261113-signature-retention"></script>
     <script src="partner-requests.js?v=20261108-partner-modal"></script>
     <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>
