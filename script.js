@@ -242,7 +242,7 @@ function renderPublicCars() {
         const [statusClass, statusLabel] = currentStatusLabels[currentStatus] || currentStatusLabels.unknown;
         const fleetId = group.id || car.id;
         const safeName = name.replace(/'/g, "\\'");
-        return `<div class="car-card" data-fleet-id="${fleetId}"><div class="car-gallery">${photos.map(photo => `<img src="${photo}" loading="lazy" alt="${name}">`).join('')}</div><div class="car-info"><h3>${name}</h3><small class="car-uid">${escapeFunHtml(uid)}</small><p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p><div class="car-price">${car.pricing ? `<span>12 h : ${car.pricing.half_day || '—'}</span><span>24 h : ${car.pricing.full_day || '—'}</span>` : (car.prix || 'Sur devis')}</div><div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission || '—'}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant || car.fuel || '—'}</span><span><i class="fas fa-users"></i> ${car.places || car.seats || '—'}</span></div><p class="car-desc">${description}</p><button type="button" class="fleet-status-button fleet-status-button-card ${statusClass}" onclick="openBookingForFleet('${fleetId}','${safeName}')" aria-label="${name} : ${statusLabel}"><strong><i class="fas fa-circle-check"></i> ${statusLabel}</strong><span>Voir la disponibilité et réserver</span></button><div class="car-actions"><button class="btn btn-primary btn-reserve" ${state.available ? '' : 'disabled'} onclick="openBookingForVehicle('${fleetId}','${safeName}')"><i class="fas fa-calendar-check"></i> Réserver</button><button class="btn btn-outline btn-quote" onclick="openQuoteForVehicle('${fleetId}')"><i class="fas fa-file-invoice"></i> Devis</button><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/${encodeURIComponent(String(siteConfig.footer.telephone || '').replace(/\D/g, ''))}?text=${encodeURIComponent(`Bonjour, je souhaite un devis pour ${name} (${uid}).`)}"><i class="fab fa-whatsapp"></i> WhatsApp</a></div></div></div>`
+        return `<div class="car-card" data-fleet-id="${fleetId}"><div class="car-gallery">${photos.map(photo => `<img src="${photo}" loading="lazy" alt="${name}">`).join('')}</div><div class="car-info"><h3>${name}</h3><small class="car-uid">${escapeFunHtml(uid)}</small><p class="booking-mode-label">${car.driver_mode === 'with_driver' ? 'Location avec chauffeur' : 'Location sans chauffeur'}</p><div class="car-price">${car.pricing ? `<span>12 h : ${formatPublicPrice(car.pricing.half_day)}</span><span>24 h : ${formatPublicPrice(car.pricing.full_day)}</span>` : (car.price_per_day ? formatPublicPrice(car.price_per_day) : (car.prix || 'Sur devis'))}</div><div class="car-tags"><span><i class="fas fa-cog"></i> ${car.transmission || '—'}</span><span><i class="fas fa-gas-pump"></i> ${car.carburant || car.fuel || '—'}</span><span><i class="fas fa-users"></i> ${car.places || car.seats || '—'}</span></div><p class="car-desc">${description}</p><button type="button" class="fleet-status-button fleet-status-button-card ${statusClass}" onclick="openBookingForFleet('${fleetId}','${safeName}')" aria-label="${name} : ${statusLabel}"><strong><i class="fas fa-circle-check"></i> ${statusLabel}</strong><span>Voir la disponibilité et réserver</span></button><div class="car-actions"><button class="btn btn-primary btn-reserve" ${state.available ? '' : 'disabled'} onclick="openBookingForVehicle('${fleetId}','${safeName}')"><i class="fas fa-calendar-check"></i> Réserver</button><button class="btn btn-outline btn-quote" onclick="openQuoteForVehicle('${fleetId}')"><i class="fas fa-file-invoice"></i> Devis</button><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/${encodeURIComponent(String(siteConfig.footer.telephone || '').replace(/\D/g, ''))}?text=${encodeURIComponent(`Bonjour, je souhaite un devis pour ${name} (${uid}).`)}"><i class="fab fa-whatsapp"></i> WhatsApp</a></div></div></div>`
     }).join('') || '<p class="fleet-empty">Aucune voiture ne correspond à vos critères.</p>';
 }
 
@@ -255,7 +255,7 @@ async function loadCars() {
     if (window.rentCarSupabase) {
         try {
             const { data: remoteCars, error: vehicleError } = await window.rentCarSupabase.from('public_fleet_vehicles').select('id,name,slug,description,price_per_day,transmission,fuel,seats,status,image_urls,make,model,price_12h,price_24h,driver_mode,driver_fee,extra_driver_fee,province_under_150_mode,province_under_150_price,province_over_150_mode,province_over_150_price,price_30_100_per_day,price_100_200_per_day,price_over_200_per_day,contract_start_date,contract_end_date,owner_phone,owner_whatsapp_enabled,uid').order('price_per_day',{ascending:true}).order('name',{ascending:true});
-            if (!vehicleError && remoteCars?.length) normalized = remoteCars.map(car => ({...car,nom:car.name,prix:car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',pricing:{half_day:car.price_12h ? formatMGA(car.price_12h) : 'Sur devis',full_day:car.price_24h ? formatMGA(car.price_24h) : 'Sur devis'},places:car.seats,carburant:car.fuel || '—',photos:car.image_urls || []}));
+            if (!vehicleError && remoteCars?.length) normalized = remoteCars.map(car => ({...car,nom:car.name,prix:car.price_per_day ? `${formatMGA(car.price_per_day)} / jour` : 'Sur devis',pricing:{half_day:car.price_12h || 0,full_day:car.price_24h || 0},places:car.seats,carburant:car.fuel || '—',photos:car.image_urls || []}));
             const { data: booked } = await window.rentCarSupabase.from('reservations').select('vehicle_id,status').neq('status','cancelled').limit(1000);
             publicRentalCounts = (booked || []).reduce((acc,row) => { if (row.vehicle_id) acc[row.vehicle_id] = (acc[row.vehicle_id] || 0) + 1; return acc; }, {});
         } catch (error) { console.warn('Chargement distant des voitures impossible.', error); }
@@ -739,6 +739,10 @@ function formatBookingRate(value) {
     const amount = Number(value || 0);
     return amount > 0 ? `${amount.toLocaleString('fr-FR').replace(/[\s\u00a0\u202f]/g, '.')} Ar` : 'Sur devis';
 }
+function formatForeignPrice(value, currency) { const amount=Number(value||0); if(!(amount>0)) return ''; const rate=currency==='EUR'?7200:6600; const symbol=currency==='EUR'?'€':'$'; return `${Math.ceil((amount/rate)/5)*5} ${symbol}`; }
+function formatForeignPrices(value) { const eur=formatForeignPrice(value,'EUR'), usd=formatForeignPrice(value,'USD'); return eur&&usd ? `<small class="foreign-prices">≈ ${eur} · ${usd}</small>` : ''; }
+function formatPublicPrice(value) { const amount=Number(value||0); return amount>0 ? `${formatBookingRate(amount)} ${formatForeignPrices(amount)}` : 'Sur devis'; }
+function formatPublicPriceText(value) { const amount=Number(value||0); return amount>0 ? `${formatBookingRate(amount)} (≈ ${formatForeignPrice(amount,'EUR')} · ${formatForeignPrice(amount,'USD')})` : 'Sur devis'; }
 function formatBookingDailyRate(value) {
     const formatted = formatBookingRate(value);
     return formatted === 'Sur devis' ? formatted : `${formatted}/jour`;
@@ -748,11 +752,11 @@ function updateBookingDistanceOptionLabels(vehicle) {
     if (!select || !vehicle) return;
     const labels = {
         '0_30': usesCumulativePkLabels(vehicle)
-            ? `${cumulativePkBandLabels['0_30']} — 12 h : ${formatBookingRate(vehicle.price_12h || vehicle.price_per_day)} · 24 h : ${formatBookingRate(vehicle.price_24h)}`
-            : `${cumulativePkBandLabels['0_30']} — ${formatBookingDailyRate(vehicle.price_per_day || vehicle.price_12h)}`,
-        '30_100': `${cumulativePkBandLabels['30_100']} — ${formatBookingDailyRate(vehicle.price_30_100_per_day)}`,
-        '100_200': `${cumulativePkBandLabels['100_200']} — ${formatBookingDailyRate(vehicle.price_100_200_per_day)}`,
-        'over_200': `${cumulativePkBandLabels.over_200} — ${formatBookingDailyRate(vehicle.price_over_200_per_day)}`
+            ? `${cumulativePkBandLabels['0_30']} — 12 h : ${formatPublicPriceText(vehicle.price_12h || vehicle.price_per_day)} · 24 h : ${formatPublicPriceText(vehicle.price_24h)}`
+            : `${cumulativePkBandLabels['0_30']} — ${formatPublicPriceText(vehicle.price_per_day || vehicle.price_12h)} / jour`,
+        '30_100': `${cumulativePkBandLabels['30_100']} — ${formatPublicPriceText(vehicle.price_30_100_per_day)} / jour`,
+        '100_200': `${cumulativePkBandLabels['100_200']} — ${formatPublicPriceText(vehicle.price_100_200_per_day)} / jour`,
+        'over_200': `${cumulativePkBandLabels.over_200} — ${formatPublicPriceText(vehicle.price_over_200_per_day)} / jour`
     };
     Array.from(select.options || []).forEach(option => {
         if (labels[option.value]) option.textContent = labels[option.value];
@@ -772,10 +776,10 @@ function renderBookingDistancePrices(vehicle) {
         if (key === '0_30') {
             const dailyRate = vehicle.price_per_day || rate12;
             pricing = cumulative
-                ? `<span><strong>${formatBookingRate(rate12)} / 12 h</strong></span><small>Formule 24 h : ${formatBookingRate(rate24)}</small>`
-                : `<span><strong>${formatBookingDailyRate(dailyRate)}</strong></span>${rate24 > 0 && rate24 !== Number(dailyRate) ? `<small>Formule 24 h : ${formatBookingRate(rate24)}</small>` : ''}`;
+                ? `<span><strong>${formatPublicPrice(rate12)} / 12 h</strong></span><small>Formule 24 h : ${formatPublicPrice(rate24)}</small>`
+                : `<span><strong>${formatPublicPrice(dailyRate)} / jour</strong></span>${rate24 > 0 && rate24 !== Number(dailyRate) ? `<small>Formule 24 h : ${formatPublicPrice(rate24)}</small>` : ''}`;
         } else {
-            pricing = `<span><strong>${formatBookingDailyRate(vehicle[band.priceKey])}</strong></span>`;
+            pricing = `<span><strong>${formatPublicPrice(vehicle[band.priceKey])} / jour</strong></span>`;
         }
         const minimum = key === '0_30' ? 'Formules 12 h ou 24 h' : 'Tarif journalier — durée flexible';
         const title = cumulativePkBandLabels[key];

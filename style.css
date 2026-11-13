@@ -414,3 +414,5 @@ body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce
   .btn, .btn-submit, button, input[type="button"], input[type="submit"] { transition: none; }
   .btn:not(:disabled):hover, .btn-submit:not(:disabled):hover, button:not(:disabled):hover, .btn:not(:disabled):active, .btn-submit:not(:disabled):active, button:not(:disabled):active { transform: none; }
 }
+
+.foreign-prices{display:block;color:#66788a;font-size:.78em;font-weight:600;margin-top:3px}.car-price .foreign-prices{font-size:.72em}
