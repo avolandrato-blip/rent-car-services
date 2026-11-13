@@ -112,7 +112,7 @@ test('le dashboard chauffeur enregistre le paiement dans un formulaire utilisabl
   assert.match(html, /id="payment-form"/);
   assert.match(html, /id="payment-due-date"/);
   assert.match(html, /id="payment-amount"/);
-  assert.match(html, /team\.js\?v=20261113-return-damage-checklists/);
+  assert.match(html, /team\.js\?v=20261113-return-damage-signatures/);
   assert.match(team, /async function savePayment\(event\)/);
   assert.match(team, /\.from\('payments'\)\.insert/);
   assert.match(team, /Paiement non enregistré/);
@@ -146,4 +146,21 @@ test('les fiches chauffeur de restitution et de dégradation sont signées, chec
   for (const level of ['0', '1/4', '1/3', '1/2', '3/4', '1/1']) assert.ok(html.includes(`value="${level}"`));
   assert.match(html, /damage-parts/);
   assert.match(html, /damage-photos/);
+});
+
+
+test('admin et chauffeur capturent ou joignent les signatures par défaut et consignent l’envoi WhatsApp', () => {
+  const admin = read('admin-enhancements.js');
+  const team = read('team.js');
+  const teamHtml = read('team.html');
+  assert.match(admin, /id=\"rm-signature-canvas\"/);
+  assert.match(admin, /client_signature_data:clientSignature/);
+  assert.match(admin, /lessor_signature_data:lessorSignature/);
+  assert.match(admin, /loadLessorSignature/);
+  assert.match(admin, /images\/owner-stamp\.png/);
+  assert.match(admin, /photos_sent_whatsapp/);
+  assert.match(team, /get_chauffeur_mission_contract_signatures/);
+  assert.match(team, /client_signature_data:signatures\.client_signature_data/);
+  assert.match(team, /lessor_signature_data:signatures\.lessor_signature_data/);
+  assert.match(teamHtml, /envoyées via WhatsApp/);
 });
