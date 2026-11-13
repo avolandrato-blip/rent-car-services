@@ -157,6 +157,10 @@ test('le dialogue de signature client est réutilisé à la réservation et aux 
   assert.match(publicScript, /canvas\.toDataURL\('image\/png'\)/);
   assert.match(publicScript, /slot\.replaceChildren\(image\)/);
   assert.doesNotMatch(publicScript, /localStorage|sessionStorage|rentCarSupabase|fetch\(|sign_contract|contract_signatures/);
+  const activeBooking = read('enhancements.js');
+  assert.match(activeBooking, /window\.getBookingClientSignature\?\.\(\)/);
+  assert.match(activeBooking, /db\.rpc\('save_public_reservation_signature'/);
+  assert.match(activeBooking, /signatureSaveFailed/);
   assert.match(html, /Continuer sans signer/);
   assert.match(publicScript, /restoreDocumentSignatureSlots\(\)/);
   assert.match(documentGenerator, /invoice-print-button'\)\?\.classList\.add\('hidden'\)/);
@@ -172,6 +176,18 @@ test('la signature client est conservée dans une table privée et n’est renvo
   assert.match(edge, /reservation_client_signatures/);
   assert.match(edge, /customerSignature: safeCustomerSignature/);
   assert.ok(edge.indexOf('get_public_invoice_by_otp') < edge.indexOf('reservation_client_signatures'));
+});
+
+test('la signature réutilisable est supprimée après H+24 sans supprimer les signatures formelles de contrat', () => {
+  const migration = read('supabase/migrations/20261113120000_client_signature_retention.sql');
+  const edge = read('supabase/functions/get-invoice-contract-package/index.ts');
+  assert.match(migration, /reservation\.end_at \+ interval '24 hours'/);
+  assert.match(migration, /cron\.schedule\(/);
+  assert.match(migration, /'\*\/10 \* \* \* \*'/);
+  assert.match(migration, /DELETE FROM public\.reservation_client_signatures/i);
+  assert.doesNotMatch(migration, /DELETE FROM public\.contract_signatures/i);
+  assert.match(edge, /Date\.now\(\) < rentalEndMs \+ 24 \* 60 \* 60 \* 1000/);
+  assert.match(edge, /if \(signatureRetentionActive\)/);
 });
 
 test('le RPC public distingue le chauffeur inclus du supplément chauffeur sélectionné', () => {

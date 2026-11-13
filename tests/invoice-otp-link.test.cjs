@@ -41,6 +41,6 @@ test('la consultation utilise le endpoint OTP protégé et contrôle les annexes
 test('les champs contractuels additionnels ne sont récupérés qu’après validation OTP côté serveur', () => {
   const edge = read('supabase/functions/get-invoice-contract-package/index.ts');
   assert.ok(edge.indexOf('get_public_invoice_by_otp') < edge.indexOf('reservationQuery'));
-  assert.match(edge, /select: "distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email"/);
+  assert.match(edge, /select: "end_at,distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email"/);
   assert.match(edge, /invoice\.reservation = \{ \.\.\.invoice\.reservation, \.\.\.reservationDetails\[0\] \}/);
 });

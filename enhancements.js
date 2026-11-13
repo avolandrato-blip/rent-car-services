@@ -302,6 +302,23 @@
     if (!reservationResult) return showBookingError('Les dernières voitures disponibles viennent d’être réservées. Actualisez le calendrier puis réessayez.');
     // La page publique ne crée pas de ligne payments : cette table est réservée à l’admin. Le montant déclaré reste dans reservations.deposit_amount et sera validé depuis l’admin.
     const r = reservationResult.data;
+    const signatureData = window.getBookingClientSignature?.() || '';
+    let signatureSaveFailed = false;
+    if (signatureData) {
+      try {
+        const savedSignature = await db.rpc('save_public_reservation_signature', {
+          p_reservation_id: r.id,
+          p_reference: r.reference,
+          p_phone: customer.customer_phone,
+          p_signature_data: signatureData
+        });
+        signatureSaveFailed = Boolean(savedSignature.error || savedSignature.data !== true);
+        if (savedSignature.error) console.error('Client signature was not stored:', savedSignature.error);
+      } catch (error) {
+        signatureSaveFailed = true;
+        console.error('Client signature was not stored:', error);
+      }
+    }
     const normalizeWhatsAppNumber = value => { let digits = String(value || '').replace(/\D/g, ''); if (digits.startsWith('00')) digits = digits.slice(2); if (digits.startsWith('0')) digits = `261${digits.slice(1)}`; return digits; };
     const ownerRecipient = normalizeWhatsAppNumber(reservedUnit.owner_phone);
     const routeToOwner = Boolean(ownerRecipient && (ownerMode || reservedUnit.owner_whatsapp_enabled));
@@ -310,7 +327,8 @@
     window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
     result.className = 'booking-result booking-success';
     const reservationMessage = quote.requiresQuote ? `Votre demande de devis (${r.reference}) a bien été enregistrée. Nous allons vous confirmer le tarif et la disponibilité.` : deposit > 0 ? `Votre demande de réservation (${r.reference}) a bien été enregistrée avec l’acompte indiqué. La période est bloquée sous réserve de validation de l’acompte.` : `Votre demande de réservation (${r.reference}) a bien été enregistrée. La période reste disponible jusqu’au versement et à la validation de l’acompte.`;
-    result.textContent = reservationMessage;
+    result.textContent = `${reservationMessage}${signatureSaveFailed ? ' Votre réservation est enregistrée, mais la signature n’a pas pu être sauvegardée ; vous pourrez la dessiner au moment de signer les documents.' : ''}`;
+    window.clearBookingClientSignature?.();
     $('booking-form').reset();
     $('invoice-access-panel')?.classList.toggle('hidden', deposit <= 0);
     setBookingStep(1); updatePaymentProofVisibility();

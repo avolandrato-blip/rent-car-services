@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
     if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(reservationId)) return response({ error: "Référence, téléphone ou code incorrect." }, 403);
     const reservationQuery = new URLSearchParams({
       id: `eq.${reservationId}`,
-      select: "distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email",
+      select: "end_at,distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email",
       limit: "1",
     });
     const reservationResponse = await fetch(`${supabaseUrl}/rest/v1/reservations?${reservationQuery.toString()}`, { headers });
@@ -124,15 +124,20 @@ Deno.serve(async (req: Request) => {
       ? lessorSignature
       : "";
 
-    const customerSignatureQuery = new URLSearchParams({
-      reservation_id: `eq.${reservationId}`,
-      select: "signature_data",
-      limit: "1",
-    });
-    const customerSignatureResponse = await fetch(`${supabaseUrl}/rest/v1/reservation_client_signatures?${customerSignatureQuery.toString()}`, { headers });
-    if (!customerSignatureResponse.ok) return response({ error: "Impossible de préparer la signature du client." }, 502);
-    const customerSignatureRows = await customerSignatureResponse.json();
-    const customerSignature = Array.isArray(customerSignatureRows) ? String(customerSignatureRows[0]?.signature_data || "") : "";
+    const rentalEndMs = Date.parse(String(invoice?.reservation?.end_at || ""));
+    const signatureRetentionActive = Number.isFinite(rentalEndMs) && Date.now() < rentalEndMs + 24 * 60 * 60 * 1000;
+    let customerSignature = "";
+    if (signatureRetentionActive) {
+      const customerSignatureQuery = new URLSearchParams({
+        reservation_id: `eq.${reservationId}`,
+        select: "signature_data",
+        limit: "1",
+      });
+      const customerSignatureResponse = await fetch(`${supabaseUrl}/rest/v1/reservation_client_signatures?${customerSignatureQuery.toString()}`, { headers });
+      if (!customerSignatureResponse.ok) return response({ error: "Impossible de préparer la signature du client." }, 502);
+      const customerSignatureRows = await customerSignatureResponse.json();
+      customerSignature = Array.isArray(customerSignatureRows) ? String(customerSignatureRows[0]?.signature_data || "") : "";
+    }
     const safeCustomerSignature = /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(customerSignature) && customerSignature.length <= 500000
       ? customerSignature
       : "";
