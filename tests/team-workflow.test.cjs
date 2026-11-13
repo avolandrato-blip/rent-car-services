@@ -150,12 +150,12 @@ test('les fiches chauffeur de restitution et de dégradation sont signées, chec
 
 
 test('admin et chauffeur capturent ou joignent les signatures par défaut et consignent l’envoi WhatsApp', () => {
-  const admin = read('admin-enhancements.js');
+  const admin = read('reference-models.js');
   const team = read('team.js');
   const teamHtml = read('team.html');
-  assert.match(admin, /id=\"rm-signature-canvas\"/);
+  assert.match(admin, /id=\"rf-signature-canvas\"/);
   assert.match(admin, /client_signature_data:clientSignature/);
-  assert.match(admin, /lessor_signature_data:lessorSignature/);
+  assert.match(admin, /lessor_signature_data:ownerSignature/);
   assert.match(admin, /loadLessorSignature/);
   assert.match(admin, /images\/owner-stamp\.png/);
   assert.match(admin, /photos_sent_whatsapp/);
