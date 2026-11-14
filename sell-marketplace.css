@@ -1,0 +1,52 @@
+/* UI d’achat et de recherche — styles confinés à sell.html */
+.sale-marketplace-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 32px; }
+.sale-marketplace-actions .btn { min-height: 48px; }
+.sale-terms-section { padding: 34px 0 76px; background: linear-gradient(180deg, rgba(255,255,255,.04), transparent); }
+.sale-terms-intro, .sale-terms-note { max-width: 850px; line-height: 1.65; }
+.sale-terms-subtitle { margin: 30px 0 18px; color: var(--accent, #d9a441); }
+.sale-marketplace-grid { margin: 0 0 24px; gap: 20px; }
+.sale-marketplace-grid .flip-card { height: 270px; cursor: pointer; }
+.sale-marketplace-grid .flip-card:focus-visible { outline: 3px solid #e8b84d; outline-offset: 4px; border-radius: 16px; }
+.sale-marketplace-grid .flip-front, .sale-marketplace-grid .flip-back { border: 1px solid rgba(217,164,65,.18); }
+.sale-marketplace-grid .flip-front h4 { margin: 6px 0 12px; }
+.sale-marketplace-grid .flip-front span { font-size: .8rem; opacity: .7; }
+.sale-marketplace-grid .flip-front i { font-size: 2.35rem; }
+.sale-marketplace-grid .flip-back { padding: 22px; line-height: 1.55; }
+.sale-marketplace-grid .flip-back p { margin: 0; }
+.sale-terms-note { margin-top: 26px; font-size: .9rem; opacity: .85; }
+
+.sale-request-modal { width: min(780px, calc(100% - 24px)); max-width: 780px; max-height: min(92vh, 900px); padding: 0; border: 0; border-radius: 22px; overflow: auto; background: #f8fafc; color: #142b3d; box-shadow: 0 28px 90px rgba(0,0,0,.45); }
+.sale-request-modal::backdrop { background: rgba(3,12,22,.78); backdrop-filter: blur(5px); }
+.sale-modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 26px 30px 22px; color: #fff; background: linear-gradient(125deg,#071827,#0e3657 62%,#176890); }
+.sale-modal-header h2 { margin: 8px 0 6px; color: #fff; font-size: clamp(1.35rem,3vw,1.8rem); }
+.sale-modal-header p { margin: 0; color: #dce7f2; line-height: 1.5; }
+.sale-modal-eyebrow { color: #f4ca70; font-size: .68rem; font-weight: 800; letter-spacing: .14em; }
+.sale-modal-close { flex: 0 0 auto; width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; color: #fff; background: rgba(255,255,255,.1); font-size: 1.55rem; cursor: pointer; }
+.sale-modal-close:hover { color: #10273b; background: #f4ca70; }
+.sale-request-form { padding: 24px 30px 28px; }
+.sale-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.sale-form-grid label { display: flex; flex-direction: column; gap: 6px; color: #17334c; font-size: .88rem; font-weight: 700; }
+.sale-form-grid input, .sale-form-grid select, .sale-form-grid textarea { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #d2dbe5; border-radius: 10px; color: #142b3d; background: #fff; font: inherit; font-weight: 400; }
+.sale-form-grid textarea { resize: vertical; }
+.sale-form-grid input:focus, .sale-form-grid select:focus, .sale-form-grid textarea:focus { outline: 0; border-color: #e6b51c; box-shadow: 0 0 0 4px rgba(230,181,28,.16); }
+.sale-form-grid .sale-form-full { grid-column: 1 / -1; }
+.sale-modal-disclaimer { margin: 20px 0 14px; padding: 13px 15px; border-left: 3px solid #e6b51c; border-radius: 0 10px 10px 0; background: #fff8de; color: #344b64; font-size: .88rem; line-height: 1.5; }
+.sale-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.sale-modal-actions .btn { min-height: 48px; }
+.sale-whatsapp-fallback { flex-basis: 100%; margin: 2px 0 0; color: #17633d; font-size: .9rem; }
+.sale-whatsapp-fallback a { color: inherit; font-weight: 700; }
+body[data-theme="royal-night"] .sale-request-modal { background: #f8fafc; color: #142b3d; }
+@media (max-width: 700px) {
+  .sale-marketplace-grid { grid-template-columns: 1fr; }
+  .sale-marketplace-grid .flip-card { height: 240px; }
+  .sale-marketplace-actions { display: grid; grid-template-columns: 1fr; }
+  .sale-marketplace-actions .btn { width: 100%; }
+  .sale-modal-header { padding: 22px 20px 18px; }
+  .sale-request-form { padding: 20px; }
+  .sale-form-grid { grid-template-columns: 1fr; }
+  .sale-form-grid .sale-form-full { grid-column: auto; }
+  .sale-modal-actions .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sale-marketplace-grid .flip-card-inner { transition: none; }
+}
