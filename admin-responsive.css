@@ -1,0 +1,58 @@
+/* Interface administration responsive : bureau, tablette et mobile */
+#app-view.shell{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh;max-width:none}
+#app-view .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;z-index:20}
+#app-view .main{min-width:0;padding:28px clamp(16px,3vw,48px) 48px}
+#app-view .topbar{position:sticky;top:0;z-index:15;padding:12px 0 18px;background:linear-gradient(var(--bg) 78%,transparent);backdrop-filter:blur(8px)}
+#app-view .topbar h1{font-size:clamp(22px,2.5vw,30px)}
+#app-view .card{min-width:0}
+#app-view .section-head{flex-wrap:wrap}
+#app-view .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#app-view .table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#app-view .table{min-width:760px}
+#app-view .sale-admin-card{display:grid;gap:12px;margin:10px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 6px 18px #0b1f3308}
+#app-view .sale-admin-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#app-view .sale-admin-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#app-view .sale-admin-card .sale-status-select{min-height:40px}
+#app-view .sale-admin-photos{display:flex;gap:8px;flex-wrap:wrap}
+#app-view .sale-admin-photos .sale-admin-thumb{width:76px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+#app-view .sale-admin-card-description{white-space:pre-line;line-height:1.5;margin:0}
+@media (max-width:1100px){
+  #app-view.shell{grid-template-columns:220px minmax(0,1fr)}
+  #app-view .sidebar{padding:22px 12px}
+  #app-view .brand{font-size:18px;padding-inline:8px}
+  #app-view .nav button{padding:11px 10px;font-size:13px}
+  #app-view .main{padding-inline:24px}
+}
+@media (max-width:820px){
+  #app-view.shell{display:block}
+  #app-view .sidebar{position:sticky;top:0;height:auto;padding:10px 12px;background:var(--navy)}
+  #app-view .brand{display:inline-block;padding:0 8px 8px}
+  #app-view .nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+  #app-view .nav button{flex:0 0 auto;width:auto;margin:0;white-space:nowrap;padding:10px 12px}
+  #app-view .side-note{display:none}
+  #app-view .main{padding:18px 16px 40px}
+  #app-view .topbar{position:static;padding-top:0}
+  #app-view .dashboard-grid,.dashboard-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:620px){
+  #app-view .main{padding-inline:12px}
+  #app-view .topbar{align-items:stretch;gap:12px}
+  #app-view .topbar-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #app-view .topbar-actions .btn{width:100%;min-height:44px;padding:9px 8px;font-size:12px}
+  #app-view .form-grid{grid-template-columns:1fr}
+  #app-view .field.full{grid-column:auto}
+  #app-view .section-head{align-items:stretch;flex-direction:column}
+  #app-view .section-head .btn{width:100%;min-height:44px}
+  #app-view .dashboard-grid,.dashboard-metrics{grid-template-columns:1fr 1fr;gap:9px}
+  #app-view .dashboard-metric{min-width:0;padding:12px}
+  #app-view .table{min-width:680px}
+  #app-view .sale-admin-card{padding:13px}
+  #app-view .sale-admin-card-head{display:grid}
+  #app-view .sale-admin-card-actions{display:grid;grid-template-columns:1fr 1fr}
+  #app-view .sale-admin-card-actions .sale-status-select,#app-view .sale-admin-card-actions .btn{width:100%;min-height:42px}
+}
+@media (max-width:380px){
+  #app-view .dashboard-grid,.dashboard-metrics{grid-template-columns:1fr}
+  #app-view .topbar-actions{grid-template-columns:1fr}
+  #app-view .sale-admin-card-actions{grid-template-columns:1fr}
+}
