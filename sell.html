@@ -8,11 +8,22 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css?v=20261114-sale-gallery-2">
   <link rel="stylesheet" href="client-harmony.css?v=20261114-sales-menu">
-  <link rel="stylesheet" href="sell-marketplace.css?v=20261114-marketplace-1">
+  <link rel="stylesheet" href="sell-marketplace.css?v=20261114-marketplace-2">
   <script>document.documentElement.classList.add('sale-page');</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body data-theme="royal-night">
+<body data-theme="premium-white">
+  <script>
+    (() => {
+      const applyAutoTheme = () => {
+        const hour = new Date().getHours();
+        document.body.dataset.theme = hour >= 6 && hour < 19 ? 'premium-white' : 'royal-night';
+        try { localStorage.setItem('rentcar-theme-mode', 'auto'); } catch (_) {}
+      };
+      applyAutoTheme();
+      window.setInterval(applyAutoTheme, 60000);
+    })();
+  </script>
   <header class="header">
     <div class="nav-container">
       <h1 id="brand-name">Rent Car <span>Service</span></h1>
@@ -20,9 +31,7 @@
       <nav id="nav-menu" aria-label="Navigation principale">
         <a class="nav-link" href="index.html#home">Accueil</a>
         <a class="nav-link" href="index.html#cars">Nos véhicules</a>
-        <a class="nav-link" href="index.html#terms">Nos conditions</a>
-        <a class="nav-link" href="#sale-terms">Conditions de mise en relation</a>
-        <a class="nav-sale-link nav-current" href="sell.html?v=20261114-marketplace-1" aria-current="page">Ventes</a>
+        <a class="nav-sale-link nav-current" href="sell.html?v=20261114-marketplace-2" aria-current="page">Ventes</a>
       </nav>
     </div>
   </header>
@@ -37,56 +46,6 @@
           <button class="btn btn-outline" type="button" data-sale-open="buyer"><i class="fas fa-magnifying-glass"></i> Je cherche une voiture</button>
         </div>
         <div id="sale-catalog" class="sale-catalog-grid"><p class="empty">Chargement des voitures à vendre…</p></div>
-      </div>
-    </section>
-    <section id="sale-terms" class="sale-terms-section">
-      <div class="container">
-        <p class="eyebrow">Vendeur et acheteur</p>
-        <h2 class="section-title">Conditions de mise en relation</h2>
-        <p class="sale-terms-intro">Touchez ou cliquez sur une carte pour lire les informations. Tous les échanges, questions, visites et négociations passent par Rent Car Service. Les coordonnées du vendeur et de l’acheteur ne sont pas communiquées directement à l’autre partie.</p>
-        <h3 class="sale-terms-subtitle">Vous proposez un véhicule</h3>
-        <div class="conditions-grid sale-marketplace-grid">
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Proposition sans engagement">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-file-lines"></i><h4>Proposition sans engagement</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Envoyer votre proposition ne garantit ni sa publication ni la vente du véhicule. Rent Car Service vous recontactera après étude.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Informations exactes">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-circle-info"></i><h4>Informations exactes</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Décrivez fidèlement le véhicule, son état, son kilométrage, ses défauts connus et les documents disponibles. Signalez tout changement important.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Droit de proposer le véhicule">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-id-card"></i><h4>Droit de proposer le véhicule</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Vous devez être propriétaire du véhicule ou être autorisé à le proposer à la vente. Les documents pourront être vérifiés avant toute suite.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Prix à confirmer">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-tags"></i><h4>Prix à confirmer</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Le prix indiqué est votre prix souhaité. Le prix de vente et les modalités seront discutés et confirmés avant toute transaction.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Échanges centralisés">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-comments"></i><h4>Échanges centralisés</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Les questions, offres et demandes de visite passent par Rent Car Service. Vos coordonnées ne sont pas communiquées directement à l’acheteur.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Vente entre particuliers">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-handshake"></i><h4>Vente entre particuliers</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>La vente et le transfert de propriété sont conclus entre vendeur et acheteur. Rent Car Service reste le canal d’échange et organise les étapes sans communiquer directement vos coordonnées.</p></div></div>
-          </div>
-        </div>
-        <h3 class="sale-terms-subtitle">Vous recherchez un véhicule</h3>
-        <div class="conditions-grid sale-marketplace-grid">
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Demande de recherche">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-magnifying-glass"></i><h4>Demande de recherche</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Votre demande aide Rent Car Service à rechercher un véhicule correspondant à vos critères. Elle ne garantit pas une disponibilité immédiate.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Critères à préciser">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-list-check"></i><h4>Critères à préciser</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Indiquez la marque, le modèle, l’année souhaitée, votre budget et le nombre de places. Vous pouvez ajouter vos préférences.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Échanges centralisés">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-comments"></i><h4>Échanges centralisés</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Rent Car Service reste votre interlocuteur. Les questions et visites passent par nous; vos coordonnées ne sont pas communiquées directement au vendeur.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Offre à vérifier">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-clipboard-check"></i><h4>Offre à vérifier</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Les informations sur un véhicule sont précisées au fur et à mesure des vérifications disponibles. Vous pouvez demander des détails avant de décider.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Prix et transaction">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-money-bill-wave"></i><h4>Prix et transaction</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>Le prix, la visite, le paiement et le transfert de propriété devront être confirmés avant la vente, conclue entre vendeur et acheteur.</p></div></div>
-          </div>
-          <div class="flip-card sale-condition-card" tabindex="0" role="button" aria-pressed="false" aria-label="Lire : Aucun engagement immédiat">
-            <div class="flip-card-inner"><div class="flip-front"><i class="fas fa-scale-balanced"></i><h4>Aucun engagement immédiat</h4><span>Appuyez pour lire</span></div><div class="flip-back"><p>La demande de recherche ne constitue ni une réservation ni un engagement d’achat. Vous pouvez examiner toute proposition avant de donner votre accord.</p></div></div>
-          </div>
-        </div>
-        <p class="sale-terms-note">Ces informations décrivent le fonctionnement de la mise en relation; toute modalité particulière sera précisée avant la transaction.</p>
       </div>
     </section>
   </main>
@@ -132,6 +91,6 @@
   <script src="navigation.js?v=20260929-1"></script>
   <script src="supabase.js"></script>
   <script src="sale.js?v=20261114-marketplace-1"></script>
-  <script src="sale-requests.js?v=20261114-marketplace-1"></script>
+  <script src="sale-requests.js?v=20261114-marketplace-2"></script>
 </body>
 </html>

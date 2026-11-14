@@ -5,15 +5,21 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('sell.html contient le menu conditions et les deux parcours modal vendeur/acheteur', () => {
+test('sell.html ne contient plus les conditions de location et conserve les deux parcours vendeur/acheteur', () => {
   const html = read('sell.html');
-  assert.match(html, /href="#sale-terms"[^>]*>Conditions de mise en relation/);
+  assert.doesNotMatch(html, /sale-terms|sale-condition-card|Conditions de mise en relation|Nos conditions/);
   assert.match(html, /data-sale-open="seller"/);
   assert.match(html, /data-sale-open="buyer"/);
-  assert.match(html, /id="sale-terms"/);
-  assert.equal((html.match(/class="flip-card sale-condition-card"/g) || []).length, 12);
-  assert.match(html, /Tous les échanges, questions, visites et négociations passent par Rent Car Service/);
-  assert.match(html, /Les coordonnées du vendeur et de l’acheteur ne sont pas communiquées directement/);
+});
+
+test('sell.html reprend le mode automatique jour/nuit de la page location', () => {
+  const html = read('sell.html');
+  const css = read('sell-marketplace.css');
+  assert.match(html, /hour >= 6 && hour < 19 \? 'premium-white' : 'royal-night'/);
+  assert.match(html, /localStorage\.setItem\('rentcar-theme-mode', 'auto'\)/);
+  assert.match(html, /setInterval\(applyAutoTheme, 60000\)/);
+  assert.match(css, /body\[data-theme="royal-night"\] \.sale-request-modal \{ background: #122337/);
+  assert.match(css, /body\[data-theme="royal-night"\] \.sale-form-grid input/);
 });
 
 test('le modal vendeur demande les informations véhicule et ne collecte aucune photo', () => {

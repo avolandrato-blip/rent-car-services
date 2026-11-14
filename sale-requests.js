@@ -32,20 +32,6 @@
     dialog.addEventListener('close', () => modalOpeners.get(dialog)?.focus());
   });
 
-  document.querySelectorAll('.sale-condition-card').forEach(card => {
-    const flip = () => {
-      const flipped = card.classList.toggle('flipped');
-      card.setAttribute('aria-pressed', String(flipped));
-    };
-    card.addEventListener('click', flip);
-    card.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        flip();
-      }
-    });
-  });
-
   const buyerForm = document.getElementById('sale-buyer-form');
   const yearToInput = buyerForm?.elements.namedItem('year_to');
   const validateYears = () => {
