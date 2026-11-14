@@ -2,6 +2,20 @@
 .sale-marketplace-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 32px; }
 .sale-marketplace-actions .btn { min-height: 48px; }
 
+.sale-terms-section { padding: 34px 0 76px; background: linear-gradient(180deg, rgba(255,255,255,.04), transparent); }
+.sale-terms-intro, .sale-terms-note { max-width: 850px; line-height: 1.65; }
+.sale-terms-subtitle { margin: 30px 0 18px; color: var(--accent, #d9a441); }
+.sale-marketplace-grid { margin: 0 0 24px; gap: 20px; }
+.sale-marketplace-grid .flip-card { height: 270px; cursor: pointer; }
+.sale-marketplace-grid .flip-card:focus-visible { outline: 3px solid #e8b84d; outline-offset: 4px; border-radius: 16px; }
+.sale-marketplace-grid .flip-front, .sale-marketplace-grid .flip-back { border: 1px solid rgba(217,164,65,.18); }
+.sale-marketplace-grid .flip-front h4 { margin: 6px 0 12px; }
+.sale-marketplace-grid .flip-front span { font-size: .8rem; opacity: .7; }
+.sale-marketplace-grid .flip-front i { font-size: 2.35rem; }
+.sale-marketplace-grid .flip-back { padding: 22px; line-height: 1.55; }
+.sale-marketplace-grid .flip-back p { margin: 0; }
+.sale-terms-note { margin-top: 26px; font-size: .9rem; opacity: .85; }
+
 .sale-request-modal { width: min(780px, calc(100% - 24px)); max-width: 780px; max-height: min(92vh, 900px); padding: 0; border: 0; border-radius: 22px; overflow: auto; background: #f8fafc; color: #142b3d; box-shadow: 0 28px 90px rgba(0,0,0,.45); }
 .sale-request-modal::backdrop { background: rgba(3,12,22,.78); backdrop-filter: blur(5px); }
 .sale-modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 26px 30px 22px; color: #fff; background: linear-gradient(125deg,#071827,#0e3657 62%,#176890); }
@@ -33,12 +47,53 @@ body[data-theme="royal-night"] .sale-form-grid textarea::placeholder { color: #a
 body[data-theme="royal-night"] .sale-modal-disclaimer { background: #1b344d; color: #dce7f2; }
 body[data-theme="royal-night"] .sale-whatsapp-fallback { color: #b4e3c7; }
 
+/* Même relief 3D que les CTA de la page Location, limité à cette page. */
+html.sale-page .btn,
+html.sale-page button,
+html.sale-page input[type="button"],
+html.sale-page input[type="submit"] {
+  box-shadow: 0 4px 0 rgba(7,22,35,.34), 0 7px 14px rgba(7,22,35,.15);
+  transform: translateY(0);
+  transition: transform 140ms cubic-bezier(.2,.8,.2,1), box-shadow 140ms cubic-bezier(.2,.8,.2,1), filter 140ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  html.sale-page .btn:not(:disabled):hover,
+  html.sale-page button:not(:disabled):hover,
+  html.sale-page input[type="button"]:not(:disabled):hover,
+  html.sale-page input[type="submit"]:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(7,22,35,.34), 0 10px 18px rgba(7,22,35,.19);
+    filter: brightness(1.035);
+  }
+}
+html.sale-page .btn:not(:disabled):active,
+html.sale-page button:not(:disabled):active,
+html.sale-page input[type="button"]:not(:disabled):active,
+html.sale-page input[type="submit"]:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(7,22,35,.36), 0 3px 7px rgba(7,22,35,.12);
+}
+html.sale-page .btn:disabled,
+html.sale-page button:disabled,
+html.sale-page input[type="button"]:disabled,
+html.sale-page input[type="submit"]:disabled { box-shadow: none; transform: none; }
+html.sale-page .btn:focus-visible,
+html.sale-page button:focus-visible { outline: 3px solid #e8b84d; outline-offset: 3px; }
+
 @media (max-width: 700px) {
   .sale-marketplace-actions { display: grid; grid-template-columns: 1fr; }
   .sale-marketplace-actions .btn { width: 100%; }
+  .sale-marketplace-grid { grid-template-columns: 1fr; }
+  .sale-marketplace-grid .flip-card { height: 240px; }
   .sale-modal-header { padding: 22px 20px 18px; }
   .sale-request-form { padding: 20px; }
   .sale-form-grid { grid-template-columns: 1fr; }
   .sale-form-grid .sale-form-full { grid-column: auto; }
   .sale-modal-actions .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.sale-page .btn, html.sale-page button { transition: none; }
+  html.sale-page .btn:hover, html.sale-page button:hover,
+  html.sale-page .btn:active, html.sale-page button:active { transform: none; }
+  .sale-marketplace-grid .flip-card-inner { transition: none; }
 }

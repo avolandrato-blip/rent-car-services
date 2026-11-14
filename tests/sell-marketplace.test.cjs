@@ -5,9 +5,12 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('sell.html ne contient plus les conditions de location et conserve les deux parcours vendeur/acheteur', () => {
+test('sell.html conserve les conditions de mise en relation commerciale et exclut celles de location', () => {
   const html = read('sell.html');
-  assert.doesNotMatch(html, /sale-terms|sale-condition-card|Conditions de mise en relation|Nos conditions/);
+  assert.match(html, /href="#sale-terms"[^>]*>Conditions de mise en relation/);
+  assert.match(html, /id="sale-terms"/);
+  assert.equal((html.match(/class="flip-card sale-condition-card"/g) || []).length, 12);
+  assert.doesNotMatch(html, /Nos conditions|href="index\.html#terms"/);
   assert.match(html, /data-sale-open="seller"/);
   assert.match(html, /data-sale-open="buyer"/);
 });
@@ -20,6 +23,21 @@ test('sell.html reprend le mode automatique jour/nuit de la page location', () =
   assert.match(html, /setInterval\(applyAutoTheme, 60000\)/);
   assert.match(css, /body\[data-theme="royal-night"\] \.sale-request-modal \{ background: #122337/);
   assert.match(css, /body\[data-theme="royal-night"\] \.sale-form-grid input/);
+});
+
+test('tous les boutons sell ont le relief 3D utilisé sur la page Location', () => {
+  const css = read('sell-marketplace.css');
+  assert.match(css, /html\.sale-page \.btn,/);
+  assert.match(css, /box-shadow: 0 4px 0 rgba\(7,22,35,\.34\)/);
+  assert.match(css, /transform: translateY\(-2px\)/);
+  assert.match(css, /transform: translateY\(2px\)/);
+});
+
+test('les cartes des conditions commerciales se retournent aussi au clavier', () => {
+  const requests = read('sale-requests.js');
+  assert.match(requests, /querySelectorAll\('\.sale-condition-card'\)/);
+  assert.match(requests, /event\.key === 'Enter' \|\| event\.key === ' '/);
+  assert.match(requests, /aria-pressed/);
 });
 
 test('le modal vendeur demande les informations véhicule et ne collecte aucune photo', () => {
