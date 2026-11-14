@@ -303,7 +303,7 @@
     }
     const normalizeWhatsAppNumber = value => { let digits = String(value || '').replace(/\D/g, ''); if (digits.startsWith('00')) digits = digits.slice(2); if (digits.startsWith('0')) digits = `261${digits.slice(1)}`; return digits; };
     const ownerRecipient = normalizeWhatsAppNumber(reservedUnit.owner_phone);
-    const routeToOwner = Boolean(ownerRecipient && (ownerMode || reservedUnit.owner_whatsapp_enabled));
+    const routeToOwner = Boolean(ownerRecipient && ownerMode && reservedUnit.owner_whatsapp_enabled);
     const recipient = routeToOwner ? ownerRecipient : normalizeWhatsAppNumber(siteConfig.footer.whatsapp);
     const message = `${routeToOwner ? 'Bonjour, cette demande provient du site Rent Car Service.' : 'Bonjour, je vous transmets ma demande de réservation.'}%0ARéférence : ${encodeURIComponent(r.reference)}%0AClient : ${encodeURIComponent(customer.customer_name)}%0ATéléphone : ${encodeURIComponent(customer.customer_phone)}%0AWhatsApp : ${encodeURIComponent(customer.whatsapp_phone)}%0AVéhicule : ${encodeURIComponent(reservedUnit.name || reservedUnit.nom)}%0APériode : ${encodeURIComponent(start)} → ${encodeURIComponent(end)}%0A${quote.requiresQuote ? `Montant : demande de devis (${encodeURIComponent(quote.quoteReason || 'à confirmer')})` : `Total estimé : ${encodeURIComponent(formatMGA(finalTotal))}`}%0A${routeToOwner ? 'Merci de confirmer la disponibilité de cette voiture.' : (deposit === 0 ? 'La facture et le contrat seront envoyés dès paiement d’un acompte.' : 'Merci de confirmer la réception de l’acompte.')}`;
     window.open(`https://wa.me/${recipient}?text=${message}`, '_blank');
