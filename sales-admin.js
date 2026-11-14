@@ -55,10 +55,13 @@
       if (result.error) throw new Error(result.error.message);
       const saleId = id || result.data?.id;
       if (!saleId) throw new Error('Identifiant de l’annonce introuvable après l’enregistrement.');
+      const verification = await db.from('vehicle_sales').select('id,updated_at').eq('id', saleId).maybeSingle();
+      if (verification.error) throw new Error(`Vérification impossible : ${verification.error.message}`);
+      if (!verification.data) throw new Error('Aucune annonce correspondante n’a été trouvée après l’enregistrement. Vérifiez votre session administrateur.');
       const files = Array.from($('admin-sale-photos').files || []).slice(0, 6), urls = {};
       for (const file of files) { const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '-'), path = `${saleId}/${Date.now()}-${safe}`, upload = await db.storage.from('vehicle-sales').upload(path, file, { upsert: false, contentType: file.type }); if (upload.error) throw new Error(upload.error.message); urls[file.name] = db.storage.from('vehicle-sales').getPublicUrl(path).data.publicUrl; }
       if (Object.keys(urls).length) { const photoUpdate = await db.from('vehicle_sales').update({ photo_urls: urls, updated_at: new Date().toISOString() }).eq('id', saleId); if (photoUpdate.error) throw new Error(photoUpdate.error.message); }
-      form.reset(); setValue('admin-sale-id', ''); form.classList.add('hidden'); await loadVehicleSales();
+      form.reset(); setValue('admin-sale-id', ''); form.classList.add('hidden'); await loadVehicleSales(); alert(id ? 'Les modifications ont bien été enregistrées.' : 'L’annonce a bien été créée.');
     } catch (error) { alert(`Annonce non enregistrée : ${error.message}`); } finally { button.disabled = false; }
   }
 
