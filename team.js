@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = value => `${Number(value || 0).toLocaleString('fr-FR')} Ar`;
+  const normalizeWhatsApp = value => { let digits=String(value||'').replace(/\D/g,''); if(digits.startsWith('00')) digits=digits.slice(2); else if(digits.startsWith('0')) digits='261'+digits.slice(1); return digits; };
   const slug = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '').slice(0, 40) || 'chauffeur';
   const state = {driver:null,missions:[],selected:null,reservations:new Map(),vehicles:new Map(),payments:new Map(),dues:new Map(),checklists:new Map(),drawing:false,hasInk:false,checklistMission:null,checklistPhase:null,paymentMission:null,returnDocMission:null,returnDocKind:null};
   const formatDate = value => value ? new Date(value).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}) : '—';
@@ -120,7 +121,7 @@
     const returnDocs=hasRecovery&&mission.status==='in_progress'?'<button id="mission-restitution-form" class="btn outline">Fiche de restitution</button><button id="mission-degradation-form" class="btn outline">Fiche de dégradation</button>':'';
     const savedReturnDocs=hasRecovery&&mission.status==='completed'?`${hasSavedReturn?'<button id="mission-restitution-print" class="btn outline">Réimprimer restitution</button>':''}${hasSavedDamage?'<button id="mission-degradation-print" class="btn outline">Réimprimer dégradation</button>':''}`:'';
     const actions=['assigned','accepted','in_progress'].includes(mission.status)
-      ? `${statusControls}<button id="mission-payment" class="btn outline">Enregistrer un paiement</button><button id="mission-signature" class="btn outline">Faire signer le client</button><button id="mission-invoice" class="btn outline">Générer la facture</button><button id="mission-contract" class="btn outline">Générer le contrat</button>${returnDocs}`
+      ? `${statusControls}<button id="mission-payment" class="btn outline">Enregistrer un paiement</button><button id="mission-signature" class="btn outline">Faire signer sur place</button><button id="mission-signature-whatsapp" class="btn outline">Envoyer le lien par WhatsApp</button><button id="mission-invoice" class="btn outline">Générer la facture</button><button id="mission-contract" class="btn outline">Générer le contrat</button>${returnDocs}`
       : `${statusControls}${savedReturnDocs}`;
     const title=mission.status==='completed'?'Fin de mission — situation financière':'Situation financière';
     $('mission-detail').innerHTML=`<h3>${esc(typeLabel(mission.mission_type))} — ${esc(reservation.reference||'Réservation')}</h3><p><b>Statut :</b> ${esc(statusLabel(mission.status))}<br><b>Client :</b> ${esc(reservation.customer_name||'—')}<br><b>Téléphone :</b> ${esc(reservation.customer_phone||'—')}<br><b>Adresse de rendez-vous :</b> ${esc(mission.handover_address||reservation.customer_address||'—')}<br><b>Trajet :</b> ${esc(reservation.trip_from||'—')} → ${esc(reservation.trip_to||'—')}<br><b>Véhicule :</b> ${esc(vehicle.name||vehicle.model||'—')} ${vehicle.registration_number?`(${esc(vehicle.registration_number)})`:''}<br><b>Location :</b> ${formatDate(reservation.start_at)} → ${formatDate(reservation.end_at)}<br><b>Mission :</b> ${formatDate(mission.starts_at)} → ${formatDate(mission.expires_at)}${reservation.notes?`<br><b>Note client :</b> ${esc(reservation.notes)}`:''}${mission.notes?`<br><b>Note interne :</b> ${esc(mission.notes)}`:''}${mission.driver_instructions?`<br><b>Consignes :</b> ${esc(mission.driver_instructions)}`:''}</p>${clientRecapHtml(mission,reservation,departure)}<div class="finance"><div>Total réservation : <strong>${money(reservation.total_amount)}</strong></div><div>Total déjà payé : <strong>${money(paidFor(reservation.id))}</strong></div><div>Reste à payer : <strong>${money(balanceFor(reservation))}</strong></div><div>Coût livraison : <strong>${money(mission.custom_delivery_cost)}</strong></div><div>Coût récupération : <strong>${money(mission.custom_recovery_cost)}</strong></div></div><div class="mission-actions">${actions}</div>${dailyScheduleHtml(reservation.id)}<h4>État des lieux au départ</h4>${checklistSummary(departure)}<h4>État des lieux au retour</h4>${checklistSummary(returnCheck)}<h4>${title}</h4>${paymentSummaryHtml(reservation,payments)}<p class="muted">Signature client : ${isSigned(reservation.id,mission)?'enregistrée':'non enregistrée'}</p>`;
@@ -130,6 +131,7 @@
     $('mission-complete')?.addEventListener('click',()=>openChecklist(mission,'return'));
     $('mission-payment')?.addEventListener('click',()=>openPayment(mission));
     $('mission-signature')?.addEventListener('click',()=>openSignature(mission));
+    $('mission-signature-whatsapp')?.addEventListener('click',()=>sendSignatureLink(mission));
     $('mission-invoice')?.addEventListener('click',()=>printMission(mission,'invoice'));
     $('mission-contract')?.addEventListener('click',()=>printMission(mission,'contract'));
     $('mission-restitution-form')?.addEventListener('click',()=>openRecoveryDocument(mission,'restitution'));
@@ -145,6 +147,18 @@
     if(error)return alert(`Réponse non enregistrée : ${error.message}. Vérifiez que la migration du workflow chauffeur est appliquée.`);
     if(data!==true)return alert(`Impossible de ${label} : la mission a expiré, a déjà reçu une réponse ou n’est pas associée à votre compte.`);
     await loadMissions();
+  }
+  async function sendSignatureLink(mission) {
+    const reservation = state.reservations.get(mission.reservation_id) || {};
+    const { data, error } = await db.rpc('create_chauffeur_customer_signature_link', { p_mission_id: mission.id });
+    if (error) return alert(`Lien impossible à créer : ${error.message}`);
+    if (!data?.ok) return alert(data?.error || 'Le lien client n’est pas disponible.');
+    const recipient = normalizeWhatsApp(data.whatsapp_phone || data.phone);
+    if (!recipient) return alert('Le numéro WhatsApp du client est manquant.');
+    const link = new URL('index.html', window.location.href);
+    link.hash = new URLSearchParams({ invoice:'access', reference:data.reference || reservation.reference || '', phone:data.phone || reservation.customer_phone || '', otp:data.otp || '' }).toString();
+    const message = [`Rent Car Service — merci de signer votre facture et votre contrat.`, `Référence : ${data.reference || reservation.reference || ''}`, `Bonjour ${reservation.customer_name || 'Madame, Monsieur'},`, `Ouvrez ce lien sécurisé pour vérifier les documents et signer à distance :`, link.href, `Ce lien est personnel ; ne le transférez pas.`].join('\n');
+    window.open(`https://wa.me/${recipient}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
   }
   function photoCheckMarkup(key,label,checked){
     return `<label class="checklist-photo"><input id="checklist-photo-${key}" type="checkbox" ${checked?'checked':''}> <span>${esc(label)}</span><small class="muted">Cochez après avoir pris la photo et envoyez-la sur WhatsApp.</small></label>`;
