@@ -150,15 +150,18 @@
   }
   async function sendSignatureLink(mission) {
     const reservation = state.reservations.get(mission.reservation_id) || {};
+    const whatsappTab = window.open('about:blank', '_blank');
     const { data, error } = await db.rpc('create_chauffeur_customer_signature_link', { p_mission_id: mission.id });
-    if (error) return alert(`Lien impossible à créer : ${error.message}`);
-    if (!data?.ok) return alert(data?.error || 'Le lien client n’est pas disponible.');
+    if (error) { whatsappTab?.close(); return alert(`Lien impossible à créer : ${error.message}`); }
+    if (!data?.ok) { whatsappTab?.close(); return alert(data?.error || 'Le lien client n’est pas disponible.'); }
     const recipient = normalizeWhatsApp(data.whatsapp_phone || data.phone);
-    if (!recipient) return alert('Le numéro WhatsApp du client est manquant.');
+    if (!recipient) { whatsappTab?.close(); return alert('Le numéro WhatsApp du client est manquant.'); }
     const link = new URL('index.html', window.location.href);
     link.hash = new URLSearchParams({ invoice:'access', reference:data.reference || reservation.reference || '', phone:data.phone || reservation.customer_phone || '', otp:data.otp || '' }).toString();
     const message = [`Rent Car Service — merci de signer votre facture et votre contrat.`, `Référence : ${data.reference || reservation.reference || ''}`, `Bonjour ${reservation.customer_name || 'Madame, Monsieur'},`, `Ouvrez ce lien sécurisé pour vérifier les documents et signer à distance :`, link.href, `Ce lien est personnel ; ne le transférez pas.`].join('\n');
-    window.open(`https://wa.me/${recipient}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+    const whatsappUrl = `https://wa.me/${recipient}?text=${encodeURIComponent(message)}`;
+    if (whatsappTab) whatsappTab.location.href = whatsappUrl;
+    else window.prompt('Copiez ce lien WhatsApp prérempli pour le transmettre au client :', whatsappUrl);
   }
   function photoCheckMarkup(key,label,checked){
     return `<label class="checklist-photo"><input id="checklist-photo-${key}" type="checkbox" ${checked?'checked':''}> <span>${esc(label)}</span><small class="muted">Cochez après avoir pris la photo et envoyez-la sur WhatsApp.</small></label>`;
