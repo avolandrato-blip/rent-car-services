@@ -49,11 +49,15 @@
     try {
       const id = val('admin-sale-id');
       const payload = { seller_name: val('admin-sale-seller'), seller_phone: val('admin-sale-phone'), seller_email: val('admin-sale-email'), seller_address: val('admin-sale-address'), make: val('admin-sale-make'), model: val('admin-sale-model'), year: Number(val('admin-sale-year')) || null, asking_price: Number(val('admin-sale-price')) || null, mileage_km: Number(val('admin-sale-mileage')) || null, description: val('admin-sale-description'), repairs_needed: val('admin-sale-repairs'), transmission: val('admin-sale-transmission'), fuel: val('admin-sale-fuel'), seats: Number(val('admin-sale-seats')) || null, status: val('admin-sale-status'), registration_card_status: val('admin-sale-registration'), insurance_status: val('admin-sale-insurance'), inspection_status: val('admin-sale-inspection'), pink_card_status: val('admin-sale-pink'), model_1_status: val('admin-sale-model1'), updated_at: new Date().toISOString() };
-      const result = id ? await db.from('vehicle_sales').update(payload).eq('id', id).select('id').single() : await db.from('vehicle_sales').insert(payload).select('id').single();
+      const result = id
+        ? await db.from('vehicle_sales').update(payload).eq('id', id)
+        : await db.from('vehicle_sales').insert(payload).select('id').single();
       if (result.error) throw new Error(result.error.message);
+      const saleId = id || result.data?.id;
+      if (!saleId) throw new Error('Identifiant de l’annonce introuvable après l’enregistrement.');
       const files = Array.from($('admin-sale-photos').files || []).slice(0, 6), urls = {};
-      for (const file of files) { const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '-'), path = `${result.data.id}/${Date.now()}-${safe}`, upload = await db.storage.from('vehicle-sales').upload(path, file, { upsert: false, contentType: file.type }); if (upload.error) throw new Error(upload.error.message); urls[file.name] = db.storage.from('vehicle-sales').getPublicUrl(path).data.publicUrl; }
-      if (Object.keys(urls).length) await db.from('vehicle_sales').update({ photo_urls: urls }).eq('id', result.data.id);
+      for (const file of files) { const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '-'), path = `${saleId}/${Date.now()}-${safe}`, upload = await db.storage.from('vehicle-sales').upload(path, file, { upsert: false, contentType: file.type }); if (upload.error) throw new Error(upload.error.message); urls[file.name] = db.storage.from('vehicle-sales').getPublicUrl(path).data.publicUrl; }
+      if (Object.keys(urls).length) { const photoUpdate = await db.from('vehicle_sales').update({ photo_urls: urls, updated_at: new Date().toISOString() }).eq('id', saleId); if (photoUpdate.error) throw new Error(photoUpdate.error.message); }
       form.reset(); setValue('admin-sale-id', ''); form.classList.add('hidden'); await loadVehicleSales();
     } catch (error) { alert(`Annonce non enregistrée : ${error.message}`); } finally { button.disabled = false; }
   }
