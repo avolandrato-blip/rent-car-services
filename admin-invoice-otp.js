@@ -38,10 +38,12 @@
     window.crypto.getRandomValues(random);
     const otp = String(100000 + (random[0] % 900000));
     const whatsappTab = window.open('about:blank', '_blank');
-    const { error: updateError } = await client.from('reservations').update({ otp_code: otp }).eq('id', id);
-    if (updateError) {
+    const { data: updatedReservation, error: updateError } = await client.from('reservations')
+      .update({ otp_code: otp }).eq('id', id).select('id').maybeSingle();
+    if (updateError || !updatedReservation) {
       whatsappTab?.close();
-      return showStatus(`Impossible de créer le code client : ${updateError.message}`);
+      const reason = updateError?.message || 'la réservation n’a pas été mise à jour. Vérifiez la session et les droits administrateur.';
+      return showStatus(`Impossible de créer le code client : ${reason}`);
     }
     const clientLink = makeClientInvoiceLink(reservation, otp);
     const message = [
@@ -72,15 +74,15 @@
     window.crypto.getRandomValues(random);
     const otp = String(100000 + (random[0] % 900000));
     const whatsappTab = window.open('about:blank', '_blank');
-    const { error } = await db.from('reservations').update({
+    const { data: updatedReservation, error } = await db.from('reservations').update({
       status: 'reserved',
       invoice_released: true,
       otp_code: otp
-    }).eq('id', id);
+    }).eq('id', id).select('id,status').maybeSingle();
 
-    if (error) {
+    if (error || !updatedReservation) {
       whatsappTab?.close();
-      alert(error.message);
+      alert(error?.message || 'Aucune réservation n’a été mise à jour. Vérifiez la session et les droits administrateur, puis actualisez la page.');
       return;
     }
 

@@ -26,3 +26,14 @@ test('le nouveau dashboard admin remplace le menu visible sans supprimer les sec
   assert.equal((html.match(/admin-dashboard\.css\?v=/g) || []).length, 1);
   assert.equal((html.match(/admin-dashboard\.js\?v=/g) || []).length, 1);
 });
+
+test('la confirmation d’une réservation vérifie le statut effectivement écrit', () => {
+  const html = read('admin.html');
+  const start = html.indexOf('async function setStatus(id,status)');
+  const end = html.indexOf('async function setVehicleStatus', start);
+  assert.ok(start >= 0 && end > start, 'la fonction admin setStatus doit être présente');
+  const action = html.slice(start, end);
+  assert.match(action, /\.select\('id,status'\)\.maybeSingle\(\)/);
+  assert.match(action, /if\(!data\)return alert\(/);
+  assert.match(action, /catch\(error\)/);
+});

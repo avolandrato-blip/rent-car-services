@@ -49,9 +49,13 @@ test('chaque facture ou contrat admin appose automatiquement la signature enregi
 
 test('le lien de signature client admin exige un acompte libéré et prépare un message WhatsApp OTP', () => {
   const otp = read('admin-invoice-otp.js');
+  const admin = read('admin.html');
+  assert.match(admin, /admin-invoice-otp\.js\?v=/);
   assert.match(otp, /window\.sendCustomerSignatureLink/);
   assert.match(otp, /!reservation\.invoice_released/);
   assert.match(otp, /Number\(reservation\.deposit_amount \|\| 0\) <= 0/);
+  assert.match(otp, /\.select\('id'\)\.maybeSingle\(\)/);
+  assert.match(otp, /!updatedReservation/);
   assert.match(otp, /signer votre facture et votre contrat/);
   assert.match(otp, /makeClientInvoiceLink\(reservation, otp\)/);
 });
@@ -285,6 +289,7 @@ test('le dialogue client signe sur confirmation et laisse vierges les deux zones
   vm.runInNewContext(read('client-signature.js'), context);
   fakeWindow.showClientDocumentSignature();
   assert.equal(dialog.open, true);
+  assert.equal(elements['invoice-client-signature-panel'].classList.contains('hidden'), false);
   canvas.onpointerdown({ preventDefault() {}, currentTarget: canvas, pointerId: 1, clientX: 30, clientY: 40 });
   canvas.onpointermove({ preventDefault() {}, currentTarget: canvas, clientX: 60, clientY: 50 });
   canvas.onpointerup();

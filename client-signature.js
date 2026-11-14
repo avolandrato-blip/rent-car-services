@@ -84,6 +84,7 @@
     const dialog = $('invoice-client-signature-modal');
     const canvas = $('invoice-client-signature-canvas');
     if (!dialog || !canvas) return false;
+    $('invoice-client-signature-panel')?.classList.remove('hidden');
     mode = nextMode;
     savedDocumentSignature = signatureIsValid(storedSignature) ? storedSignature : '';
     clearCanvas();
