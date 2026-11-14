@@ -17,8 +17,6 @@
   }
 
   let currentBookingStep = 1;
-  const BOOKING_START_BUFFER_MS = 2 * 60 * 60 * 1000;
-
   function localDateValue(date) {
     const pad = value => String(value).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -29,18 +27,12 @@
     const startTime = $('booking-start-time');
     const endDate = $('booking-end-date');
     if (!startDate || !startTime || !endDate) return;
-    const now = new Date();
-    const today = localDateValue(now);
     startDate.removeAttribute('min');
     if (startDate.value) endDate.min = startDate.value;
     else endDate.removeAttribute('min');
-    const nowMs = now.getTime();
-    const earliestFutureStart = nowMs + BOOKING_START_BUFFER_MS;
     [...startTime.options].forEach(option => {
       if (!option.value) return;
-      const slot = new Date(`${startDate.value}T${option.value}`);
-      const slotTime = slot.getTime();
-      option.disabled = startDate.value === today && Number.isFinite(slotTime) && slotTime > nowMs && slotTime <= earliestFutureStart;
+      option.disabled = false;
     });
   }
 
@@ -63,14 +55,6 @@
     if (!section) return true;
     if (step === 1) {
       updateBookingDateConstraints();
-      const startDateValue = $('booking-start-date')?.value;
-      const startTimeValue = $('booking-start-time')?.value;
-      const start = selectedBookingStart();
-      const nowMs = Date.now();
-      if (startDateValue && startTimeValue && start && Number.isFinite(start.getTime()) && start.getTime() > nowMs && start.getTime() <= nowMs + BOOKING_START_BUFFER_MS) {
-        showBookingError('Pour un départ futur, prévoyez au moins deux heures d’avance. Choisissez un créneau ultérieur.');
-        return false;
-      }
     }
     const fields = [...section.querySelectorAll('input, select, textarea')].filter(field => !field.disabled && field.type !== 'hidden');
     for (const field of fields) { if (!field.checkValidity()) { field.reportValidity(); return false; } }
@@ -249,8 +233,6 @@
     updateBookingDateConstraints();
     const startAt = start ? new Date(start) : null;
     if (!vehicle || !startAt || !Number.isFinite(startAt.getTime()) || !end || new Date(end) <= startAt) return showBookingError('Vérifiez le véhicule et les dates choisies.');
-    const nowMs = Date.now();
-    if (startAt.getTime() > nowMs && startAt.getTime() <= nowMs + BOOKING_START_BUFFER_MS) return showBookingError('Pour un départ futur, prévoyez au moins deux heures d’avance. Choisissez un créneau ultérieur puis réessayez.');
     const candidateUnits = window.RentCarFleet.countAvailability(fleetGroup, startAt.toISOString(), new Date(end).toISOString(), bookingReservations, bookingMaintenance).availableUnits;
     if (!candidateUnits.length) return showBookingError('Ce véhicule vient d’être réservé ou est en maintenance. Actualisez les disponibilités ou choisissez un autre véhicule.');
     if (!$('booking-terms-consent')?.checked) return showBookingError('Veuillez cocher la case d’acceptation des conditions.');
