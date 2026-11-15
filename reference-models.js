@@ -26,18 +26,27 @@
     const bookingRows = groupedRows.length ? groupedRows : [r];
     const sumField = field => bookingRows.reduce((sum, row) => sum + Number(row?.[field] || 0), 0);
     const totalAmount = sumField('total_amount');
-    const totalDiscount = sumField('promo_discount');
+    const durationDiscount = row => {
+      const hours = (Date.parse(row?.end_at || '') - Date.parse(row?.start_at || '')) / 3600000;
+      const days = Number(row?.days || 0) || Math.max(1, Math.ceil(hours / 24));
+      if (row?.distance_band !== '0_30' || !(hours > 48)) return 0;
+      const rate = days >= 10 ? 0.10 : days >= 5 ? 0.03 : 0;
+      const dailyRate = Number(row?.rate_12h || row?.daily_rate || 0);
+      return Math.round(dailyRate * days * rate);
+    };
+    const rowDiscount = row => Number(row?.promo_discount || 0) + durationDiscount(row);
+    const totalDiscount = bookingRows.reduce((sum, row) => sum + rowDiscount(row), 0);
     const grossTotal = totalAmount + totalDiscount;
     const amountInWords = value => theme.amountInWords ? theme.amountInWords(value) : `${Math.round(Number(value || 0)).toLocaleString('fr-FR')} Ariary`;
     const periodAmountsMarkup = bookingRows.map((row, index) => {
-      const periodAmount = Number(row.total_amount || 0) + Number(row.promo_discount || 0);
+      const periodAmount = Number(row.total_amount || 0) + rowDiscount(row);
       const trip = `${row.trip_from || r.trip_from || 'Selon destination convenue'} → ${row.trip_to || r.trip_to || '—'}`;
       const rowWithDriver = row.with_driver == null ? (v.driver_mode === 'with_driver' || Boolean(r.with_driver)) : Boolean(row.with_driver);
       const formula = rowWithDriver ? 'Avec chauffeur' : 'Sans chauffeur';
       return `<tr><td><b>Période ${index + 1}</b><br>du ${esc(dateTime(row.start_at))} au ${esc(dateTime(row.end_at))}</td><td>${money(periodAmount)}</td><td>${esc(trip)}</td><td>${formula}</td><td>${esc(amountInWords(periodAmount))}</td></tr>`;
     }).join('');
     const financialSummaryMarkup = `<tr class="document-period-total"><td><b>Total avant remise</b></td><td>${money(grossTotal)}</td><td></td><td></td><td>${esc(amountInWords(grossTotal))}</td></tr><tr class="document-period-total"><td><b>Remise</b></td><td>− ${money(totalDiscount)}</td><td></td><td></td><td>${esc(amountInWords(totalDiscount))}</td></tr><tr class="document-period-total document-period-grand-total"><td><b>Total après remise</b></td><td><b>${money(totalAmount)}</b></td><td></td><td></td><td><b>${esc(amountInWords(totalAmount))}</b></td></tr>`;
-    const periodTableHeader = '<thead><tr><th>A — Information</th><th>B — Montant (Ar)</th><th>C — Trajet</th><th>D — Formule</th><th>E — Montant en lettres</th></tr></thead>';
+    const periodTableHeader = '<thead><tr><th>Information</th><th>Montant (Ar)</th><th>Trajet</th><th>Formule</th><th>Montant en lettres</th></tr></thead>';
     const periodTable = `<table class="document-table document-period-table">${periodTableHeader}<tbody>${periodAmountsMarkup}${financialSummaryMarkup}</tbody></table>`;
     const amountPaid = bookingRows.reduce((sum, row) => sum + Number(paid(row) || 0), 0);
     const totalDays = bookingRows.reduce((sum, row) => sum + Number(row?.days || 0), 0) || bookingRows.length || 1;
