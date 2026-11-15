@@ -15,12 +15,12 @@ test('sell.html conserve les conditions de mise en relation commerciale et exclu
   assert.match(html, /data-sale-open="buyer"/);
 });
 
-test('sell.html reprend le mode automatique jour/nuit de la page location', () => {
+test('sell.html respecte le thème clair/sombre partagé au lieu de forcer le mode automatique', () => {
   const html = read('sell.html');
   const css = read('sell-marketplace.css');
-  assert.match(html, /hour >= 6 && hour < 19 \? 'premium-white' : 'royal-night'/);
-  assert.match(html, /localStorage\.setItem\('rentcar-theme-mode', 'auto'\)/);
-  assert.match(html, /setInterval\(applyAutoTheme, 60000\)/);
+  assert.match(html, /theme-system\.css/);
+  assert.match(html, /theme-system\.js/);
+  assert.doesNotMatch(html, /applyAutoTheme|rentcar-theme-mode', 'auto'|setInterval\(applyAutoTheme/);
   assert.match(css, /body\[data-theme="royal-night"\] \.sale-request-modal \{ background: #122337/);
   assert.match(css, /body\[data-theme="royal-night"\] \.sale-form-grid input/);
 });

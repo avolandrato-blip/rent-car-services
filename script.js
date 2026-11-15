@@ -9,8 +9,20 @@ function promoEligibility(quote) {
     const raw = activePromo.discount_type === 'percent' ? Number(quote.total || 0) * Number(activePromo.discount_value || 0) / 100 : Number(activePromo.discount_value || 0);
     return { valid: true, discount: Math.min(Number(quote.total || 0), Math.max(0, raw)) };
 }
-function setClientTheme(theme) { document.body.dataset.theme = theme; localStorage.setItem("rentcar-theme", theme); }
-function initClientTheme() { setClientTheme(localStorage.getItem("rentcar-theme") || "royal-night"); }
+function setClientTheme(theme) {
+    document.body.dataset.theme = theme;
+    try { localStorage.setItem("rentcar-theme", theme); } catch (_) {}
+}
+function initClientTheme() {
+    let mode = "";
+    let legacyTheme = "";
+    try {
+        mode = localStorage.getItem("rentcar-theme-mode") || "";
+        legacyTheme = localStorage.getItem("rentcar-theme") || "";
+    } catch (_) {}
+    const theme = mode === "dark" ? "royal-night" : mode === "light" ? "premium-white" : legacyTheme || "premium-white";
+    setClientTheme(theme);
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initSite();

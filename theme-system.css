@@ -1,0 +1,249 @@
+/* Rent Car Service — palette partagée, contrastes et relief d’interface */
+html[data-theme="premium-white"] {
+  color-scheme: light;
+  --ui-page: #f2f6fa;
+  --ui-surface: #ffffff;
+  --ui-surface-soft: #eaf0f5;
+  --ui-text: #142b3d;
+  --ui-muted: #596d7f;
+  --ui-border: #ced9e3;
+  --ui-primary: #0d5c8f;
+  --ui-primary-hover: #0a4d79;
+  --ui-accent: #b88221;
+  --ui-card-edge: #d6e0e9;
+  --ui-shadow: rgba(13, 43, 67, .13);
+  --ui-button-edge: #08476f;
+}
+
+html[data-theme="royal-night"] {
+  color-scheme: dark;
+  --ui-page: #0b1420;
+  --ui-surface: #172638;
+  --ui-surface-soft: #20344a;
+  --ui-text: #eef4f8;
+  --ui-muted: #b7c5d1;
+  --ui-border: #344b61;
+  --ui-primary: #3289b9;
+  --ui-primary-hover: #45a0d0;
+  --ui-accent: #efbf59;
+  --ui-card-edge: #101d2b;
+  --ui-shadow: rgba(0, 0, 0, .34);
+  --ui-button-edge: #15577d;
+}
+
+html[data-theme="premium-white"],
+html[data-theme="royal-night"] { background: var(--ui-page); }
+
+body[data-theme="premium-white"],
+body[data-theme="royal-night"] {
+  --primary: var(--ui-primary);
+  --blue: var(--ui-primary);
+  --accent: var(--ui-accent);
+  --page: var(--ui-page);
+  --bg: var(--ui-page);
+  --surface: var(--ui-surface);
+  --surface-soft: var(--ui-surface-soft);
+  --card: var(--ui-surface);
+  --text: var(--ui-text);
+  --ink: var(--ui-text);
+  --dark: var(--ui-text);
+  --muted: var(--ui-muted);
+  --line: var(--ui-border);
+  background: var(--ui-page) !important;
+  color: var(--ui-text) !important;
+  color-scheme: inherit;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+body[data-theme] :is(main, .main, .content, .tab, .layout, .wrap, .dashboard, .dashboard-section) {
+  color: var(--ui-text);
+}
+
+body[data-theme] :is(h1, h2, h3, h4, h5, h6, p, label, legend, th, td, li, dt, dd, figcaption, blockquote) {
+  color: var(--ui-text);
+}
+
+body[data-theme] :is(small, .muted, .eyebrow, .meta, .metric-label, .side-note, .field-note, .help-text, .empty) {
+  color: var(--ui-muted);
+}
+
+body[data-theme="premium-white"] :is(.card, .section, .booking-panel, .contact-wrapper, .team-card, .team-metric, .action-card, .admin-modal, .signature-modal, .recovery-doc-dialog, .terms-modal, .sale-card, .sale-request-modal, .driver-card, .car-card, .availability-row, .booking-multi-period, .booking-extra-period, .booking-distance-prices, .booking-mini-summary, .live-fleet-panel, .panel, .tablewrap, .checklist-section, .checklist-photo, .mission-detail, .mission-card, .game-card, .dashboard-card, .dashboard-actions, .calendar-day, .arena) {
+  background-color: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  border-color: var(--ui-border) !important;
+}
+
+body[data-theme="royal-night"] :is(.card, .section, .booking-panel, .contact-wrapper, .team-card, .team-metric, .action-card, .admin-modal, .signature-modal, .recovery-doc-dialog, .terms-modal, .sale-card, .sale-request-modal, .driver-card, .car-card, .availability-row, .booking-multi-period, .booking-extra-period, .booking-distance-prices, .booking-mini-summary, .live-fleet-panel, .panel, .tablewrap, .checklist-section, .checklist-photo, .mission-detail, .mission-card, .game-card, .dashboard-card, .dashboard-actions, .calendar-day, .arena) {
+  background-color: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  border-color: var(--ui-border) !important;
+}
+
+body[data-theme] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+  background-color: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  border-color: var(--ui-border) !important;
+}
+body[data-theme] input::placeholder,
+body[data-theme] textarea::placeholder { color: var(--ui-muted) !important; opacity: .88; }
+body[data-theme] option { background: var(--ui-surface); color: var(--ui-text); }
+body[data-theme] :is(table, th, td, .table, .table-wrap, .tablewrap) { border-color: var(--ui-border); }
+body[data-theme="royal-night"] :is(th, .table th) { background-color: var(--ui-surface-soft); }
+body[data-theme="premium-white"] :is(th, .table th) { background-color: #eaf0f5; }
+
+body[data-theme="premium-white"] .sidebar {
+  background: #e5edf4 !important;
+  color: #142b3d !important;
+  border-right: 1px solid var(--ui-border);
+}
+body[data-theme="premium-white"] .sidebar :is(.brand, .side-note) { color: #142b3d !important; }
+body[data-theme="premium-white"] .sidebar .nav button { color: #29465d !important; }
+body[data-theme="premium-white"] .sidebar .nav button.active,
+body[data-theme="premium-white"] .sidebar .nav button:hover { background: #cddce8 !important; color: #10283d !important; }
+body[data-theme="royal-night"] .sidebar { background: #08111b !important; color: #eef4f8 !important; }
+body[data-theme="royal-night"] .sidebar :is(.brand, .side-note) { color: #eef4f8 !important; }
+body[data-theme="royal-night"] .sidebar .nav button { color: #c1d1df !important; }
+body[data-theme="royal-night"] .sidebar .nav button.active,
+body[data-theme="royal-night"] .sidebar .nav button:hover { background: #203b53 !important; color: #ffffff !important; }
+
+body[data-theme] :is(.header, .team-top, .topbar, .top) {
+  background-color: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  border-color: var(--ui-border) !important;
+}
+body[data-theme] :is(#nav-menu, .footer-nav, .nav-menu) { color: var(--ui-text); }
+body[data-theme] :is(#nav-menu a, #nav-menu button, .nav-link, .nav-sale-link, .footer-nav a, .footer-nav button, .back, nav.toc a) {
+  color: var(--ui-text);
+}
+body[data-theme="royal-night"] :is(#nav-menu a, #nav-menu button, .nav-link, .nav-sale-link, .footer-nav a, .footer-nav button, .back, nav.toc a) {
+  color: var(--ui-text) !important;
+}
+body[data-theme="royal-night"] :is(#nav-menu, .footer-nav, nav.toc) { background-color: var(--ui-surface); }
+body[data-theme="royal-night"] :is(#nav-menu a:hover, #nav-menu button:hover, .nav-link:hover, nav.toc a:hover) { background-color: var(--ui-surface-soft); }
+body[data-theme="premium-white"] :is(#nav-menu a:hover, #nav-menu button:hover, .nav-link:hover, nav.toc a:hover) { background-color: #e8eff5; }
+
+body[data-theme="premium-white"] :is(footer, .footer-fixed, .footer-marketing) {
+  background-color: #e8eff5 !important;
+  color: var(--ui-text) !important;
+  border-color: var(--ui-border) !important;
+}
+body[data-theme="royal-night"] :is(footer, .footer-fixed, .footer-marketing) {
+  background-color: #101d2b !important;
+  color: var(--ui-text) !important;
+  border-color: var(--ui-border) !important;
+}
+body[data-theme="premium-white"] :is(.footer-marketing-brand p, .footer-marketing-points small) { color: var(--ui-muted) !important; }
+body[data-theme="royal-night"] :is(.footer-marketing-brand h2, .footer-marketing-points > div) { color: var(--ui-text) !important; }
+
+body[data-theme] :is(.btn, button, input[type="button"], input[type="submit"], input[type="reset"]) {
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease, background-color 160ms ease;
+}
+body[data-theme] :is(.btn-primary, .btn.btn-primary, .primary, .btn-submit) {
+  background-color: var(--ui-primary) !important;
+  border-color: var(--ui-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 0 var(--ui-button-edge), 0 8px 16px var(--ui-shadow) !important;
+}
+body[data-theme="royal-night"] :is(.btn-primary, .btn.btn-primary, .primary, .btn-submit) {
+  color: #ffffff !important;
+}
+body[data-theme] :is(.btn-outline, .btn.outline, .outline, .btn-secondary) {
+  background-color: var(--ui-surface) !important;
+  color: var(--ui-primary) !important;
+  border: 1px solid var(--ui-border) !important;
+  box-shadow: 0 4px 0 var(--ui-card-edge), 0 8px 14px var(--ui-shadow) !important;
+}
+body[data-theme="royal-night"] :is(.btn-outline, .btn.outline, .outline, .btn-secondary) {
+  color: #e7c270 !important;
+}
+body[data-theme] :is(button:not(:disabled), input[type="button"]:not(:disabled), input[type="submit"]:not(:disabled), .btn:not(:disabled)):active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--ui-button-edge), 0 3px 6px var(--ui-shadow) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-theme] :is(button:not(:disabled), input[type="button"]:not(:disabled), input[type="submit"]:not(:disabled), .btn:not(:disabled)):hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+  }
+  body[data-theme] :is(.btn-primary, .btn.btn-primary, .primary, .btn-submit):hover {
+    box-shadow: 0 6px 0 var(--ui-button-edge), 0 12px 20px var(--ui-shadow) !important;
+  }
+}
+body[data-theme] :is(button:disabled, input[type="button"]:disabled, input[type="submit"]:disabled, .btn:disabled) {
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: .58;
+}
+body[data-theme] :is(.card, .car-card, .driver-card, .sale-card, .booking-panel, .team-card, .action-card, .admin-modal, .signature-modal, .terms-modal, .panel, .mission-card, .game-card, .dashboard-card, .dashboard-actions, .arena) {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.48), 0 4px 0 var(--ui-card-edge), 0 12px 24px var(--ui-shadow) !important;
+}
+body[data-theme="royal-night"] :is(.card, .car-card, .driver-card, .sale-card, .booking-panel, .team-card, .action-card, .admin-modal, .signature-modal, .terms-modal, .panel, .mission-card, .game-card, .dashboard-card, .dashboard-actions, .arena) {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 4px 0 var(--ui-card-edge), 0 14px 28px var(--ui-shadow) !important;
+}
+body[data-theme="premium-white"] :is(.game-card, .arena, .dashboard-card, .dashboard-actions) { background: var(--ui-surface) !important; color: var(--ui-text) !important; border-color: var(--ui-border) !important; }
+body[data-theme="royal-night"] :is(.game-card, .arena, .dashboard-card, .dashboard-actions) { background: var(--ui-surface) !important; color: var(--ui-text) !important; border-color: var(--ui-border) !important; }
+body[data-theme] :is(.dashboard-card, .dashboard-card *) { color: var(--ui-text); }
+body[data-theme] :is(a:not(.btn), .nav-current) { text-decoration-color: var(--ui-accent); }
+body[data-theme="royal-night"] :is(.section-title, .car-card h3, .driver-card h3, .sale-card h3, .booking-panel h3, .team-top h1, .action-card h1) { color: var(--ui-text) !important; }
+body[data-theme="royal-night"] :is(.sale-modal-disclaimer, .booking-distance-price, .booking-distance-selected, .ad-admin-preview img) { background-color: var(--ui-surface-soft); color: var(--ui-text); border-color: var(--ui-border); }
+body[data-theme="royal-night"] :is(.calendar-day, .calendar-event) { color: var(--ui-text); }
+body[data-theme="premium-white"] :is(.calendar-day, .calendar-event) { color: var(--ui-text); }
+
+.rc-theme-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  width: max-content;
+  padding: 4px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-surface-soft);
+  color: var(--ui-text);
+  box-shadow: inset 0 1px 2px var(--ui-shadow), 0 3px 8px var(--ui-shadow);
+}
+.rc-theme-switcher .rc-theme-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ui-text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  cursor: pointer;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.rc-theme-switcher .rc-theme-option.is-active {
+  background: var(--ui-primary) !important;
+  border-color: var(--ui-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 0 var(--ui-button-edge), 0 4px 8px var(--ui-shadow) !important;
+}
+.rc-theme-icon { font-size: 14px; line-height: 1; }
+#nav-menu .rc-theme-switcher { margin: 5px 0 0; }
+#nav-menu .rc-theme-switcher .rc-theme-option { width: auto; justify-content: center; }
+.topbar-actions .rc-theme-switcher { margin-inline: 4px; }
+.team-top .rc-theme-switcher { margin-left: auto; }
+#login-view .rc-theme-switcher, #team-login .rc-theme-switcher { margin: 0 0 12px auto; }
+.action-shell > .rc-theme-switcher { margin-left: auto; }
+.top .wrap > .rc-theme-switcher { margin: 0 0 8px auto; justify-content: flex-end; }
+.rc-theme-switcher-fixed { position: fixed; z-index: 12000; right: 14px; bottom: 16px; }
+
+:focus-visible { outline: 3px solid var(--ui-accent, #b88221); outline-offset: 3px; }
+@media (max-width: 700px) {
+  .topbar-actions .rc-theme-switcher { margin: 0; }
+  #nav-menu .rc-theme-switcher { align-self: flex-start; }
+  .rc-theme-switcher .rc-theme-option { min-height: 38px; padding-inline: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-theme], body[data-theme] :is(.btn, button, input[type="button"], input[type="submit"], .card) { transition: none !important; }
+  body[data-theme] :is(button, .btn):hover, body[data-theme] :is(button, .btn):active { transform: none !important; }
+}

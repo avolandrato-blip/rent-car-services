@@ -337,7 +337,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    autoTheme(); setInterval(autoTheme, 60000); addBookingFields(); setupBookingSteps(); window.syncClientRequiredMarks?.(document);
+    addBookingFields(); setupBookingSteps(); window.syncClientRequiredMarks?.(document);
     window.submitReservation = async (event) => {
       const form = $('booking-form');
       const result = $('booking-result');

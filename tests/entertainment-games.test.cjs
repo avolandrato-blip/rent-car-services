@@ -14,7 +14,9 @@ test('mini-jeux autonomes accessibles depuis Médias et divertissement', () => {
   assert.match(script, /Morpion, Snake, Memory/);
   assert.match(games, /<html lang="fr">/);
   assert.match(games, /href="index\.html\?v=20261101-snake-swipe#fun"/);
-  assert.doesNotMatch(games, /<script[^>]+src=/i);
+  const externalScripts = [...games.matchAll(/<script[^>]+src=["']([^"']+)["'][^>]*>/gi)]
+    .map(match => match[1].split('?')[0]);
+  assert.deepEqual(externalScripts, ['theme-system.js']);
   const gameEntries = games.match(/\['[^']+','[^']+','[^']+','[^']+'\]/g) || [];
   assert.equal(gameEntries.length, 10);
   assert.ok(gameEntries.some(entry => entry.includes("'Memory'")));
