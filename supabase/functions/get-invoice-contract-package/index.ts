@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
     if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(reservationId)) return response({ error: "Référence, téléphone ou code incorrect." }, 403);
     const reservationQuery = new URLSearchParams({
       id: `eq.${reservationId}`,
-      select: "end_at,distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email",
+      select: "booking_group_id,booking_group_reference,end_at,distance_band,distance_km,minimum_days,license_acquired_place,license_acquired_at,cin_acquired_place,cin_acquired_at,customer_email",
       limit: "1",
     });
     const reservationResponse = await fetch(`${supabaseUrl}/rest/v1/reservations?${reservationQuery.toString()}`, { headers });
@@ -53,6 +53,20 @@ Deno.serve(async (req: Request) => {
     const reservationDetails = await reservationResponse.json();
     if (!Array.isArray(reservationDetails) || !reservationDetails[0]) return response({ error: "Référence, téléphone ou code incorrect." }, 403);
     invoice.reservation = { ...invoice.reservation, ...reservationDetails[0] };
+    // Les réservations multi-périodes sont plusieurs lignes liées par un groupe.
+    // Le document client doit recevoir toutes les lignes, pas seulement la première.
+    const groupId = String(invoice.reservation.booking_group_id || "");
+    const groupReference = String(invoice.reservation.booking_group_reference || "");
+    if (groupId || groupReference) {
+      const groupFilter = groupId ? `booking_group_id=eq.${encodeURIComponent(groupId)}` : `booking_group_reference=eq.${encodeURIComponent(groupReference)}`;
+      const groupQuery = new URLSearchParams({
+        select: "id,reference,booking_group_id,booking_group_reference,start_at,end_at,days,total_amount,deposit_amount,delivery_fee,recovery_fee,chauffeur_fee",
+        order: "start_at.asc",
+        limit: "20",
+      });
+      const groupResponse = await fetch(`${supabaseUrl}/rest/v1/reservations?${groupFilter}&${groupQuery.toString()}`, { headers });
+      if (groupResponse.ok) invoice.reservations = await groupResponse.json();
+    }
     const withDriver = Boolean(invoice?.reservation?.with_driver || invoice?.vehicle?.driver_mode === "with_driver");
     const documentKinds = withDriver ? ["cin_recto", "cin_verso"] : ["cin_recto", "cin_verso", "permis_recto"];
 
