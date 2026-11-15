@@ -21,7 +21,7 @@
         document.getElementById('login-view')?.classList.add('hidden');
         document.getElementById('app-view')?.classList.remove('hidden');
         const month = document.getElementById('calendar-month');
-        if (month) month.value = new Date().toISOString().slice(0, 7);
+        if (month) { const today = new Date(); month.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`; }
         if (typeof window.refreshAll === 'function') await window.refreshAll();
         else if (typeof refreshAll === 'function') await refreshAll();
       } catch (error) {

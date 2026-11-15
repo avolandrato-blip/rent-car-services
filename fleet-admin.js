@@ -23,6 +23,48 @@
     return duplicate && distinguisher ? `${name} — ${distinguisher}` : name;
   }
 
+  const CALENDAR_MONTHS_AROUND_TODAY = 12;
+
+  function monthKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function offsetMonth(value, offset) {
+    const [year, month] = value.split('-').map(Number);
+    return monthKey(new Date(year, month - 1 + offset, 1));
+  }
+
+  function configureCalendarMonthFilter() {
+    const input = $('calendar-month');
+    if (!input) return;
+    const today = new Date();
+    input.min = monthKey(new Date(today.getFullYear(), today.getMonth() - CALENDAR_MONTHS_AROUND_TODAY, 1));
+    input.max = monthKey(new Date(today.getFullYear(), today.getMonth() + CALENDAR_MONTHS_AROUND_TODAY, 1));
+    if (!input.value) input.value = monthKey(today);
+    updateCalendarMonthControls();
+  }
+
+  function updateCalendarMonthControls() {
+    const input = $('calendar-month');
+    if (!input) return;
+    const previous = $('calendar-prev-month');
+    const next = $('calendar-next-month');
+    if (previous) previous.disabled = !input.value || input.value <= input.min;
+    if (next) next.disabled = !input.value || input.value >= input.max;
+  }
+
+  function changeCalendarMonth(offset) {
+    const input = $('calendar-month');
+    if (!input) return;
+    if (!input.value) input.value = monthKey(new Date());
+    updateCalendarMonthControls();
+    const candidate = offsetMonth(input.value, offset);
+    if (candidate < input.min || candidate > input.max) return;
+    input.value = candidate;
+    updateCalendarMonthControls();
+    renderCalendar();
+  }
+
   function localSlot(date, startHour, endHour, nextDay = false) {
     const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), startHour);
     const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + (nextDay ? 1 : 0), endHour);
@@ -63,12 +105,14 @@
   }
 
   function renderCalendar() {
-    const target = $('calendar');
+    const target = $('fleet-calendar-results');
     if (!target || typeof reservations === 'undefined' || typeof maintenances === 'undefined') return;
-    const month = $('calendar-month')?.value || new Date().toISOString().slice(0, 7);
+    const monthInput = $('calendar-month');
+    const month = monthInput?.value || monthKey(new Date());
     const selected = $('calendar-vehicle')?.value || 'all';
     const first = new Date(`${month}-01T00:00:00`);
     if (!Number.isFinite(first.getTime())) return;
+    updateCalendarMonthControls();
     const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
     let groups;
     if (selected === 'all') {
@@ -107,8 +151,17 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    $('calendar-month')?.addEventListener('change', renderCalendar);
+    configureCalendarMonthFilter();
+    $('calendar-month')?.addEventListener('change', () => { updateCalendarMonthControls(); renderCalendar(); });
     $('calendar-vehicle')?.addEventListener('change', renderCalendar);
+    $('calendar-prev-month')?.addEventListener('click', () => changeCalendarMonth(-1));
+    $('calendar-current-month')?.addEventListener('click', () => {
+      const input = $('calendar-month');
+      if (input) input.value = monthKey(new Date());
+      updateCalendarMonthControls();
+      renderCalendar();
+    });
+    $('calendar-next-month')?.addEventListener('click', () => changeCalendarMonth(1));
     $('vehicle-form')?.addEventListener('submit', () => setTimeout(() => { updateCalendarFilter(); renderCalendar(); }, 0), true);
     if ($('app-view') && !$('app-view').classList.contains('hidden')) {
       updateCalendarFilter();
