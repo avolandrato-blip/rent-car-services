@@ -23,6 +23,8 @@ test('contrat public imprimé inclut les articles complets et le palier kilomét
   assert.match(contractTerms.buildContractTerms(false, '0_30'), /Article 11 : Acceptation/);
   assert.match(contractTerms.buildContractTerms(true, 'over_200'), /Article 12 : Conditions particulières de la location avec chauffeur/);
   assert.match(contractTerms.buildContractTerms(true, '0_30'), /le locataire n’est pas autorisé à le conduire/);
+  assert.match(contractTerms.buildContractTerms(false, '0_30'), /État du véhicule et immobilisation/);
+  assert.doesNotMatch(contractTerms.buildContractTerms(true, '0_30'), /État du véhicule et immobilisation|indemnité d’un jour de location par jour d’immobilisation/);
 });
 
 test('article 6 encadre les frais de panne hors zone sans mentionner une panne aggravée', () => {
@@ -33,8 +35,8 @@ test('article 6 encadre les frais de panne hors zone sans mentionner une panne a
   assert.match(article6, /ne rend pas le locataire responsable d’une panne mécanique indépendante de son comportement/);
   assert.match(article6, /sauf urgence de sécurité/);
   assert.doesNotMatch(article6, /aggrav(?:er|é|ée|ation)/i);
-  assert.match(publicPage, /contract-terms\.js\?v=20261116-vehicle-immobilisation/);
-  assert.match(adminHtml, /contract-terms\.js\?v=20261116-vehicle-immobilisation/);
+  assert.match(publicPage, /contract-terms\.js\?v=20261116-self-drive-immobilisation/);
+  assert.match(adminHtml, /contract-terms\.js\?v=20261116-self-drive-immobilisation/);
 });
 
 test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond et le palier >200 km reste ouvert', () => {
