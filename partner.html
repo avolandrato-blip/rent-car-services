@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Espace partenaire — Rent Car Service</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <style>
+    :root{--navy:#0b1f33;--blue:#0d5c8f;--gold:#d9a441;--bg:#f3f6f9;--card:#fff;--muted:#66788a;--line:#e2e9ef;--green:#167a3d;--red:#b42318;--amber:#8a6000}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font-family:"DM Sans",sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+    .login-wrap{max-width:440px;margin:9vh auto;padding:20px}.brand{font:700 24px "Space Grotesk"}.brand span{color:var(--gold)}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 22px #0b1f3309}.login-card{padding:30px}.eyebrow{color:var(--blue);font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}.login-card h1,.topbar h1{font:700 29px "Space Grotesk";margin:7px 0 10px}.muted,.help{color:var(--muted);font-size:13px;line-height:1.5}.field{margin:14px 0}.field label{display:block;margin-bottom:6px;color:var(--muted);font-size:12px;font-weight:700}.field input,.field select,.field textarea,.toolbar input,.toolbar select{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--navy)}
+    .btn{border:0;border-radius:9px;padding:11px 15px;font-weight:700}.primary{background:var(--blue);color:white}.outline{background:white;border:1px solid var(--line);color:var(--navy)}.danger{background:#fff1f0;color:var(--red)}.btn:disabled{opacity:.55;cursor:not-allowed}.login-card .btn{width:100%;margin-top:8px}.notice{padding:12px 14px;border-radius:10px;background:#edf5fb;color:var(--blue);font-size:13px;line-height:1.45}.notice.error{background:#fff1f0;color:var(--red)}.notice.warn{background:#fff7df;color:var(--amber)}
+    .shell{min-height:100vh;display:grid;grid-template-columns:235px 1fr}.sidebar{background:var(--navy);color:white;padding:24px 16px}.sidebar .brand{padding:2px 10px 22px;font-size:20px}.profile-chip{margin:0 8px 20px;padding:11px;border:1px solid #ffffff26;border-radius:10px;color:#d4e0e9;font-size:12px;overflow-wrap:anywhere}.nav{display:grid;gap:5px}.nav button{width:100%;text-align:left;color:#c3d3df;background:transparent;border:0;border-radius:9px;padding:12px}.nav button.active,.nav button:hover{background:#173b59;color:#fff}.sidebar-footer{margin:25px 8px;color:#a8bac8;font-size:12px;line-height:1.5}.main{width:100%;max-width:1500px;margin:0 auto;padding:30px 4vw}.topbar,.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px}.topbar{margin-bottom:20px}.topbar h1{margin:3px 0}.actions{display:flex;gap:8px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.metric{border-top:4px solid var(--blue);min-height:120px}.metric:nth-child(2){border-top-color:#2d9b58}.metric:nth-child(3){border-top-color:#d49a2e}.metric:nth-child(4){border-top-color:#7654b8}.metric-label{font-size:12px;color:var(--muted)}.metric-value{font:700 25px "Space Grotesk";margin:12px 0 5px}.section{margin-top:18px}.section h2{font:600 20px "Space Grotesk";margin:0}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:680px}.table th,.table td{text-align:left;vertical-align:top;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px}.table th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}.pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#e9eff4;font-size:11px;font-weight:700}.pill.reserved,.pill.completed,.pill.available{background:#e1f6e8;color:#166534}.pill.pre_reserved,.pill.partial,.pill.maintenance{background:#fff3d5;color:#805c00}.pill.cancelled,.pill.inactive,.pill.contract_ended{background:#ffe7e4;color:#9f241b}.empty{padding:24px;color:var(--muted);text-align:center}.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:12px 0}.toolbar>*{min-width:170px;flex:1}.toolbar .btn{flex:0 0 auto}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.field.full{grid-column:1/-1}.photo-preview{display:flex;gap:8px;flex-wrap:wrap}.photo-preview img{width:86px;height:64px;object-fit:cover;border-radius:8px;background:#e9eff3}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.calendar-heading{text-align:center;padding:7px 3px;color:var(--muted);font-size:11px;font-weight:700}.calendar-day{min-height:85px;padding:6px;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}.calendar-day.other{opacity:.45}.calendar-day strong{font-size:11px}.calendar-event{display:block;margin-top:4px;padding:4px 5px;border-radius:5px;background:#e3f1fb;color:#164b70;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.calendar-event.pending{background:#fff3d5;color:#805c00}.calendar-event.maintenance{background:#ffe7e4;color:#9f241b}.section[hidden]{display:none!important}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.status-line{margin:10px 0}.footer-note{margin-top:25px;color:var(--muted);font-size:12px;text-align:center}
+    @media(max-width:950px){.shell{grid-template-columns:190px 1fr}.grid{grid-template-columns:repeat(2,1fr)}.main{padding:22px 18px}}
+    @media(max-width:650px){.shell{display:block}.sidebar{padding:12px}.sidebar .brand{padding:0 8px 10px}.profile-chip,.sidebar-footer{display:none}.nav{display:flex;overflow-x:auto}.nav button{width:auto;white-space:nowrap;flex:0 0 auto;padding:10px}.main{padding:18px 12px}.topbar{align-items:flex-start;flex-direction:column}.grid,.split,.form-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column}.calendar-day{min-height:65px;padding:4px}.calendar-event{font-size:9px;padding:3px}.calendar-heading{font-size:10px}.toolbar>*{min-width:130px}.actions{width:100%}.actions .btn{flex:1}}
+  </style>
+</head>
+<body>
+  <main id="login-view" class="login-wrap">
+    <div class="brand">Rent Car <span>Service</span></div>
+    <section class="card login-card" style="margin-top:20px">
+      <div class="eyebrow">Espace partenaire</div>
+      <h1>Connexion</h1>
+      <p class="muted">Connectez-vous avec l’adresse e-mail et le mot de passe remis par l’administrateur.</p>
+      <form id="login-form">
+        <div class="field"><label for="login-email">Adresse e-mail</label><input id="login-email" type="email" autocomplete="username" required></div>
+        <div class="field"><label for="login-password">Mot de passe</label><input id="login-password" type="password" autocomplete="current-password" required></div>
+        <button id="login-submit" class="btn primary" type="submit">Se connecter</button>
+      </form>
+      <p id="login-message" class="notice status-line" role="status" aria-live="polite" hidden></p>
+      <p class="help">L’accès est limité aux données rattachées à votre compte. Si votre accès a expiré, contactez l’administrateur.</p>
+    </section>
+  </main>
+
+  <div id="app-view" class="shell hidden">
+    <aside class="sidebar">
+      <div class="brand">Rent Car <span>Service</span></div>
+      <div id="profile-chip" class="profile-chip">Chargement du compte…</div>
+      <nav class="nav" aria-label="Navigation partenaire">
+        <button class="active" type="button" data-tab="overview">Tableau de bord</button>
+        <button type="button" data-tab="vehicles">Mes voitures</button>
+        <button type="button" data-tab="reservations">Réservations</button>
+        <button type="button" data-tab="calendar">Calendrier</button>
+      </nav>
+      <div class="sidebar-footer">Les voitures, réservations, paiements et périodes de maintenance affichés sont limités par les règles d’accès Supabase de votre compte.</div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">Espace sécurisé</div><h1 id="page-title">Tableau de bord</h1><div id="profile-expiry" class="muted"></div></div>
+        <div class="actions"><button id="refresh-button" type="button" class="btn outline">Actualiser</button><button id="logout-button" type="button" class="btn outline">Se déconnecter</button></div>
+      </header>
+      <div id="app-message" class="notice" role="status" aria-live="polite" hidden></div>
+      <div class="notice warn" style="margin-bottom:15px"><strong>Fonctions en préparation :</strong> l’attribution de missions chauffeur et le choix automatique de vos modèles de facture/contrat ne sont pas activés ici, car les règles serveur actuelles les réservent ou ne les relient pas encore au propriétaire.</div>
+
+      <section id="tab-overview" class="page-tab">
+        <div class="grid">
+          <article class="card metric"><div class="metric-label">Mes voitures actives</div><div id="metric-vehicles" class="metric-value">—</div><div class="muted">Hors véhicules en fin de contrat</div></article>
+          <article class="card metric"><div class="metric-label">Réservations confirmées / terminées</div><div id="metric-bookings" class="metric-value">—</div><div class="muted">Pour vos voitures</div></article>
+          <article class="card metric"><div class="metric-label">Montant réservé</div><div id="metric-revenue" class="metric-value">—</div><div class="muted">Total des réservations confirmées et terminées</div></article>
+          <article class="card metric"><div class="metric-label">Encaissements enregistrés</div><div id="metric-collected" class="metric-value">—</div><div class="muted">Acomptes et paiements saisis</div></article>
+          <article class="card metric"><div class="metric-label">Paiements incomplets</div><div id="metric-unpaid" class="metric-value">—</div><div class="muted">Réservations confirmées avec solde</div></article>
+        </div>
+        <div class="split section">
+          <section class="card"><div class="section-head"><h2>Demandes récentes</h2><button class="btn outline" type="button" data-open-tab="reservations">Voir mes réservations</button></div><div id="recent-reservations" class="table-wrap" style="margin-top:10px"></div></section>
+          <section class="card"><div class="section-head"><h2>Ma flotte</h2><button class="btn outline" type="button" data-open-tab="vehicles">Voir mes voitures</button></div><div id="recent-vehicles" class="table-wrap" style="margin-top:10px"></div></section>
+        </div>
+      </section>
+
+      <section id="tab-vehicles" class="page-tab" hidden>
+        <section class="card">
+          <div class="section-head"><div><div class="eyebrow">Inventaire</div><h2>Ajouter une voiture</h2><p class="muted">Le tarif 12 h est obligatoire; le tarif 24 h reste facultatif. La fin de contrat est préremplie à J−1 de votre date d’accès.</p></div><button id="vehicle-form-toggle" type="button" class="btn outline">Nouvelle voiture</button></div>
+          <form id="vehicle-form" class="form-grid" hidden>
+            <input id="vehicle-id" type="hidden">
+            <div class="field"><label for="vehicle-name">Nom affiché *</label><input id="vehicle-name" maxlength="120" required></div>
+            <div class="field"><label for="vehicle-make">Marque</label><input id="vehicle-make" maxlength="80"></div>
+            <div class="field"><label for="vehicle-model">Modèle</label><input id="vehicle-model" maxlength="100"></div>
+            <div class="field"><label for="vehicle-registration">Immatriculation (facultative)</label><input id="vehicle-registration" maxlength="40"></div>
+            <div class="field"><label for="vehicle-price-12h">Prix 12 h (Ar) *</label><input id="vehicle-price-12h" type="number" min="1" step="1000" required></div>
+            <div class="field"><label for="vehicle-price-24h">Prix 24 h (Ar) — facultatif</label><input id="vehicle-price-24h" type="number" min="0" step="1000"><small class="help">Laisser vide pour afficher « Sur devis ».</small></div>
+            <div class="field"><label for="vehicle-price-day">Tarif par jour (Ar) — facultatif</label><input id="vehicle-price-day" type="number" min="0" step="1000"><small class="help">Utilisé pour les locations calculées à la journée.</small></div>
+            <div class="field"><label for="vehicle-driver-mode">Mode de location</label><select id="vehicle-driver-mode"><option value="without_driver">Sans chauffeur</option><option value="with_driver">Avec chauffeur</option></select></div>
+            <div class="field"><label for="vehicle-transmission">Transmission</label><input id="vehicle-transmission" maxlength="60"></div>
+            <div class="field"><label for="vehicle-fuel">Carburant</label><input id="vehicle-fuel" maxlength="60"></div>
+            <div class="field"><label for="vehicle-seats">Nombre de places</label><input id="vehicle-seats" type="number" min="1" max="60"></div>
+            <div class="field"><label for="vehicle-driver-fee">Frais chauffeur (Ar/jour)</label><input id="vehicle-driver-fee" type="number" min="0" step="1000" value="30000"></div>
+            <div class="field"><label for="vehicle-fleet-group">Groupe de flotte (facultatif)</label><input id="vehicle-fleet-group" maxlength="100"></div>
+            <div class="field"><label for="vehicle-status">Disponibilité</label><select id="vehicle-status"><option value="available">Disponible</option><option value="maintenance">En maintenance</option><option value="inactive">Inactive</option></select></div>
+            <div class="field"><label for="vehicle-30-100">Prix/jour — 30 à 100 jours (Ar)</label><input id="vehicle-30-100" type="number" min="0" step="1000"></div>
+            <div class="field"><label for="vehicle-100-200">Prix/jour — 100 à 200 jours (Ar)</label><input id="vehicle-100-200" type="number" min="0" step="1000"></div>
+            <div class="field"><label for="vehicle-over-200">Prix/jour — plus de 200 jours (Ar)</label><input id="vehicle-over-200" type="number" min="0" step="1000"></div>
+            <div class="field"><label for="vehicle-province-under-mode">Périphérie &lt; 150 km</label><select id="vehicle-province-under-mode"><option value="quote">Sur devis</option><option value="fixed">Tarif fixe</option></select></div>
+            <div class="field"><label for="vehicle-province-under-price">Tarif fixe périphérie &lt; 150 km (Ar)</label><input id="vehicle-province-under-price" type="number" min="0" step="1000"></div>
+            <div class="field"><label for="vehicle-province-over-mode">Province &gt; 150 km</label><select id="vehicle-province-over-mode"><option value="quote">Sur devis</option><option value="fixed">Tarif fixe</option></select></div>
+            <div class="field"><label for="vehicle-province-over-price">Tarif fixe province &gt; 150 km (Ar)</label><input id="vehicle-province-over-price" type="number" min="0" step="1000"></div>
+            <div class="field full"><label for="vehicle-description">Description</label><textarea id="vehicle-description" rows="3" maxlength="1500"></textarea></div>
+            <div class="field full"><label for="vehicle-photos">Photos (JPG, PNG ou WebP — 5 Mo maximum par photo)</label><input id="vehicle-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="vehicle-photo-preview" class="photo-preview"></div></div>
+            <p id="vehicle-form-message" class="notice field full" role="status" aria-live="polite" hidden></p>
+            <div class="field full actions"><button id="vehicle-save" type="submit" class="btn primary">Enregistrer la voiture</button><button id="vehicle-cancel" type="button" class="btn outline">Annuler</button></div>
+          </form>
+        </section>
+        <section class="card section"><div class="section-head"><div><div class="eyebrow">Votre inventaire privé</div><h2>Mes voitures</h2></div><span id="vehicle-count" class="muted"></span></div><div id="vehicles-table" class="table-wrap" style="margin-top:10px"></div></section>
+      </section>
+
+      <section id="tab-reservations" class="page-tab" hidden>
+        <section class="card"><div class="section-head"><div><div class="eyebrow">Dossiers clients</div><h2>Réservations de mes voitures</h2></div><div class="toolbar" style="margin:0"><select id="reservation-filter" aria-label="Filtrer les réservations"><option value="all">Tous les statuts</option><option value="pre_reserved">En attente</option><option value="reserved">Confirmées</option><option value="completed">Terminées</option><option value="cancelled">Annulées</option></select></div></div><div id="reservations-table" class="table-wrap" style="margin-top:12px"></div></section>
+      </section>
+
+      <section id="tab-calendar" class="page-tab" hidden>
+        <section class="card"><div class="section-head"><div><div class="eyebrow">Disponibilité de votre flotte</div><h2>Calendrier de mes voitures</h2></div><button id="calendar-refresh" type="button" class="btn outline">Recharger</button></div><div class="toolbar"><label>Date<input id="calendar-month" type="month"></label><label>Voiture<select id="calendar-vehicle"><option value="all">Toutes mes voitures</option></select></label></div><div class="help">Le calendrier montre les réservations et périodes de maintenance renvoyées par Supabase pour votre compte.</div><div id="calendar-view" style="margin-top:14px"></div></section>
+      </section>
+      <p class="footer-note">Espace partenaire Rent Car Service · Accès sécurisé par Supabase</p>
+    </main>
+  </div>
+  <script src="partner-dashboard.js?v=20261116-partner-dashboard-v1" defer></script>
+</body>
+</html>
