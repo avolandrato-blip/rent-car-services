@@ -33,8 +33,8 @@ test('article 6 encadre les frais de panne hors zone sans mentionner une panne a
   assert.match(article6, /ne rend pas le locataire responsable d’une panne mécanique indépendante de son comportement/);
   assert.match(article6, /sauf urgence de sécurité/);
   assert.doesNotMatch(article6, /aggrav(?:er|é|ée|ation)/i);
-  assert.match(publicPage, /contract-terms\.js\?v=20261009-min4/);
-  assert.match(adminHtml, /contract-terms\.js\?v=20261009-min4/);
+  assert.match(publicPage, /contract-terms\.js\?v=20261116-vehicle-immobilisation/);
+  assert.match(adminHtml, /contract-terms\.js\?v=20261116-vehicle-immobilisation/);
 });
 
 test('les trois paliers fermés appliquent 1 000 Ar par km au-delà du plafond et le palier >200 km reste ouvert', () => {
