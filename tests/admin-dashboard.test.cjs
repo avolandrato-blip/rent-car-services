@@ -37,3 +37,11 @@ test('la confirmation d’une réservation vérifie le statut effectivement écr
   assert.match(action, /if\(!data\)return alert\(/);
   assert.match(action, /catch\(error\)/);
 });
+
+test('les erreurs de chargement des réservations affichent le diagnostic Supabase exact', () => {
+  const html = read('admin.html');
+  assert.match(html, /r\.error\.message/);
+  assert.match(html, /r\.error\.code/);
+  assert.match(html, /Chargement reservations échoué/);
+  assert.doesNotMatch(html, /Impossible de charger les réservations avec cette session/);
+});
