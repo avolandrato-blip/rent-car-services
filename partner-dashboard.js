@@ -10,8 +10,8 @@
   const reservationPaid = (reservation, payments = []) => Math.max(Number(reservation?.deposit_amount || 0), payments.filter(payment => payment.reservation_id === reservation?.id).reduce((sum, payment) => sum + Number(payment.amount || 0), 0));
   const normalizePartnerLogin = value => {
     let name = String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    name = name.replace(/^p[_\s-]*/i, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    return name ? `p_${name}` : '';
+    name = name.replace(/^p[_\s-]+/i, '').replace(/[^a-zA-Z0-9]+/g, '.').replace(/^\.+|\.+$/g, '').toLowerCase();
+    return name;
   };
   const partnerAuthEmail = login => `${login.toLowerCase()}@partner.rent-car-service.local`;
   const helpers = { esc, dateInTana, contractEndBefore, canAccessPartnerPage, reservationPaid, normalizePartnerLogin, partnerAuthEmail };
@@ -108,7 +108,7 @@
     setLoginMessage('Connexion…');
     try {
       const login = normalizePartnerLogin($('login-name').value);
-      if (!login || login.length < 4) throw new Error('Saisissez votre identifiant au format P_Prénom.');
+      if (!login || login.length < 2) throw new Error('Saisissez le prénom utilisé comme identifiant.');
       const { data, error } = await db.auth.signInWithPassword({ email: partnerAuthEmail(login), password: $('login-password').value });
       if (error) throw error;
       const allowed = await loadProfile(data.user);

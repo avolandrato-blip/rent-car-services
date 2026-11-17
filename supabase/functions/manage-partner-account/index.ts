@@ -29,7 +29,7 @@ function todayInMadagascar(): string {
 }
 
 function slugName(value: string): string {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase().slice(0, 35);
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "").slice(0, 40);
 }
 
 function randomPassword(): string {
@@ -116,7 +116,7 @@ Deno.serve(async req => {
       return json({ error: "Saisissez un prénom valide et une date de fin au moins égale à aujourd’hui (heure de Madagascar)." }, 400);
     }
 
-    const loginBase = `P_${base}`;
+    const loginBase = base;
     const { data: profiles, error: lookupError } = await service.from("account_profiles")
       .select("login_name").eq("role", "partner").not("login_name", "is", null).limit(1000);
     if (lookupError) return json({ error: "Impossible de vérifier les identifiants existants." }, 500);
@@ -125,7 +125,7 @@ Deno.serve(async req => {
     let suffix = 2;
     while (used.has(loginName.toLowerCase())) loginName = `${loginBase}${suffix++}`;
 
-    const email = `${loginName.toLowerCase()}@partner.rent-car-service.local`;
+    const email = `${loginName}@partner.rent-car-service.local`;
     const initialPassword = randomPassword();
     const { data: created, error: createError } = await service.auth.admin.createUser({
       email,
