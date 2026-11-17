@@ -58,3 +58,14 @@ test('les missions et modèles de documents ne sont pas présentés comme dispon
   assert.match(html, /les règles serveur actuelles/);
   assert.doesNotMatch(js, /assign_chauffeur_mission/);
 });
+
+test('l’espace partenaire expose les actions de réservation, calendrier et contrat', () => {
+  const actions = fs.readFileSync(path.join(__dirname, '..', 'partner-actions.js'), 'utf8');
+  assert.match(html, /id="partner-add-reservation"/);
+  assert.match(html, /id="partner-add-block"/);
+  assert.match(js, /data-partner-booking-action="accept"/);
+  assert.match(js, /data-partner-booking-action="reject"/);
+  assert.match(actions, /prevent_partner_vehicle_schedule_overlap|overlapQuery/);
+  assert.match(actions, /Imprimer le contrat|Contrat de location de véhicule/);
+  assert.match(actions, /from\('maintenance'\)\.delete\(\)/);
+});

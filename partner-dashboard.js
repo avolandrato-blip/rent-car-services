@@ -240,9 +240,9 @@
   function renderReservations() {
     const vehicleById = new Map(state.vehicles.map(vehicle => [vehicle.id, vehicle]));
     const rows = filteredBookings();
-    $('reservations-table').innerHTML = rows.length ? `<table class="table"><thead><tr><th>Référence / véhicule</th><th>Client</th><th>Période</th><th>Total / payé / solde</th><th>Statut</th></tr></thead><tbody>${rows.map(row => {
+    $('reservations-table').innerHTML = rows.length ? `<table class="table"><thead><tr><th>Référence / véhicule</th><th>Client</th><th>Période</th><th>Total / payé / solde</th><th>Statut / actions</th><th>Documents</th></tr></thead><tbody>${rows.map(row => {
       const paid = reservationPaid(row, state.payments), total = Number(row.total_amount || 0), balance = Math.max(0, total - paid), vehicle = vehicleById.get(row.vehicle_id);
-      return `<tr><td><strong>${esc(row.reference)}</strong><br><small>${esc(vehicle ? vehicleLabel(vehicle) : 'Voiture')}</small></td><td>${esc(row.customer_name)}<br><a href="tel:${esc(String(row.customer_phone || '').replace(/[^+\d]/g, ''))}">${esc(row.customer_phone || '')}</a></td><td>${dateTime(row.start_at)}<br>→ ${dateTime(row.end_at)}</td><td>${money(total)}<br><small>Payé : ${money(paid)} · Solde : ${money(balance)}</small></td><td>${statusPill(row.status)}</td></tr>`;
+      return `<tr><td><strong>${esc(row.reference)}</strong><br><small>${esc(vehicle ? vehicleLabel(vehicle) : 'Voiture')}</small></td><td>${esc(row.customer_name)}<br><a href="tel:${esc(String(row.customer_phone || '').replace(/[^+\d]/g, ''))}">${esc(row.customer_phone || '')}</a></td><td>${dateTime(row.start_at)}<br>→ ${dateTime(row.end_at)}</td><td>${money(total)}<br><small>Payé : ${money(paid)} · Solde : ${money(balance)}</small></td><td>${statusPill(row.status)}<div class="actions" style="margin-top:6px">${row.status === 'pre_reserved' ? `<button type="button" class="btn primary" data-partner-booking-action="accept" data-id="${esc(row.id)}">Accepter</button><button type="button" class="btn danger" data-partner-booking-action="reject" data-id="${esc(row.id)}">Refuser</button>` : row.status === 'reserved' ? `<button type="button" class="btn outline" data-partner-booking-action="cancel" data-id="${esc(row.id)}">Annuler</button><button type="button" class="btn outline" data-partner-booking-action="complete" data-id="${esc(row.id)}">Terminer</button>` : ''}<button type="button" class="btn outline" data-partner-booking-action="edit" data-id="${esc(row.id)}">Modifier</button></div></td><td><button type="button" class="btn outline" data-partner-booking-action="contract" data-id="${esc(row.id)}">Imprimer le contrat</button></td></tr>`;
     }).join('')}</tbody></table>` : '<div class="empty">Aucune réservation ne correspond à ce filtre.</div>';
     const recent = relatedReservations().slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6);
     $('recent-reservations').innerHTML = recent.length ? `<table class="table"><thead><tr><th>Demande</th><th>Période</th><th>Statut</th></tr></thead><tbody>${recent.map(row => `<tr><td><strong>${esc(row.reference)}</strong><br><small>${esc(row.customer_name)}</small></td><td>${dateTime(row.start_at)}</td><td>${statusPill(row.status)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">Aucune demande de réservation.</div>';
@@ -269,7 +269,7 @@
         const reservations = state.reservations.filter(row => row.vehicle_id === vehicle.id && !['cancelled'].includes(row.status) && new Date(row.start_at) < dayEnd && new Date(row.end_at) > dayStart);
         const maintenance = state.maintenances.filter(row => row.vehicle_id === vehicle.id && new Date(row.start_at) < dayEnd && new Date(row.end_at) > dayStart);
         reservations.forEach(row => events.push(`<span class="calendar-event ${row.status === 'pre_reserved' ? 'pending' : ''}" title="${esc(`${vehicleLabel(vehicle)} · ${row.reference} · ${row.customer_name}`)}">${esc(vehicleLabel(vehicle))} · ${esc(row.reference)}</span>`));
-        maintenance.forEach(row => events.push(`<span class="calendar-event maintenance" title="${esc(row.reason || 'Maintenance')}">${esc(vehicleLabel(vehicle))} · Maintenance</span>`));
+        maintenance.forEach(row => events.push(`<span class="calendar-event maintenance" title="${esc(row.reason || 'Maintenance')}">${esc(vehicleLabel(vehicle))} · ${esc(row.reason || 'Blocage')} <button type="button" aria-label="Supprimer le blocage" data-partner-remove-block="${esc(row.id)}">×</button></span>`));
       });
       cards.push(`<div class="calendar-day"><strong>${day}</strong>${events.join('')}</div>`);
     }
@@ -294,6 +294,7 @@
       }
       await fetchOwnedData();
       renderAll();
+      document.dispatchEvent(new CustomEvent('rentcar:partner-refreshed', { detail: { vehicles: state.vehicles, reservations: relatedReservations(), profile: state.profile } }));
       setMessage(`Données actualisées à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`);
     } catch (error) {
       setMessage(error?.message || 'Erreur pendant le chargement des données.', 'error');
