@@ -8,7 +8,13 @@
   };
   const canAccessPartnerPage = (profile, today = dateInTana()) => Boolean(profile && profile.role === 'partner' && profile.is_active === true && (!profile.access_ends_on || profile.access_ends_on >= today));
   const reservationPaid = (reservation, payments = []) => Math.max(Number(reservation?.deposit_amount || 0), payments.filter(payment => payment.reservation_id === reservation?.id).reduce((sum, payment) => sum + Number(payment.amount || 0), 0));
-  const helpers = { esc, dateInTana, contractEndBefore, canAccessPartnerPage, reservationPaid };
+  const normalizePartnerLogin = value => {
+    let name = String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    name = name.replace(/^p[_\s-]*/i, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    return name ? `p_${name}` : '';
+  };
+  const partnerAuthEmail = login => `${login.toLowerCase()}@partner.rent-car-service.local`;
+  const helpers = { esc, dateInTana, contractEndBefore, canAccessPartnerPage, reservationPaid, normalizePartnerLogin, partnerAuthEmail };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -39,12 +45,24 @@
 
   function showLogin(message = '', isError = false) {
     $('app-view')?.classList.add('hidden');
+    $('password-change-view')?.classList.add('hidden');
     $('login-view')?.classList.remove('hidden');
     setLoginMessage(message, isError);
   }
 
+  function showPasswordChange(message = '', isError = false) {
+    $('login-view')?.classList.add('hidden');
+    $('app-view')?.classList.add('hidden');
+    $('password-change-view')?.classList.remove('hidden');
+    const element = $('password-change-message');
+    element.textContent = message;
+    element.className = `notice status-line${isError ? ' error' : ''}`;
+    element.hidden = !message;
+  }
+
   function showApp() {
     $('login-view')?.classList.add('hidden');
+    $('password-change-view')?.classList.add('hidden');
     $('app-view')?.classList.remove('hidden');
     const accountLabel = state.profile?.business_name || state.profile?.display_name || state.profile?.email || 'Partenaire';
     $('profile-chip').textContent = accountLabel;
@@ -57,7 +75,7 @@
   }
 
   async function loadProfile(user) {
-    const { data, error } = await db.from('account_profiles').select('user_id,role,email,display_name,business_name,is_active,access_ends_on').eq('user_id', user.id).maybeSingle();
+    const { data, error } = await db.from('account_profiles').select('user_id,role,email,display_name,business_name,is_active,access_ends_on,login_name,must_change_password').eq('user_id', user.id).maybeSingle();
     if (error) throw error;
     if (!canAccessPartnerPage(data)) {
       await db.auth.signOut();
@@ -68,6 +86,10 @@
     }
     state.user = user;
     state.profile = data;
+    if (data.must_change_password === true) {
+      showPasswordChange();
+      return true;
+    }
     showApp();
     return true;
   }
@@ -85,14 +107,49 @@
     button.disabled = true;
     setLoginMessage('Connexion…');
     try {
-      const { data, error } = await db.auth.signInWithPassword({ email: $('login-email').value.trim(), password: $('login-password').value });
+      const login = normalizePartnerLogin($('login-name').value);
+      if (!login || login.length < 4) throw new Error('Saisissez votre identifiant au format P_Prénom.');
+      const { data, error } = await db.auth.signInWithPassword({ email: partnerAuthEmail(login), password: $('login-password').value });
       if (error) throw error;
       const allowed = await loadProfile(data.user);
       if (!allowed) return;
       setLoginMessage();
+      if (state.profile?.must_change_password === true) return;
       await refreshAll();
     } catch (error) {
       setLoginMessage(`Connexion impossible : ${error?.message || error}`, true);
+    } finally { button.disabled = false; }
+  }
+
+  async function changeInitialPassword(event) {
+    event.preventDefault();
+    const temporaryPassword = $('temporary-password').value;
+    const password = $('new-password').value;
+    const confirmation = $('confirm-password').value;
+    if (!temporaryPassword) return showPasswordChange('Saisissez le mot de passe temporaire remis par le super-admin.', true);
+    if (password.length < 12) return showPasswordChange('Le nouveau mot de passe doit comporter au moins 12 caractères.', true);
+    if (password !== confirmation) return showPasswordChange('Les deux mots de passe ne correspondent pas.', true);
+    if (password === temporaryPassword) return showPasswordChange('Le nouveau mot de passe doit être différent du mot de passe temporaire.', true);
+    const button = $('password-change-submit');
+    button.disabled = true;
+    showPasswordChange('Enregistrement sécurisé du mot de passe…');
+    try {
+      const { data, error } = await db.functions.invoke('manage-partner-account', {
+        body: { action: 'complete_first_login', temporary_password: temporaryPassword, new_password: password },
+      });
+      if (error || data?.ok !== true) throw error || new Error(data?.error || 'La première connexion n’a pas pu être validée. Réessayez.');
+      const loginName = state.profile?.login_name;
+      await db.auth.signOut();
+      const { data: signedIn, error: signInError } = await db.auth.signInWithPassword({
+        email: partnerAuthEmail(loginName), password,
+      });
+      if (signInError || !signedIn?.user) throw signInError || new Error('Mot de passe mis à jour. Reconnectez-vous avec votre nouveau mot de passe.');
+      const allowed = await loadProfile(signedIn.user);
+      if (!allowed || state.profile?.must_change_password === true) throw new Error('Le compte doit encore valider son changement de mot de passe.');
+      $('password-change-form').reset();
+      await refreshAll();
+    } catch (error) {
+      showPasswordChange(`Impossible de terminer la première connexion : ${error?.message || error}`, true);
     } finally { button.disabled = false; }
   }
 
@@ -395,6 +452,7 @@
   function initialize() {
     if (!db) { showLogin('Configuration Supabase introuvable.', true); return; }
     $('login-form').addEventListener('submit', signIn);
+    $('password-change-form').addEventListener('submit', changeInitialPassword);
     $('logout-button').addEventListener('click', signOut);
     $('refresh-button').addEventListener('click', refreshAll);
     $('calendar-refresh').addEventListener('click', refreshAll);
@@ -420,7 +478,7 @@
       if (event === 'SIGNED_OUT') { state.user = null; state.profile = null; showLogin(); }
       if (event === 'TOKEN_REFRESHED' && session?.user) loadProfile(session.user).catch(error => showLogin(error.message, true));
     });
-    verifySession().then(ok => { if (ok) refreshAll(); }).catch(error => showLogin(`Vérification du compte impossible : ${error?.message || error}`, true));
+    verifySession().then(ok => { if (ok && state.profile?.must_change_password !== true) refreshAll(); }).catch(error => showLogin(`Vérification du compte impossible : ${error?.message || error}`, true));
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });

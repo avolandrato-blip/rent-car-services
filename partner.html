@@ -26,14 +26,30 @@
     <section class="card login-card" style="margin-top:20px">
       <div class="eyebrow">Espace partenaire</div>
       <h1>Connexion</h1>
-      <p class="muted">Connectez-vous avec l’adresse e-mail et le mot de passe remis par l’administrateur.</p>
+      <p class="muted">Utilisez votre identifiant partenaire et le mot de passe remis par le super-admin.</p>
       <form id="login-form">
-        <div class="field"><label for="login-email">Adresse e-mail</label><input id="login-email" type="email" autocomplete="username" required></div>
+        <div class="field"><label for="login-name">Identifiant partenaire</label><input id="login-name" type="text" autocomplete="username" placeholder="P_Prénom" minlength="3" maxlength="50" required></div>
         <div class="field"><label for="login-password">Mot de passe</label><input id="login-password" type="password" autocomplete="current-password" required></div>
         <button id="login-submit" class="btn primary" type="submit">Se connecter</button>
       </form>
       <p id="login-message" class="notice status-line" role="status" aria-live="polite" hidden></p>
       <p class="help">L’accès est limité aux données rattachées à votre compte. Si votre accès a expiré, contactez l’administrateur.</p>
+    </section>
+  </main>
+
+  <main id="password-change-view" class="login-wrap hidden">
+    <div class="brand">Rent Car <span>Service</span></div>
+    <section class="card login-card" style="margin-top:20px">
+      <div class="eyebrow">Première connexion</div>
+      <h1>Choisissez votre mot de passe</h1>
+      <p class="muted">Pour protéger votre compte, remplacez le mot de passe temporaire avant d’ouvrir votre espace.</p>
+      <form id="password-change-form">
+        <div class="field"><label for="temporary-password">Mot de passe temporaire remis par le super-admin</label><input id="temporary-password" type="password" autocomplete="current-password" required></div>
+        <div class="field"><label for="new-password">Nouveau mot de passe</label><input id="new-password" type="password" minlength="12" autocomplete="new-password" required><small class="help">12 caractères minimum; choisissez un mot de passe unique.</small></div>
+        <div class="field"><label for="confirm-password">Confirmer le mot de passe</label><input id="confirm-password" type="password" minlength="12" autocomplete="new-password" required></div>
+        <button id="password-change-submit" class="btn primary" type="submit">Enregistrer et continuer</button>
+      </form>
+      <p id="password-change-message" class="notice status-line" role="status" aria-live="polite" hidden></p>
     </section>
   </main>
 
@@ -116,6 +132,6 @@
       <p class="footer-note">Espace partenaire Rent Car Service · Accès sécurisé par Supabase</p>
     </main>
   </div>
-  <script src="partner-dashboard.js?v=20261116-partner-dashboard-v1" defer></script>
+  <script src="partner-dashboard.js?v=20261117-login-pprenom-1" defer></script>
 </body>
 </html>
