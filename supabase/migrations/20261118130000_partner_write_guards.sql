@@ -1,4 +1,4 @@
--- Harden partner write paths. Local change only; apply after explicit production approval.
+-- Harden partner write paths for the partner dashboard production rollout.
 
 -- Partners must use the SECURITY DEFINER RPCs; direct PostgREST writes would let them
 -- alter payment status, invoice OTPs, reservation fields, payment rows, or return forms.
@@ -348,9 +348,10 @@ BEGIN
      OR v_client_signature !~ '^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$' THEN
     RAISE EXCEPTION 'Fiche de retour invalide ou signature client manquante.' USING ERRCODE='22023';
   END IF;
-  IF CASE WHEN p_payload ? 'photo_paths' THEN jsonb_typeof(p_payload->'photo_paths')<>'array'
-     ELSE false END OR CASE WHEN jsonb_typeof(coalesce(p_payload->'photo_paths','[]'::jsonb))='array'
-     THEN jsonb_array_length(coalesce(p_payload->'photo_paths','[]'::jsonb))>8 ELSE false END THEN
+  IF p_payload ? 'photo_paths' AND jsonb_typeof(p_payload->'photo_paths') IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'La fiche peut contenir au maximum 8 photos.' USING ERRCODE='22023';
+  END IF;
+  IF jsonb_array_length(coalesce(p_payload->'photo_paths','[]'::jsonb))>8 THEN
     RAISE EXCEPTION 'La fiche peut contenir au maximum 8 photos.' USING ERRCODE='22023';
   END IF;
   FOR v_photo IN SELECT value FROM jsonb_array_elements(coalesce(p_payload->'photo_paths','[]'::jsonb)) LOOP

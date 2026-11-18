@@ -39,6 +39,8 @@ test('documents et photos restent dans des buckets privés et sont limités à l
   assert.match(migration, /UPDATE storage\.buckets SET file_size_limit=8388608/);
   assert.match(migration, /VALUES\('return-damage-photos','return-damage-photos',false,8388608/);
   assert.match(migration, /left\(v_photo #>> '\{\}',37\)/);
+  assert.match(migration, /p_payload \? 'photo_paths' AND jsonb_typeof\(p_payload->'photo_paths'\) IS DISTINCT FROM 'array'/);
+  assert.match(migration, /jsonb_array_length\(coalesce\(p_payload->'photo_paths','\[\]'::jsonb\)\)>8/);
   assert.match(migration, /contract_documents_storage_partner_insert[\s\S]*?partner_can_manage_reservation/);
   assert.match(migration, /return_damage_photo_insert[\s\S]*?partner_can_manage_reservation/);
   assert.match(actions, /createSignedUrl\(button\.dataset\.viewDoc,300\)/);
