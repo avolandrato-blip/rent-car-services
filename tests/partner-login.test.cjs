@@ -37,6 +37,16 @@ test('le premier accès oblige à remplacer le mot de passe temporaire', () => {
   assert.match(loginJs, /temporary_password: temporaryPassword/);
 });
 
+test('le changement initial du mot de passe accepte uniquement les origines web approuvées', () => {
+  assert.match(edge, /const ALLOWED_ORIGINS = new Set\(\[/);
+  assert.match(edge, /"https:\/\/avolandrato-blip\.github\.io"/);
+  assert.match(edge, /"https:\/\/vices-nu\.vercel\.app"/);
+  assert.match(edge, /ALLOWED_ORIGINS\.has\(origin\)/);
+  assert.match(edge, /"Access-Control-Allow-Origin": origin/);
+  assert.match(edge, /if \(!isAllowedOrigin\)/);
+  assert.doesNotMatch(edge, /Access-Control-Allow-Origin"\s*:\s*"\*"/);
+});
+
 test('le super-admin crée le compte depuis le prénom et la date, sans demander d’adresse e-mail', () => {
   assert.match(adminJs, /name="first_name"/);
   assert.match(adminJs, /name="access_ends_on"/);

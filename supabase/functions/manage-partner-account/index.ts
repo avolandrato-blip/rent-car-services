@@ -1,17 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const ALLOWED_ORIGIN = "https://avolandrato-blip.github.io";
-const corsHeaders = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Vary": "Origin",
-};
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
-  status,
-  headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
-});
+const ALLOWED_ORIGINS = new Set([
+  "https://avolandrato-blip.github.io",
+  "https://vices-nu.vercel.app",
+]);
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
 function validDate(value: unknown): value is string {
@@ -52,9 +44,21 @@ function constantTimeEqual(left: string, right: string): boolean {
 }
 
 Deno.serve(async req => {
+  const origin = req.headers.get("origin") || "";
+  const isAllowedOrigin = ALLOWED_ORIGINS.has(origin);
+  const corsHeaders = {
+    ...(isAllowedOrigin ? { "Access-Control-Allow-Origin": origin } : {}),
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+  if (!isAllowedOrigin) return json({ error: "Origine non autorisée." }, 403);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Méthode non autorisée." }, 405);
-  if (req.headers.get("origin") !== ALLOWED_ORIGIN) return json({ error: "Origine non autorisée." }, 403);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
