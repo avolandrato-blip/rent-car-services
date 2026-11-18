@@ -65,7 +65,13 @@
 
   async function invoke(body) {
     const { data, error } = await db.functions.invoke('manage-partner-account', { body });
-    if (error) throw new Error(data?.error || error.message || 'Fonction partenaire indisponible.');
+    if (error) {
+      const message = data?.error || error.message || 'Fonction partenaire indisponible.';
+      if (error.name === 'FunctionsFetchError' || /Failed to send a request to the Edge Function/i.test(message)) {
+        throw new Error(`Connexion à Supabase impossible depuis ${window.location.origin}. Vérifiez l’adresse de l’administration; aucune confirmation n’a été reçue. Actualisez la liste des comptes avant de réessayer.`);
+      }
+      throw new Error(message);
+    }
     if (data?.error) throw new Error(data.error);
     return data;
   }

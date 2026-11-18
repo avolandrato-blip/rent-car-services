@@ -5,8 +5,8 @@ html[data-theme="premium-white"] {
   --ui-surface: #ffffff;
   --ui-surface-soft: #eaf0f5;
   --ui-text: #142b3d;
-  --ui-muted: #596d7f;
-  --ui-border: #ced9e3;
+  --ui-muted: #4b5e70;
+  --ui-border: #bdcad6;
   --ui-primary: #0d5c8f;
   --ui-primary-hover: #0a4d79;
   --ui-accent: #b88221;
@@ -21,8 +21,8 @@ html[data-theme="royal-night"] {
   --ui-surface: #172638;
   --ui-surface-soft: #20344a;
   --ui-text: #eef4f8;
-  --ui-muted: #b7c5d1;
-  --ui-border: #344b61;
+  --ui-muted: #c4d0db;
+  --ui-border: #496075;
   --ui-primary: #3289b9;
   --ui-primary-hover: #45a0d0;
   --ui-accent: #efbf59;
@@ -247,3 +247,109 @@ body[data-theme="premium-white"] :is(.calendar-day, .calendar-event) { color: va
   body[data-theme], body[data-theme] :is(.btn, button, input[type="button"], input[type="submit"], .card) { transition: none !important; }
   body[data-theme] :is(button, .btn):hover, body[data-theme] :is(button, .btn):active { transform: none !important; }
 }
+
+
+/* Lisibilité : taille de base, aides, tableaux, liens et alertes */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body[data-theme] { font-size: 16px; line-height: 1.5; }
+body[data-theme] :is(p, li, dd, dt, blockquote) { line-height: 1.55; }
+body[data-theme] :is(small, .muted, .field-note, .help-text, .help, .meta, .empty, .side-note) {
+  color: var(--ui-muted) !important;
+  font-size: max(.875rem, 13px);
+  line-height: 1.55;
+}
+body[data-theme] :is(label, legend) { font-size: max(.875rem, 14px); }
+body[data-theme] :is(th, .table th) { font-size: max(.75rem, 12px); line-height: 1.35; }
+body[data-theme] :is(td, .table td) { font-size: max(.875rem, 14px); line-height: 1.45; }
+body[data-theme] :is(.notice, .notice.error, .notice.warn) { font-size: max(.875rem, 14px); line-height: 1.55; }
+body[data-theme] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) { font-size: 16px; }
+body[data-theme] a:not(.btn) { color: var(--ui-primary); text-underline-offset: .18em; }
+body[data-theme] a:not(.btn):hover { text-decoration-thickness: 2px; }
+body[data-theme="premium-white"] .notice:not(.error):not(.warn) { background: #eaf4fb; border: 1px solid #c7dce9; color: #164b70 !important; }
+body[data-theme="premium-white"] :is(.notice.error, .notice-error, .error-message) { background: #fff0ee; border: 1px solid #e9b8b2; color: #8e2119 !important; font-weight: 600; }
+body[data-theme="premium-white"] :is(.notice.warn, .notice-warning) { background: #fff6dc; border: 1px solid #e7d29a; color: #6c4b00 !important; }
+body[data-theme="royal-night"] .notice:not(.error):not(.warn) { background: #19354a; border: 1px solid #34566d; color: #d7edf8 !important; }
+body[data-theme="royal-night"] :is(.notice.error, .notice-error, .error-message) { background: #482624; border: 1px solid #7d4640; color: #ffd1ca !important; font-weight: 600; }
+body[data-theme="royal-night"] :is(.notice.warn, .notice-warning) { background: #42361e; border: 1px solid #78643b; color: #ffdf9b !important; }
+
+/* Navigation admin : accent couleur par rubrique et texte contrasté */
+body[data-theme] .sidebar .nav .nav-group[data-nav-group="reservations"] { --nav-accent: #1682b2; }
+body[data-theme] .sidebar .nav .nav-group[data-nav-group="fleet"] { --nav-accent: #c58b21; }
+body[data-theme] .sidebar .nav .nav-group[data-nav-group="partners"] { --nav-accent: #8054a8; }
+body[data-theme] .sidebar .nav .nav-group[data-nav-group="team"] { --nav-accent: #18836b; }
+body[data-theme] .sidebar .nav .nav-group[data-nav-group="finance"] { --nav-accent: #356caf; }
+body[data-theme] .sidebar .nav .nav-group[data-nav-group="site"] { --nav-accent: #c45c4c; }
+body[data-theme="premium-white"] .sidebar .nav > button {
+  border-left: 4px solid transparent;
+  color: #29465d !important;
+  font-weight: 600;
+}
+body[data-theme="premium-white"] .sidebar .nav > button.active {
+  background: #0d5c8f !important;
+  border-left-color: #d9a441 !important;
+  color: #fff !important;
+}
+body[data-theme="premium-white"] .sidebar .nav .nav-group > summary {
+  background: #f4f8fb !important;
+  border: 1px solid #cbd8e2;
+  border-left: 4px solid var(--nav-accent);
+  color: #173b55 !important;
+  font-weight: 700;
+}
+body[data-theme="premium-white"] .sidebar .nav .nav-group > summary:hover,
+body[data-theme="premium-white"] .sidebar .nav .nav-group[open] > summary {
+  background: #e1ecf4 !important;
+  color: #102c41 !important;
+}
+body[data-theme="premium-white"] .sidebar .nav-submenu {
+  background: #f8fafc;
+  border-left: 3px solid var(--nav-accent);
+  border-radius: 0 10px 10px 0;
+}
+body[data-theme="premium-white"] .sidebar .nav-submenu button { color: #29465d !important; font-weight: 600; }
+body[data-theme="premium-white"] .sidebar .nav-submenu button:hover { background: #e6eff5 !important; color: #102c41 !important; }
+body[data-theme="premium-white"] .sidebar .nav-submenu button.active {
+  background: #0d5c8f !important;
+  border-left: 4px solid var(--nav-accent) !important;
+  color: #fff !important;
+}
+body[data-theme="royal-night"] .sidebar .nav > button { border-left: 4px solid transparent; font-weight: 600; }
+body[data-theme="royal-night"] .sidebar .nav > button.active {
+  background: #205b7d !important;
+  border-left-color: #efbf59 !important;
+  color: #fff !important;
+}
+body[data-theme="royal-night"] .sidebar .nav .nav-group > summary {
+  background: #14283a !important;
+  border: 1px solid #344c60;
+  border-left: 4px solid var(--nav-accent);
+  color: #eaf3f8 !important;
+  font-weight: 700;
+}
+body[data-theme="royal-night"] .sidebar .nav .nav-group > summary:hover,
+body[data-theme="royal-night"] .sidebar .nav .nav-group[open] > summary {
+  background: #203a50 !important;
+  color: #fff !important;
+}
+body[data-theme="royal-night"] .sidebar .nav-submenu {
+  background: #0d1b29;
+  border-left: 3px solid var(--nav-accent);
+  border-radius: 0 10px 10px 0;
+}
+body[data-theme="royal-night"] .sidebar .nav-submenu button { color: #d0dce6 !important; font-weight: 600; }
+body[data-theme="royal-night"] .sidebar .nav-submenu button:hover { background: #1b3449 !important; color: #fff !important; }
+body[data-theme="royal-night"] .sidebar .nav-submenu button.active {
+  background: #205b7d !important;
+  border-left: 4px solid var(--nav-accent) !important;
+  color: #fff !important;
+}
+body[data-theme] .sidebar .nav .nav-group > summary:focus-visible,
+body[data-theme] .sidebar .nav button:focus-visible { outline: 3px solid var(--ui-accent); outline-offset: 2px; }
+@media (max-width: 700px) {
+  body[data-theme] { font-size: 16px; }
+  body[data-theme] .sidebar .nav .nav-group > summary { min-height: 44px; }
+}
+
+/* Les libellés compacts gardent une taille minimale lisible, surtout sur mobile. */
+body[data-theme] :is(.metric-label, .pill, .badge, .tag, .chip, .status-pill) { font-size: max(.75rem, 12px); }
+body[data-theme] .sidebar .nav :is(button, .nav-group > summary) { font-size: max(.875rem, 14px); }

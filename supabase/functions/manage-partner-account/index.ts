@@ -56,7 +56,10 @@ Deno.serve(async req => {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
-  if (!isAllowedOrigin) return json({ error: "Origine non autorisée." }, 403);
+  if (!isAllowedOrigin) {
+    console.warn("manage-partner-account rejected origin:", origin || "(missing)");
+    return json({ error: "Origine non autorisée." }, 403);
+  }
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Méthode non autorisée." }, 405);
 

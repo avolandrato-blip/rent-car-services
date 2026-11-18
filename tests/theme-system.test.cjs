@@ -6,8 +6,8 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('le sélecteur partagé clair/sombre est installé sur toutes les pages principales', () => {
-  for (const page of ['index.html', 'sell.html', 'admin.html', 'team.html', 'team-action.html', 'games.html', 'confidentialite.html']) {
+test('le sélecteur partagé clair/sombre est installé sur toutes les pages principales, y compris le portail partenaire', () => {
+  for (const page of ['index.html', 'sell.html', 'admin.html', 'team.html', 'team-action.html', 'games.html', 'confidentialite.html', 'partner.html']) {
     const html = read(page);
     assert.match(html, /theme-system\.css/ , `${page}: stylesheet partagé absent`);
     assert.match(html, /theme-system\.js/ , `${page}: contrôleur partagé absent`);
@@ -90,6 +90,20 @@ test('les palettes distinguent fond, surfaces, texte et bordures', () => {
   assert.match(css, /html\[data-theme="premium-white"\][\s\S]*?color-scheme: light/);
   assert.match(css, /\.game-card/);
   assert.match(css, /\.calendar-day/);
+});
+
+test('la lisibilité globale renforce la taille des aides, des tableaux et le contraste des alertes', () => {
+  const css = read('theme-system.css');
+  assert.match(css, /body\[data-theme\] \{ font-size: 16px; line-height: 1\.5; \}/);
+  assert.match(css, /font-size: max\(\.875rem, 13px\)/);
+  assert.match(css, /font-size: max\(\.875rem, 14px\)/);
+  assert.match(css, /\.notice\.error/);
+  assert.match(css, /#8e2119/);
+  assert.match(css, /#ffd1ca/);
+  for (const group of ['reservations', 'fleet', 'partners', 'team', 'finance', 'site']) {
+    assert.match(css, new RegExp(`data-nav-group="${group}"`));
+  }
+  assert.match(css, /nav-submenu button\.active/);
 });
 
 test('les boutons et les cartes reçoivent un relief, un état pressé et un focus visible', () => {

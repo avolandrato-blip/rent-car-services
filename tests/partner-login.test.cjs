@@ -44,7 +44,9 @@ test('le changement initial du mot de passe accepte uniquement les origines web 
   assert.match(edge, /ALLOWED_ORIGINS\.has\(origin\)/);
   assert.match(edge, /"Access-Control-Allow-Origin": origin/);
   assert.match(edge, /if \(!isAllowedOrigin\)/);
+  assert.match(edge, /rejected origin:/);
   assert.doesNotMatch(edge, /Access-Control-Allow-Origin"\s*:\s*"\*"/);
+  assert.match(adminJs, /window\.location\.origin/);
 });
 
 test('le super-admin crée le compte depuis le prénom et la date, sans demander d’adresse e-mail', () => {
