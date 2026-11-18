@@ -13,8 +13,9 @@
     name = name.replace(/^p[_\s-]+/i, '').replace(/[^a-zA-Z0-9]+/g, '.').replace(/^\.+|\.+$/g, '').toLowerCase();
     return name;
   };
-  const partnerAuthEmail = login => `${login.toLowerCase()}@partner.rent-car-service.local`;
-  const helpers = { esc, dateInTana, contractEndBefore, canAccessPartnerPage, reservationPaid, normalizePartnerLogin, partnerAuthEmail };
+  const partnerAuthEmail = login => `p_${normalizePartnerLogin(login)}@partner.rent-car-service.local`;
+  const legacyPartnerAuthEmail = login => `${normalizePartnerLogin(login)}@partner.rent-car-service.local`;
+  const helpers = { esc, dateInTana, contractEndBefore, canAccessPartnerPage, reservationPaid, normalizePartnerLogin, partnerAuthEmail, legacyPartnerAuthEmail };
   if (typeof module !== 'undefined' && module.exports) module.exports = helpers;
   if (typeof document === 'undefined') return;
 
@@ -108,8 +109,17 @@
     setLoginMessage('Connexion…');
     try {
       const login = normalizePartnerLogin($('login-name').value);
-      if (!login || login.length < 2) throw new Error('Saisissez le prénom utilisé comme identifiant.');
-      const { data, error } = await db.auth.signInWithPassword({ email: partnerAuthEmail(login), password: $('login-password').value });
+      if (!login || login.length < 2) throw new Error('Saisissez le login partenaire P_prénom.');
+      const password = $('login-password').value;
+      let result = await db.auth.signInWithPassword({ email: partnerAuthEmail(login), password });
+      if (result.error) {
+        const legacyEmail = legacyPartnerAuthEmail(login);
+        if (legacyEmail.toLowerCase() !== partnerAuthEmail(login).toLowerCase()) {
+          const legacyResult = await db.auth.signInWithPassword({ email: legacyEmail, password });
+          if (!legacyResult.error) result = legacyResult;
+        }
+      }
+      const { data, error } = result;
       if (error) throw error;
       const allowed = await loadProfile(data.user);
       if (!allowed) return;

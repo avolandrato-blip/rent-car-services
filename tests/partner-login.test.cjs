@@ -18,16 +18,19 @@ test('le login est basé sur le prénom comme pour le chauffeur, sans exposer l�
   assert.equal(helpers.normalizePartnerLogin('Jean Paul'), 'jean.paul');
   assert.equal(helpers.normalizePartnerLogin('P_Tiana'), 'tiana');
   assert.equal(helpers.normalizePartnerLogin('Patrick'), 'patrick');
-  assert.equal(helpers.partnerAuthEmail('Tiana'), 'tiana@partner.rent-car-service.local');
+  assert.equal(helpers.partnerAuthEmail('Tiana'), 'p_tiana@partner.rent-car-service.local');
+  assert.equal(helpers.partnerAuthEmail('P_Tiana'), 'p_tiana@partner.rent-car-service.local');
+  assert.equal(helpers.legacyPartnerAuthEmail('Tiana'), 'tiana@partner.rent-car-service.local');
   assert.match(html, /id="login-name"/);
-  assert.match(html, /placeholder="Votre prénom/);
-  assert.doesNotMatch(html, /placeholder="P_Prénom"/);
+  assert.match(html, /placeholder="P_Tiana"/);
+  assert.match(html, /Les anciens logins restent acceptés/);
   assert.doesNotMatch(html, /id="login-email"/);
 });
 
 test('le premier accès oblige à remplacer le mot de passe temporaire', () => {
   assert.match(html, /id="password-change-view"/);
   assert.match(html, /id="new-password"[^>]*minlength="12"/);
+  assert.match(loginJs, /legacyPartnerAuthEmail/);
   assert.match(loginJs, /must_change_password/);
   assert.match(html, /id="temporary-password"/);
   assert.match(loginJs, /complete_first_login/);
@@ -39,7 +42,7 @@ test('le super-admin crée le compte depuis le prénom et la date, sans demander
   assert.match(adminJs, /name="access_ends_on"/);
   assert.match(adminJs, /action: 'create', first_name: firstName, access_ends_on: accessEnd/);
   assert.match(adminJs, /initial_password/);
-  assert.match(adminJs, /login sera basé sur son prénom/);
+  assert.match(adminJs, /format <code>P_prénom<\/code>/);
   assert.match(adminJs, /mot de passe aléatoire temporaire/);
   assert.match(adminHtml, /partner-accounts-admin\.js\?v=/);
   assert.match(adminHtml, /initPartnerAccountsAdmin/);
@@ -47,7 +50,7 @@ test('le super-admin crée le compte depuis le prénom et la date, sans demander
 
 test('l’Edge Function garde la création sous contrôle super-admin et crée un login unique avec mot de passe aléatoire', () => {
   assert.match(edge, /caller\.rpc\("is_super_admin"\)/);
-  assert.match(edge, /const loginBase = base/);
+  assert.match(edge, /const loginBase = `P_\$\{base\}`/);
   assert.match(edge, /replace\(\/\[\^a-z0-9\]\+\/g, "\."\)/);
   assert.match(edge, /while \(used\.has\(loginName\.toLowerCase\(\)\)\)/);
   assert.match(edge, /@partner\.rent-car-service\.local/);

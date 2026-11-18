@@ -116,7 +116,7 @@ Deno.serve(async req => {
       return json({ error: "Saisissez un prénom valide et une date de fin au moins égale à aujourd’hui (heure de Madagascar)." }, 400);
     }
 
-    const loginBase = base;
+    const loginBase = `P_${base}`;
     const { data: profiles, error: lookupError } = await service.from("account_profiles")
       .select("login_name").eq("role", "partner").not("login_name", "is", null).limit(1000);
     if (lookupError) return json({ error: "Impossible de vérifier les identifiants existants." }, 500);

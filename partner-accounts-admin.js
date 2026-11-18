@@ -15,7 +15,7 @@
     beforeSection.insertAdjacentHTML('beforebegin', `
       <section id="partner-accounts" class="tab">
         <div class="card">
-          <div class="section-head"><div><h2>Créer un compte partenaire</h2><p class="muted">Le login sera basé sur son prénom (ex. <code>tiana</code>, comme pour un chauffeur). Un mot de passe aléatoire temporaire sera affiché une seule fois et devra être remplacé à la première connexion.</p></div></div>
+          <div class="section-head"><div><h2>Créer un compte partenaire</h2><p class="muted">Le login est généré automatiquement à partir du prénom, au format <code>P_prénom</code> (ex. <code>P_tiana</code>; un numéro est ajouté si le login existe déjà). Un mot de passe aléatoire temporaire sera affiché une seule fois et devra être remplacé à la première connexion.</p></div></div>
           <form id="partner-create-form" class="form-grid">
             <div class="field"><label for="partner-first-name">Prénom du partenaire</label><input id="partner-first-name" name="first_name" maxlength="80" autocomplete="off" required></div>
             <div class="field"><label for="partner-access-end">Fin d’accès / contrat</label><input id="partner-access-end" name="access_ends_on" type="date" required><small class="muted">L’accès reste valable jusqu’à 23 h 59, heure de Madagascar, à cette date.</small></div>

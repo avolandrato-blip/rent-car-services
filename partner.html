@@ -26,9 +26,9 @@
     <section class="card login-card" style="margin-top:20px">
       <div class="eyebrow">Espace partenaire</div>
       <h1>Connexion</h1>
-      <p class="muted">Utilisez votre identifiant partenaire et le mot de passe remis par le super-admin.</p>
+      <p class="muted">Utilisez le login remis par le super-admin (format : P_prénom) et votre mot de passe. Les anciens logins restent acceptés.</p>
       <form id="login-form">
-        <div class="field"><label for="login-name">Identifiant partenaire</label><input id="login-name" type="text" autocomplete="username" placeholder="Votre prénom (ex. Tiana)" minlength="2" maxlength="50" required></div>
+        <div class="field"><label for="login-name">Identifiant partenaire</label><input id="login-name" type="text" autocomplete="username" placeholder="P_Tiana" minlength="2" maxlength="50" required></div>
         <div class="field"><label for="login-password">Mot de passe</label><input id="login-password" type="password" autocomplete="current-password" required></div>
         <button id="login-submit" class="btn primary" type="submit">Se connecter</button>
       </form>
@@ -132,7 +132,7 @@
       <p class="footer-note">Espace partenaire Rent Car Service · Accès sécurisé par Supabase</p>
     </main>
   </div>
-  <script src="partner-dashboard.js?v=20261117-login-firstname-2" defer></script>
+  <script src="partner-dashboard.js?v=20261118-partner-login-p-prefix" defer></script>
   <script src="partner-actions.js?v=20261117-partner-management-1" defer></script>
 </body>
 </html>
