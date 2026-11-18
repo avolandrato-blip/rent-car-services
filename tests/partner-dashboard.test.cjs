@@ -53,10 +53,15 @@ test('le tarif 12 h est requis et le tarif 24 h vide reste facultatif / sur devi
   assert.match(js, /price_24h: \$\('vehicle-price-24h'\)\.value\.trim\(\) === '' \? null/);
 });
 
-test('les missions et modèles de documents ne sont pas présentés comme disponibles avant leur raccordement serveur', () => {
-  assert.match(html, /l’attribution de missions chauffeur et le choix automatique de vos modèles/);
-  assert.match(html, /les règles serveur actuelles/);
-  assert.doesNotMatch(js, /assign_chauffeur_mission/);
+test('le dossier partenaire expose les actions opérationnelles sécurisées', () => {
+  const actions = fs.readFileSync(path.join(__dirname, '..', 'partner-actions.js'), 'utf8');
+  assert.match(html, /Dossier partenaire/);
+  assert.match(actions, /partner_create_reservation/);
+  assert.match(actions, /partner_update_reservation/);
+  assert.match(actions, /partner_add_payment/);
+  assert.match(actions, /partner_release_invoice_and_create_otp/);
+  assert.match(actions, /assign_partner_chauffeur_mission/);
+  assert.match(actions, /return_forms/);
 });
 
 test('l’espace partenaire expose les actions de réservation, calendrier et contrat', () => {
