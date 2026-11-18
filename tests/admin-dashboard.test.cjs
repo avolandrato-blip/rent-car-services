@@ -10,6 +10,7 @@ test('le nouveau dashboard admin remplace le menu visible sans supprimer les sec
   const css = read('admin-dashboard.css');
   const script = read('admin-dashboard.js');
   const tabs = new Set([...html.matchAll(/data-tab="([^"]+)"/g)].map(match => match[1]));
+  if (/data-tab="team-missions"/.test(read('team-admin.js'))) tabs.add('team-missions');
   const dashboardTargets = [...html.matchAll(/data-dashboard-tab="([^"]+)"/g)].map(match => match[1]);
   assert.ok(dashboardTargets.length >= 20, 'chaque rubrique doit rester atteignable par les raccourcis');
   for (const target of dashboardTargets) assert.ok(tabs.has(target), `destination inconnue: ${target}`);

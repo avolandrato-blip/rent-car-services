@@ -8,7 +8,7 @@
 
   function buildInterface() {
     if (initialized) return;
-    const nav = document.querySelector('.nav');
+    const nav = document.querySelector('.nav-group[data-nav-group="partners"] .nav-submenu');
     const beforeSection = document.getElementById('chauffeurs');
     if (!nav || !beforeSection) return;
     nav.insertAdjacentHTML('beforeend', '<button data-tab="partner-accounts" type="button">Comptes partenaires</button>');
