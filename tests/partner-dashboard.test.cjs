@@ -61,7 +61,8 @@ test('le dossier partenaire expose les actions opérationnelles sécurisées', (
   assert.match(actions, /partner_add_payment/);
   assert.match(actions, /partner_release_invoice_and_create_otp/);
   assert.match(actions, /assign_partner_chauffeur_mission/);
-  assert.match(actions, /return_forms/);
+  assert.match(actions, /partner_save_return_form/);
+  assert.doesNotMatch(actions, /from\('return_forms'\)\.(insert|update|upsert|delete)/);
 });
 
 test('l’espace partenaire expose les actions de réservation, calendrier et contrat', () => {
@@ -71,6 +72,6 @@ test('l’espace partenaire expose les actions de réservation, calendrier et co
   assert.match(js, /data-partner-booking-action="accept"/);
   assert.match(js, /data-partner-booking-action="reject"/);
   assert.match(actions, /prevent_partner_vehicle_schedule_overlap|overlapQuery/);
-  assert.match(actions, /Imprimer le contrat|Contrat de location de véhicule/);
+  assert.match(actions, /Imprimer le contrat|CONTRAT DE LOCATION DE VÉHICULE/);
   assert.match(actions, /from\('maintenance'\)\.delete\(\)/);
 });
