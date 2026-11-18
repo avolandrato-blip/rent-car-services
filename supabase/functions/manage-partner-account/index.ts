@@ -84,7 +84,7 @@ Deno.serve(async req => {
       .select("user_id,role,is_active,access_ends_on,must_change_password")
       .eq("user_id", authData.user.id).maybeSingle();
     if (profileError) return json({ error: "Impossible de vérifier le compte partenaire." }, 500);
-    if (!profile || profile.role !== "partner" || profile.is_active !== true || profile.must_change_password !== true || !profile.access_ends_on || profile.access_ends_on < todayInMadagascar()) {
+    if (!profile || profile.role !== "partner" || profile.is_active !== true || profile.must_change_password !== true || (profile.access_ends_on && profile.access_ends_on < todayInMadagascar())) {
       return json({ error: "Aucun changement initial de mot de passe n’est requis pour ce compte." }, 403);
     }
     const { data: credential, error: credentialError } = await service.from("partner_initial_credentials")
@@ -111,12 +111,13 @@ Deno.serve(async req => {
   if (body.action === "create") {
     const firstName = String(body.first_name || "").trim().replace(/\s+/g, " ");
     const base = slugName(firstName);
-    const accessEndsOn = body.access_ends_on;
-    if (firstName.length < 2 || firstName.length > 80 || !base || !validDate(accessEndsOn) || accessEndsOn < todayInMadagascar()) {
-      return json({ error: "Saisissez un prénom valide et une date de fin au moins égale à aujourd’hui (heure de Madagascar)." }, 400);
+    const accessEndsOn = body.access_ends_on == null || body.access_ends_on === "" ? null : body.access_ends_on;
+    if (firstName.length < 2 || firstName.length > 80 || !base || (accessEndsOn !== null && (!validDate(accessEndsOn) || accessEndsOn < todayInMadagascar()))) {
+      return json({ error: "Saisissez un prénom valide et, si besoin, une date de fin au moins égale à aujourd’hui (heure de Madagascar)." }, 400);
     }
 
     const loginBase = `P_${base}`;
+    const isRijaniaina = base === "rijaniaina" || base === "rija.niaina";
     const { data: profiles, error: lookupError } = await service.from("account_profiles")
       .select("login_name").eq("role", "partner").not("login_name", "is", null).limit(1000);
     if (lookupError) return json({ error: "Impossible de vérifier les identifiants existants." }, 500);
@@ -145,6 +146,13 @@ Deno.serve(async req => {
       access_ends_on: accessEndsOn,
       must_change_password: true,
       created_by: authData.user.id,
+      ...(isRijaniaina ? {
+        business_name: "RAKOTOARISOA RIJA NIAINA",
+        business_address: "SIAE 33 Ambodifilao Antananarivo",
+        business_phone: "0388552432",
+        business_legal_id: "NIF : 5012357932 · STAT : 70209 11 2025 0 06328",
+        partner_contract_template_key: "rijaniaina_v1",
+      } : {}),
     });
     if (profileError) {
       await service.auth.admin.deleteUser(created.user.id);
@@ -161,10 +169,10 @@ Deno.serve(async req => {
 
   if (body.action === "update") {
     const userId = String(body.user_id || "");
-    const accessEndsOn = body.access_ends_on;
+    const accessEndsOn = body.access_ends_on == null || body.access_ends_on === "" ? null : body.access_ends_on;
     const isActive = body.is_active;
     const resetPassword = body.reset_password === true;
-    if (!/^[0-9a-f-]{36}$/i.test(userId) || !validDate(accessEndsOn) || typeof isActive !== "boolean" || (isActive && accessEndsOn < todayInMadagascar())) {
+    if (!/^[0-9a-f-]{36}$/i.test(userId) || (accessEndsOn !== null && !validDate(accessEndsOn)) || typeof isActive !== "boolean" || (isActive && accessEndsOn !== null && accessEndsOn < todayInMadagascar())) {
       return json({ error: "Données de mise à jour invalides ou date déjà expirée." }, 400);
     }
 

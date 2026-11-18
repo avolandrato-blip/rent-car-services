@@ -15,10 +15,10 @@
     beforeSection.insertAdjacentHTML('beforebegin', `
       <section id="partner-accounts" class="tab">
         <div class="card">
-          <div class="section-head"><div><h2>Créer un compte partenaire</h2><p class="muted">Le login est généré automatiquement à partir du prénom, au format <code>P_prénom</code> (ex. <code>P_tiana</code>; un numéro est ajouté si le login existe déjà). Un mot de passe aléatoire temporaire sera affiché une seule fois et devra être remplacé à la première connexion.</p></div></div>
+          <div class="section-head"><div><h2>Créer un compte partenaire</h2><p class="muted">Le login est généré automatiquement à partir du prénom, au format <code>P_prénom</code> (ex. <code>P_tiana</code>; un numéro est ajouté si le login existe déjà). Un mot de passe aléatoire temporaire sera affiché une seule fois et devra être remplacé à la première connexion. Pour Rijaniaina, saisissez <code>Rijaniaina</code> ou <code>Rija Niaina</code> : ses coordonnées et son modèle contractuel fourni seront associés automatiquement.</p></div></div>
           <form id="partner-create-form" class="form-grid">
             <div class="field"><label for="partner-first-name">Prénom du partenaire</label><input id="partner-first-name" name="first_name" maxlength="80" autocomplete="off" required></div>
-            <div class="field"><label for="partner-access-end">Fin d’accès / contrat</label><input id="partner-access-end" name="access_ends_on" type="date" required><small class="muted">L’accès reste valable jusqu’à 23 h 59, heure de Madagascar, à cette date.</small></div>
+            <div class="field"><label for="partner-access-end">Fin d’accès / contrat (facultatif)</label><input id="partner-access-end" name="access_ends_on" type="date"><small class="muted">Laissez vide pour un accès permanent. Sinon, l’accès reste valable jusqu’à 23 h 59, heure de Madagascar, à cette date.</small></div>
             <div class="field full"><button id="partner-create-submit" type="submit" class="btn primary">Créer le compte partenaire</button></div>
           </form>
           <p id="partner-admin-message" class="notice" role="status" aria-live="polite" hidden></p>
@@ -75,7 +75,7 @@
     if (busy) return;
     const firstName = $('partner-first-name').value.trim();
     const accessEnd = $('partner-access-end').value;
-    if (!firstName || !accessEnd) return showMessage('Saisissez le prénom et la date de fin d’accès.', true);
+    if (!firstName) return showMessage('Saisissez le prénom.', true);
     busy = true;
     $('partner-create-submit').disabled = true;
     $('partner-secret').hidden = true;
@@ -112,7 +112,7 @@
     if (!row) return;
     const date = row.querySelector('[data-access-end]').value;
     const active = activeOverride == null ? row.querySelector('[data-action="toggle"]')?.dataset.active === 'true' : activeOverride;
-    if (!date) return showMessage('La date de fin d’accès est obligatoire.', true);
+
     if (resetPassword && !window.confirm('Générer un nouveau mot de passe temporaire ? L’ancien mot de passe cessera immédiatement de fonctionner.')) return;
     busy = true;
     showMessage(resetPassword ? 'Génération du nouveau mot de passe…' : 'Enregistrement du compte…');

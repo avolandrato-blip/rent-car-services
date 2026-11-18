@@ -3,7 +3,7 @@
   const db = window.rentCarSupabase;
   const $ = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let vehicles = [], reservations = [], busy = false;
+  let vehicles = [], reservations = [], busy = false, partnerUserId = null;
   const money = n => `${Math.round(Number(n || 0)).toLocaleString('fr-FR')} Ar`;
   function notify(text, error = false) {
     const node = $('app-message'); if (!node) return;
@@ -66,8 +66,22 @@
   }
   function printContract(row) {
     const vehicle = vehicles.find(v => v.id === row.vehicle_id) || {};
+    const assignedPartnerId = row.partner_user_id || null;
+    const currentPartnerId = window.__partnerUserId || partnerUserId;
+    if (assignedPartnerId && assignedPartnerId !== currentPartnerId) return notify('Cette réservation est attribuée à un autre partenaire. Son contrat n’est pas accessible depuis ce compte.', true);
+    if (assignedPartnerId === currentPartnerId) {
+      const templateKey = window.__partnerProfile?.partner_contract_template_key;
+      if (!templateKey || !window.RentCarPartnerContracts) return notify('Le modèle contractuel de ce compte n’est pas disponible. Contactez le super-admin.', true);
+      const grouped = row.booking_group_id ? reservations.filter(item => item.booking_group_id === row.booking_group_id) : [row];
+      const html = window.RentCarPartnerContracts.renderHtml(templateKey, row, vehicle, grouped);
+      const customWindow = window.open('', '_blank');
+      if (!customWindow) return notify('Autorisez les fenêtres pop-up pour imprimer le contrat.', true);
+      customWindow.document.open(); customWindow.document.write(html); customWindow.document.close();
+      return;
+    }
     const date = value => value ? new Date(value).toLocaleString('fr-FR',{timeZone:'Indian/Antananarivo',dateStyle:'short',timeStyle:'short'}) : '—';
-    const html = `<!doctype html><html lang="fr"><meta charset="utf-8"><title>Contrat ${esc(row.reference)}</title><style>body{font:15px Arial,sans-serif;max-width:800px;margin:40px auto;color:#182b38}h1,h2{color:#0c3850}table{width:100%;border-collapse:collapse}td{padding:9px;border-bottom:1px solid #ddd}.sign{display:flex;justify-content:space-between;margin-top:60px}.sign div{width:42%;border-top:1px solid #333;padding-top:10px}.note{font-size:12px;color:#666}@media print{body{margin:15mm}}</style><h1>Contrat de location de véhicule</h1><p>Référence : <strong>${esc(row.reference)}</strong> · Émis le ${new Date().toLocaleDateString('fr-FR')}</p><h2>Loueur</h2><p>${esc(window.__partnerDisplayName || 'Partenaire Rent Car Service')}</p><h2>Locataire</h2><p>${esc(row.customer_name)} · ${esc(row.customer_phone)}</p><h2>Véhicule et période</h2><table><tr><td>Véhicule</td><td>${esc(vehicle.name || vehicle.make || '')} ${esc(vehicle.model || '')}</td></tr><tr><td>Immatriculation</td><td>${esc(vehicle.registration_number || 'À compléter')}</td></tr><tr><td>Début</td><td>${date(row.start_at)}</td></tr><tr><td>Fin</td><td>${date(row.end_at)}</td></tr><tr><td>Trajet</td><td>${esc([row.trip_from,row.trip_to].filter(Boolean).join(' → ') || 'À préciser')}</td></tr><tr><td>Montant total</td><td>${money(row.total_amount)}</td></tr><tr><td>Payé / acompte</td><td>${money(row.deposit_amount)}</td></tr></table><h2>Conditions particulières</h2><p>Le locataire s’engage à utiliser le véhicule conformément à sa destination et à le restituer à la date convenue, dans l’état où il l’a reçu, sous réserve de l’usure normale. Tout dommage, retard ou frais imputable au locataire demeure à sa charge après justification. Le véhicule ne peut être sous-loué ni utilisé pour une activité illicite.</p><p class="note">Document généré pour impression à partir des informations de réservation. Vérifiez les identités, documents et conditions applicables avant signature. Ce document n’est pas signé électroniquement et ne constitue pas un avis juridique.</p><div class="sign"><div>Le locataire<br><br>Nom et signature</div><div>Le loueur<br><br>Nom et signature</div></div><script>window.print()<\/script></html>`;
+    const lessor = assignedPartnerId ? (window.__partnerProfile?.business_name || window.__partnerProfile?.display_name || 'Partenaire') : 'ANDRIANASOLO Volandrato — Rent Car Service';
+    const html = `<!doctype html><html lang="fr"><meta charset="utf-8"><title>Contrat ${esc(row.reference)}</title><style>body{font:15px Arial,sans-serif;max-width:800px;margin:40px auto;color:#182b38}h1,h2{color:#0c3850}table{width:100%;border-collapse:collapse}td{padding:9px;border-bottom:1px solid #ddd}.sign{display:flex;justify-content:space-between;margin-top:60px}.sign div{width:42%;border-top:1px solid #333;padding-top:10px}.note{font-size:12px;color:#666}@media print{body{margin:15mm}}</style><h1>Contrat de location de véhicule</h1><p>Référence : <strong>${esc(row.reference)}</strong> · Émis le ${new Date().toLocaleDateString('fr-FR')}</p><h2>Loueur</h2><p>${esc(lessor)}</p><h2>Locataire</h2><p>${esc(row.customer_name)} · ${esc(row.customer_phone)}</p><h2>Véhicule et période</h2><table><tr><td>Véhicule</td><td>${esc(vehicle.name || vehicle.make || '')} ${esc(vehicle.model || '')}</td></tr><tr><td>Immatriculation</td><td>${esc(vehicle.registration_number || 'À compléter')}</td></tr><tr><td>Début</td><td>${date(row.start_at)}</td></tr><tr><td>Fin</td><td>${date(row.end_at)}</td></tr><tr><td>Trajet</td><td>${esc([row.trip_from,row.trip_to].filter(Boolean).join(' → ') || 'À préciser')}</td></tr><tr><td>Montant total</td><td>${money(row.total_amount)}</td></tr><tr><td>Payé / acompte</td><td>${money(row.deposit_amount)}</td></tr></table><h2>Conditions particulières</h2><p>Le locataire s’engage à utiliser le véhicule conformément à sa destination et à le restituer à la date convenue, dans l’état où il l’a reçu, sous réserve de l’usure normale. Tout dommage, retard ou frais imputable au locataire demeure à sa charge après justification. Le véhicule ne peut être sous-loué ni utilisé pour une activité illicite.</p><p class="note">Document généré pour impression à partir des informations de réservation. Vérifiez les identités, documents et conditions applicables avant signature. Ce document n’est pas signé électroniquement et ne constitue pas un avis juridique.</p><div class="sign"><div>Le locataire<br><br>Nom et signature</div><div>Le loueur<br><br>Nom et signature</div></div><script>window.print()<\/script></html>`;
     const w = window.open('','_blank'); if (!w) return notify('Autorisez les fenêtres pop-up pour imprimer le contrat.',true); w.document.write(html); w.document.close();
   }
   async function bookingAction(event) {
@@ -79,16 +93,23 @@
     if (!next || !window.confirm(`${action === 'accept' ? 'Confirmer cette réservation ?' : action === 'complete' ? 'Marquer cette réservation comme terminée ?' : 'Annuler/refuser cette réservation ?'}`)) return;
     busy = true;
     try {
-      const { error } = await db.from('reservations').update({status:next}).eq('id',row.id).eq('status',row.status);
-      if (error) throw error;
+      let result;
+      if (row.partner_user_id && row.partner_user_id === partnerUserId) {
+        result = await db.rpc('partner_update_assigned_reservation', { p_reservation_id: row.id, p_status: next });
+      } else {
+        result = await db.from('reservations').update({status:next}).eq('id',row.id).eq('status',row.status);
+      }
+      if (result.error) throw result.error;
+      if (typeof result.data === 'number' && result.data < 1) throw new Error('Aucune période de la réservation n’a été mise à jour.');
       notify(action === 'accept' ? 'Réservation acceptée.' : action === 'reject' ? 'Demande refusée.' : 'Statut de réservation mis à jour.'); await reload(); $('refresh-button')?.click();
     } catch (e) { notify(`Mise à jour impossible : ${e.message || e}`, true); }
     finally { busy = false; }
   }
   async function reload() {
-    const [v,r] = await Promise.all([db.from('vehicles').select('id,name,make,model,registration_number,owner_user_id,status,price_12h,price_24h').order('name').limit(500),db.from('reservations').select('id,reference,vehicle_id,customer_name,customer_phone,start_at,end_at,days,total_amount,deposit_amount,daily_rate,status,with_driver,trip_from,trip_to,created_at').order('created_at',{ascending:false}).limit(1000)]);
+    const [{ data: authData }, v, r] = await Promise.all([db.auth.getUser(),db.from('vehicles').select('id,name,make,model,registration_number,owner_user_id,status,price_12h,price_24h').order('name').limit(500),db.from('reservations').select('id,reference,vehicle_id,partner_user_id,vehicles(name,make,model,registration_number),customer_name,customer_phone,start_at,end_at,days,total_amount,deposit_amount,daily_rate,status,with_driver,trip_from,trip_to,created_at').order('created_at',{ascending:false}).limit(1000)]);
+    partnerUserId = authData?.user?.id || null;
     if (v.error || r.error) throw v.error || r.error;
-    vehicles = v.data || []; const ids = new Set(vehicles.map(x=>x.id)); reservations = (r.data || []).filter(x=>ids.has(x.vehicle_id));
+    vehicles = v.data || []; const ids = new Set(vehicles.map(x=>x.id)); reservations = (r.data || []).filter(x=>ids.has(x.vehicle_id) || x.partner_user_id === partnerUserId);
     document.dispatchEvent(new CustomEvent('rentcar:partner-refreshed',{detail:{vehicles,reservations}}));
   }
   function initialize() {
@@ -104,7 +125,7 @@
       catch (e) { notify(`Suppression impossible : ${e.message || e}`, true); }
       finally { busy = false; }
     });
-    db.auth.onAuthStateChange((event,session)=>{ if(session?.user) reload().catch(()=>{}); else { vehicles=[]; reservations=[]; } });
+    db.auth.onAuthStateChange((event,session)=>{ partnerUserId=session?.user?.id||null; if(session?.user) reload().catch(()=>{}); else { vehicles=[]; reservations=[]; } });
     document.addEventListener('rentcar:partner-refreshed',event=>{ vehicles=event.detail.vehicles||[]; reservations=event.detail.reservations||[]; });
     setTimeout(()=>{ if(document.querySelector('#app-view:not(.hidden)')) reload().catch(()=>{}); },1000);
   }
