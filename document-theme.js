@@ -50,5 +50,5 @@
   const infoGrid = items => `<div class="document-info-grid">${items.map(([label, value]) => card(label, `<b>${value}</b>`)).join('')}</div>`;
   const bookingSummary = (vehicleHtml, infoHtml) => `<div class="document-booking-summary">${vehicleHtml}${infoHtml}</div>`;
   const footer = () => `<footer class="document-footer"><span><b>Rent Car Service</b><br>Votre route commence ici.<br>67 Ha Nord-Ouest, Parking FJKM SALEMA</span><span>Antananarivo · Madagascar<br>034 91 207 26</span></footer>`;
-  window.RentCarDocumentTheme = { logoUrl, esc, amountInWords, styles, brand, meta, parties, vehicle, infoGrid, bookingSummary, footer, card };
+  window.RentCarDocumentTheme = { logoUrl, esc, amountInWords, styles: styles + '\n@page{size:A4;margin:0}@media print{.document-contract .document-footer{display:none}}', brand, meta, parties, vehicle, infoGrid, bookingSummary, footer, card };
 })();
