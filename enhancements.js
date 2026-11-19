@@ -57,7 +57,14 @@
       updateBookingDateConstraints();
     }
     const fields = [...section.querySelectorAll('input, select, textarea')].filter(field => !field.disabled && field.type !== 'hidden');
-    for (const field of fields) { if (!field.checkValidity()) { field.reportValidity(); return false; } }
+    for (const field of fields) {
+      if (!field.checkValidity()) {
+        const label = field.labels?.[0]?.textContent?.trim().replace(/\s+/g, ' ');
+        showBookingError(label ? `Vérifiez le champ « ${label} » avant de continuer.` : 'Vérifiez le champ en surbrillance avant de continuer.');
+        field.reportValidity();
+        return false;
+      }
+    }
     if (step === 1) {
       const start = selectedBookingStart();
       const end = $('booking-end-date')?.value && $('booking-end-time')?.value ? new Date(`${$('booking-end-date').value}T${$('booking-end-time').value}`) : null;
@@ -314,11 +321,37 @@
     $('booking-form').reset();
     $('invoice-access-panel')?.classList.toggle('hidden', deposit <= 0);
     setBookingStep(1); updatePaymentProofVisibility();
-    if (typeof loadBookingData === 'function') await loadBookingData();
+    scrollBookingResultIntoView();
+    if (typeof loadBookingData === 'function') {
+      try {
+        Promise.resolve(loadBookingData()).catch(error => console.warn('Réservation enregistrée; actualisation des disponibilités échouée :', error));
+      } catch (error) {
+        console.warn('Réservation enregistrée; actualisation des disponibilités échouée :', error);
+      }
+    }
   }
 
   function reservationErrorMessage(error) { const raw = String(error?.message || ''); const known = raw.includes('Price changed') ? 'Le tarif a changé depuis l’ouverture du formulaire. Actualisez la page puis vérifiez le total.' : raw.includes('Duration requires a quote') ? 'Cette durée est disponible uniquement sur devis.' : raw.includes('Province pricing requires a quote') ? 'Cette zone est disponible uniquement sur devis.' : raw.includes('Province zone unavailable') ? 'Cette zone n’est pas disponible pour ce véhicule.' : raw.includes('Vehicle unavailable') ? 'Ce véhicule n’est plus disponible pour cette période.' : raw.includes('Invalid booking dates') ? 'La période est invalide : le retour doit être après le départ.' : raw.includes('Terms acceptance required') ? 'Veuillez cocher l’acceptation des conditions.' : raw.includes('Payment method required') ? 'Veuillez sélectionner le mode de paiement de l’acompte.' : raw.includes('Invalid deposit amount') ? 'Le montant de l’acompte est invalide.' : 'Impossible d’enregistrer la réservation. Actualisez la page puis réessayez.'; return known; }
-  function showBookingError(message) { const result = $('booking-result'); result.className = 'booking-result booking-error'; result.textContent = message; }
+  function scrollBookingResultIntoView() {
+    const result = $('booking-result');
+    if (result) requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  }
+  function findInvalidBookingField(form) {
+    for (const section of form.querySelectorAll('[data-booking-step]')) {
+      const field = [...section.querySelectorAll('input, select, textarea')]
+        .find(item => !item.disabled && item.type !== 'hidden' && !item.checkValidity());
+      if (field) return { field, step: Number(section.dataset.bookingStep) };
+    }
+    return null;
+  }
+  function showBookingError(message) {
+    const result = $('booking-result');
+    if (!result) return;
+    result.className = 'booking-result booking-error';
+    result.setAttribute('role', 'alert');
+    result.textContent = message;
+    scrollBookingResultIntoView();
+  }
 
   function enhanceReturnPanel() {
     const section = $('booking');
@@ -339,21 +372,40 @@
   document.addEventListener('DOMContentLoaded', () => {
     addBookingFields(); setupBookingSteps(); window.syncClientRequiredMarks?.(document);
     window.submitReservation = async (event) => {
+      event?.preventDefault?.();
       const form = $('booking-form');
       const result = $('booking-result');
+      const invalid = form && findInvalidBookingField(form);
+      if (invalid) {
+        setBookingStep(invalid.step);
+        if (result) {
+          result.className = 'booking-result booking-error';
+          result.setAttribute('role', 'alert');
+          result.textContent = 'Certains champs obligatoires doivent être complétés avant l’envoi.';
+        }
+        requestAnimationFrame(() => {
+          invalid.field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          invalid.field.focus({ preventScroll: true });
+          invalid.field.reportValidity();
+        });
+        return;
+      }
       const submitButton = form?.querySelector('button[type=submit]');
       if (submitButton) { submitButton.disabled = true; submitButton.dataset.originalText = submitButton.textContent; submitButton.textContent = 'Enregistrement…'; }
-      if (result) { result.className = 'booking-result'; result.textContent = 'Enregistrement de votre demande…'; }
+      if (result) { result.className = 'booking-result'; result.setAttribute('role', 'status'); result.textContent = 'Enregistrement de votre demande…'; }
+      scrollBookingResultIntoView();
       try {
         await submitReservationEnhanced(event);
       } catch (error) {
         console.error('Reservation submission failed:', error);
         if (result) {
           result.className = 'booking-result booking-error';
+          result.setAttribute('role', 'alert');
           result.textContent = error?.message === 'TIMEOUT_RESERVATION'
             ? 'Le serveur met trop de temps à répondre. Vérifiez votre référence avant de recommencer, afin d’éviter une double réservation.'
             : 'La réservation n’a pas pu être enregistrée. Vérifiez les informations puis réessayez.';
         }
+        scrollBookingResultIntoView();
       } finally {
         if (submitButton) { submitButton.disabled = false; submitButton.textContent = submitButton.dataset.originalText || 'Confirmer la réservation'; }
       }

@@ -101,13 +101,14 @@
                 <div class="booking-panel">
                     <h3>Demander une réservation</h3>
                     <div id="ads-slot-booking" class="ad-slot ad-slot-booking hidden" aria-label="Annonce partenaire"></div>
-                    <form id="booking-form" onsubmit="submitReservation(event)">
+                    <form id="booking-form" novalidate onsubmit="submitReservation(event)">
                         <div class="booking-progress" aria-label="Étapes de réservation">
                             <div class="booking-progress-step active" data-progress-step="1"><span>1</span><strong>Véhicule et dates</strong></div>
                             <div class="booking-progress-step" data-progress-step="2"><span>2</span><strong>Informations client</strong></div>
                             <div class="booking-progress-step" data-progress-step="3"><span>3</span><strong>Options et paiement</strong></div>
                             <div class="booking-progress-step" data-progress-step="4"><span>4</span><strong>Résumé et confirmation</strong></div>
                         </div>
+                        <p id="booking-result" class="booking-result" role="status" aria-live="polite"></p>
                         <section class="booking-step active" data-booking-step="1">
                             <h4>1. Véhicule, zone d’utilisation et période</h4>
                             <p class="muted">Sélectionnez le véhicule, sa zone d’utilisation autour de Tana et la période souhaitée pour consulter le tarif estimatif.</p>
@@ -169,7 +170,6 @@
                             <div class="booking-step-actions"><button type="button" class="btn btn-outline" data-prev-step="3">Modifier</button><button id="booking-submit-button" class="btn btn-whatsapp btn-submit" type="submit"><i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande</button></div>
                         </section>
                     </form>
-                    <p id="booking-result" class="booking-result" role="status"></p>
                 </div>
             </div>
             <div id="invoice-access-panel" class="booking-panel invoice-access-panel hidden">
@@ -323,7 +323,7 @@
     <script src="contract-terms.js?v=20261116-self-drive-immobilisation"></script>
     <script src="booking-periods.js?v=20261115-multi-period-documents"></script>
 <script src="script.js?v=20261115-multi-periods-documents-3"></script><script src="client-signature.js?v=20261114-signature-modal-panel-fix"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261111-vehicle-uid"></script>
-    <script src="enhancements.js?v=20261113-signature-retention"></script>
+    <script src="enhancements.js?v=20261119-client-submit-feedback-v1"></script>
     <script src="partner-requests.js?v=20261108-partner-modal"></script>
     <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>
     <script src="morning-changes.js?v=20261009-1"></script>
