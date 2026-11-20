@@ -1,0 +1,53 @@
+/* Responsive refinements for the driver workspace. */
+.team-shell,
+.team-shell * { min-width: 0; }
+
+@media (max-width: 900px) {
+  .team-shell { padding: 22px 16px 40px; }
+  .team-layout { grid-template-columns: minmax(0, 1fr); }
+  .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.mission-card,
+.mission-detail,
+.team-card { overflow-wrap: anywhere; }
+.mission-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mission-actions .btn,
+.modal-actions .btn { min-height: 44px; }
+
+.signature-modal,
+.checklist-modal {
+  box-sizing: border-box;
+  padding: 12px;
+}
+.signature-modal > div,
+.checklist-modal > div {
+  box-sizing: border-box;
+  width: min(680px, 100%);
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 600px) {
+  .team-shell { padding: 16px 12px 32px; }
+  .team-top { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .team-card { padding: 14px; }
+  .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .team-metric { padding: 12px; }
+  .team-metric strong { font-size: 20px; overflow-wrap: anywhere; }
+  .mission-meta,
+  .form-grid,
+  .checklist-photo-grid { grid-template-columns: minmax(0, 1fr); }
+  .form-grid .full { grid-column: auto; }
+  .field input,
+  .field select,
+  .field textarea { min-height: 44px; font-size: 16px; }
+  .field textarea { min-height: 88px; }
+  .mission-actions,
+  .modal-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .mission-actions .btn,
+  .modal-actions .btn { width: 100%; min-height: 46px; }
+  .signature-canvas { height: 190px; }
+  .due-table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}

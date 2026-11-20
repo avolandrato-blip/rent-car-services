@@ -1,0 +1,86 @@
+/* Responsive refinements for the partner workspace. */
+.partner-workspace,
+.partner-workspace * { min-width: 0; }
+
+@media (max-width: 950px) {
+  .shell { display: block; }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 12px;
+  }
+  .sidebar .brand { padding: 0 8px 10px; }
+  .profile-chip,
+  .sidebar-footer { display: none; }
+  .nav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+  .nav button {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  .main { padding: 22px clamp(14px, 3vw, 28px); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+@media (max-width: 650px) {
+  .main { padding: 16px 12px 28px; }
+  .card { padding: 16px; }
+  .topbar,
+  .section-head { align-items: stretch; }
+  .grid,
+  .split,
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .field.full { grid-column: auto; }
+  .toolbar { align-items: stretch; }
+  .toolbar > * { min-width: 0; flex-basis: 100%; }
+  .actions { width: 100%; }
+  .actions .btn,
+  .section-head > .btn { min-height: 44px; }
+  .field input,
+  .field select,
+  .field textarea,
+  .toolbar input,
+  .toolbar select { font-size: 16px; }
+
+  /* Keep the seven-day month view readable; swipe horizontally instead of
+     squeezing dates and event labels into unreadable narrow cells. */
+  #calendar-view { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .calendar-grid { min-width: 700px; gap: 6px; }
+  .calendar-day { min-height: 82px; padding: 6px; }
+  .calendar-heading { font-size: 11px; }
+  .calendar-event { font-size: 10px; line-height: 1.3; }
+
+  #partner-action-dialog {
+    box-sizing: border-box;
+    width: calc(100vw - 20px);
+    max-width: 620px;
+    max-height: calc(100dvh - 20px);
+    overflow: auto;
+    padding: 16px;
+  }
+  #partner-action-dialog input,
+  #partner-action-dialog select,
+  #partner-action-dialog textarea { font-size: 16px; }
+  #partner-action-dialog .actions .btn { flex: 1 1 100%; min-height: 44px; }
+}
+
+@media (min-width: 651px) and (max-width: 950px) {
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calendar-day { min-height: 78px; }
+}
