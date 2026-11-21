@@ -910,9 +910,10 @@ function updateBookingQuote() {
         if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
         return;
     }
+    const durationDays = aggregate.segments.reduce((sum, item) => sum + Number(item.quote.days || 0), 0);
     if (aggregate.requiresQuote) {
         if (quote) quote.textContent = `${aggregate.quoteReason}. La demande sera transmise à Rent Car Service pour établir le prix.`;
-        if (mini) mini.innerHTML = `<strong>Demande de devis</strong><span>${aggregate.segments.length} période(s) sélectionnée(s).</span>`;
+        if (mini) mini.innerHTML = `<strong>Demande de devis</strong><span>${durationDays} jour(s) estimé(s) · ${aggregate.segments.length} période(s) sélectionnée(s).</span>`;
         if (submit) submit.innerHTML = '<i class="fas fa-file-invoice"></i> Demander un devis';
         return;
     }
@@ -920,7 +921,7 @@ function updateBookingQuote() {
     const deposit = Number(document.getElementById('booking-deposit')?.value || 0);
     const periods = aggregate.segments.map((item, i) => `${i + 1}. ${formatBookingPeriod(item)}`).join(' · ');
     if (quote) quote.textContent = `${periods} — location ${formatMGA(aggregate.rental)} + options ${formatMGA(aggregate.options)}${promoDiscount ? ` − promo ${formatMGA(promoDiscount)}` : ''} = ${formatMGA(finalTotal)}. Acompte : ${formatMGA(deposit)}. Reste : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
-    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${aggregate.segments.length} période(s) · ${periods}</span>`;
+    if (mini) mini.innerHTML = `<strong>Total estimatif : ${formatMGA(finalTotal)}</strong><span>${durationDays} jour(s) estimé(s) · ${aggregate.segments.length} période(s) · ${periods}</span>`;
     const balanceNote = document.getElementById('booking-balance-note'); if (balanceNote) balanceNote.textContent = `Reste à payer au moment de récupérer la voiture : ${formatMGA(Math.max(0, finalTotal - deposit))}.`;
     if (submit) submit.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmer et soumettre la demande';
 }

@@ -298,7 +298,63 @@
     host.innerHTML=window.siteAds.length?`<table class="table"><thead><tr><th>Annonce</th><th>Période</th><th>État</th><th>Actions</th></tr></thead><tbody>${window.siteAds.map(ad=>`<tr><td><div class="ad-admin-row"><img src="${esc(ad.image_url)}" alt="${esc(ad.alt_text||ad.title)}"><div><strong>${esc(ad.title)}</strong><br><small>${esc(ad.description||'Sans description')}</small><br><small>${esc(ad.target_url||'Sans lien')}</small></div></div></td><td>${ad.starts_at?new Date(ad.starts_at).toLocaleString('fr-FR'):'Dès maintenant'}<br>→ ${ad.ends_at?new Date(ad.ends_at).toLocaleString('fr-FR'):'Sans date de fin'}</td><td><span class="pill ${ad.active?'available':'inactive'}">${ad.active?'Active':'Désactivée'}</span></td><td><div class="actions"><button class="btn outline" onclick="editSiteAd('${ad.id}')">Modifier</button><button class="btn danger" onclick="deleteSiteAd('${ad.id}')">Supprimer</button></div></td></tr>`).join('')}</tbody></table>`:'<div class="empty">Aucune publicité enregistrée.</div>';
     if(!form.dataset.bound){form.dataset.bound='1';bindAdImagePreview();form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;const resultBox=$('ads-result');try{const id=$('ad-id').value;const file=$('ad-image-file').files?.[0];const title=$('ad-title').value.trim();const altText=$('ad-alt-text').value.trim();const description=$('ad-description').value.trim()||null;const ctaLabel=$('ad-cta-label').value.trim()||'Découvrir l’offre';const target=$('ad-target-url').value.trim()||null;const starts=adIsoValue('ad-starts-at');const ends=adIsoValue('ad-ends-at');const placement=['fleet','booking'].includes($('ad-placement').value)?$('ad-placement').value:'fleet';if(ends&&starts&&new Date(ends)<new Date(starts))throw new Error('La date de fin doit être après la date de début.');if(!id&&!file)throw new Error('Ajoutez une image publicitaire.');let payload={title,alt_text:altText,description,cta_label:ctaLabel,target_url:target,placement,starts_at:starts,ends_at:ends,active:$('ad-active').value==='true',updated_at:new Date().toISOString()};let saved=id?await db.from('site_ads').update(payload).eq('id',id).select('id,image_url').single():await db.from('site_ads').insert({...payload,image_url:'pending',active:false}).select('id,image_url').single();if(saved.error)throw new Error(saved.error.message);let imageUrl=saved.data.image_url;if(file){const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'-');const path=`${saved.data.id}/${Date.now()}-${safe}`;const upload=await db.storage.from('site-ads').upload(path,file,{upsert:false,contentType:file.type});if(upload.error)throw new Error(upload.error.message);imageUrl=db.storage.from('site-ads').getPublicUrl(path).data.publicUrl;const imageUpdate=await db.from('site_ads').update({image_url:imageUrl,updated_at:new Date().toISOString()}).eq('id',saved.data.id);if(imageUpdate.error)throw new Error(imageUpdate.error.message);const activation=await db.from('site_ads').update({active:payload.active,updated_at:new Date().toISOString()}).eq('id',saved.data.id);if(activation.error)throw new Error(activation.error.message);}if(!imageUrl||imageUrl==='pending')throw new Error('Une image est nécessaire pour publier la publicité.');resultBox.textContent='Publicité enregistrée.';resetAdForm();await loadAdsAdmin();}catch(error){resultBox.textContent=`Erreur : ${error.message}`;}finally{button.disabled=false;}})}
   };
+  function setupReservationDateActions() {
+    const table = $('reservations-table');
+    if (!table || table.dataset.dateActionsBound) return;
+    table.dataset.dateActionsBound = '1';
+    const decorate = () => {
+      const allReservations = typeof reservations !== 'undefined' ? reservations : [];
+      const filter = $('reservation-status-filter')?.value || 'all';
+      const visible = allReservations.filter(row => filter === 'all' || row.status === filter);
+      const groups = [];
+      const seen = new Set();
+      visible.forEach(row => {
+        const key = window.RentCarBookingPeriods?.groupKey(row) || row.id;
+        if (seen.has(key)) return;
+        seen.add(key);
+        groups.push(window.RentCarBookingPeriods?.groupReservations(row, allReservations) || [row]);
+      });
+      [...table.querySelectorAll('tbody tr')].forEach((tr, index) => {
+        const group = groups[index] || [];
+        const periodCells = [...(tr.children[4]?.children || [])];
+        group.forEach((row, periodIndex) => {
+          if (row.status !== 'reserved' || !periodCells[periodIndex] || periodCells[periodIndex].querySelector('[data-edit-reservation-dates]')) return;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'btn outline';
+          button.dataset.editReservationDates = row.id;
+          button.textContent = 'Modifier les dates';
+          periodCells[periodIndex].appendChild(button);
+        });
+      });
+    };
+    const observer = new MutationObserver(decorate);
+    observer.observe(table, { childList: true, subtree: true });
+    table.addEventListener('click', event => {
+      const button = event.target.closest('[data-edit-reservation-dates]');
+      if (!button) return;
+      const reservation = (typeof reservations !== 'undefined' ? reservations : []).find(row => row.id === button.dataset.editReservationDates);
+      if (typeof window.openReservationDateEditor !== 'function') return alert('Le module de modification des dates n’est pas encore chargé. Actualisez la page.');
+      window.openReservationDateEditor(reservation, { onSaved: () => window.refreshAll?.() });
+    });
+    decorate();
+  }
+  function loadReservationDateEditor() {
+    if (window.openReservationDateEditor) return setupReservationDateActions();
+    const script = document.createElement('script');
+    script.src = 'reservation-date-editor.js?v=20261121-confirmed-dates';
+    script.onload = setupReservationDateActions;
+    script.onerror = () => console.error('Unable to load reservation-date-editor.js');
+    document.head.appendChild(script);
+  }
+
+  window.editReservationDates = function (id) {
+    const reservation = (typeof reservations !== 'undefined' ? reservations : []).find(row => row.id === id);
+    if (!reservation) return alert('Réservation introuvable. Actualisez le tableau.');
+    if (typeof window.openReservationDateEditor !== 'function') return alert('Le module de modification des dates n’est pas encore chargé. Actualisez la page.');
+    window.openReservationDateEditor(reservation, { onSaved: () => window.refreshAll?.() });
+  };
   window.printReturnForm = openReturnModal;
   window.printDocument = printDocumentEnhanced;
-  document.addEventListener('DOMContentLoaded', () => { addMaintenanceFields(); addStyles(); setupOfficeBooking(); setTimeout(renderFinanceAnalysis, 1200); setTimeout(() => window.loadAdsAdmin?.(), 800); });
+  document.addEventListener('DOMContentLoaded', () => { addMaintenanceFields(); addStyles(); setupOfficeBooking(); loadReservationDateEditor(); setTimeout(renderFinanceAnalysis, 1200); setTimeout(() => window.loadAdsAdmin?.(), 800); });
 })();
