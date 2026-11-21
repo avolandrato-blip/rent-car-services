@@ -318,7 +318,7 @@
         const group = groups[index] || [];
         const periodCells = [...(tr.children[4]?.children || [])];
         group.forEach((row, periodIndex) => {
-          if (row.status !== 'reserved' || !periodCells[periodIndex] || periodCells[periodIndex].querySelector('[data-edit-reservation-dates]')) return;
+          if (!['reserved', 'completed'].includes(row.status) || !periodCells[periodIndex] || periodCells[periodIndex].querySelector('[data-edit-reservation-dates]')) return;
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'btn outline';
