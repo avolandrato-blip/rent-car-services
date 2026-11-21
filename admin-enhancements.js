@@ -342,7 +342,7 @@
   function loadReservationDateEditor() {
     if (window.openReservationDateEditor) return setupReservationDateActions();
     const script = document.createElement('script');
-    script.src = 'reservation-date-editor.js?v=20261121-confirmed-dates';
+    script.src = 'reservation-date-editor.js?v=20261121-completed-dates';
     script.onload = setupReservationDateActions;
     script.onerror = () => console.error('Unable to load reservation-date-editor.js');
     document.head.appendChild(script);

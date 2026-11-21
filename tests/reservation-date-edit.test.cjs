@@ -31,6 +31,9 @@ test('le dialogue appelle la RPC avec les dates et explique la conservation des 
   assert.match(editor, /p_end_at: endDate\.toISOString\(\)/);
   assert.match(editor, /ne seront pas recalculés automatiquement/);
   assert.match(editor, /endDate <= startDate/);
+  assert.match(editor, /!\['reserved', 'completed'\]\.includes\(reservation\.status\)/);
+  assert.match(editor, /confirmées ou terminées peuvent être modifiées/);
+  assert.match(read('admin-enhancements.js'), /reservation-date-editor\.js\?v=20261121-completed-dates/);
 });
 
 test('le tableau admin ajoute un bouton pour les périodes confirmées et terminées, puis rafraîchit après sauvegarde', () => {

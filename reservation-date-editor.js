@@ -14,8 +14,8 @@
   }
 
   window.openReservationDateEditor = function (reservation, { onSaved } = {}) {
-    if (!reservation?.id || reservation.status !== 'reserved') {
-      alert('Seules les réservations confirmées peuvent être modifiées.');
+    if (!reservation?.id || !['reserved', 'completed'].includes(reservation.status)) {
+      alert('Seules les réservations confirmées ou terminées peuvent être modifiées.');
       return;
     }
     ensureStyles();
