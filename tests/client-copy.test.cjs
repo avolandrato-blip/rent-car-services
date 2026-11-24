@@ -61,12 +61,15 @@ test('les libellés français révisés apparaissent dans le parcours client', (
   assert.ok(cards.conditions.every((item) => item.reponse && !/Mada\.|hôtel|voitures libres/i.test(item.reponse)));
 });
 
-test('le contrat avec chauffeur conserve l’essentiel sans clauses de dommages ou d’accessoires', () => {
+test('le contrat avec chauffeur attribue la conduite au chauffeur et limite les frais client aux faits imputables', () => {
   const driver = contractTerms.buildContractTerms(true);
   const selfDrive = contractTerms.buildContractTerms(false);
-  assert.match(driver, /chauffeur/);
-  assert.match(driver, /client convient avec le loueur de l’itinéraire et des horaires/);
-  assert.doesNotMatch(driver, /dommage|accident|perte|accessoire|clé/i);
+  assert.match(driver, /Le véhicule est conduit exclusivement par le chauffeur/);
+  assert.match(driver, /Le chauffeur conduit le véhicule, respecte le code de la route/);
+  assert.match(driver, /Le carburant n’est pas compris dans le prix et reste à la charge du client/);
+  assert.match(driver, /Un dommage causé par le chauffeur ou une panne mécanique indépendante du comportement du client ne lui est pas imputé/);
+  assert.match(driver, /sauf remise expresse au client/);
+  assert.doesNotMatch(driver, /une indemnité d’un jour de location par jour d’immobilisation/);
   assert.match(selfDrive, /dommage|accident|perte|clé/i);
   const html = read('index.html');
   assert.match(html, /contract-terms\.js/);
@@ -85,7 +88,7 @@ test('la prise en charge des repas et de l’hébergement apparaît pour les loc
   assert.ok(condition);
   assert.match(condition.reponse, /repas et l’hébergement du chauffeur sont à la charge du client/);
   assert.match(read('script.js'), /data_cards\.json\?v=20260927-driver-meals-lodging/);
-  assert.match(contractTerms.buildContractTerms(true), /repas et l’hébergement du chauffeur restent à la charge du client/);
+  assert.match(contractTerms.buildContractTerms(true), /Les repas et l’hébergement du chauffeur sont à la charge du client/);
 });
 
 test('les photos CIN et permis sont intégrées au contrat seulement après validation OTP', () => {
