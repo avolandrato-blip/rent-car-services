@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="style.css?v=20261113-multi-periods"><link rel="stylesheet" href="client-harmony.css?v=20261110-3d-buttons-hero-cta">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="reviews.css?v=20261109-reviews-3">
-  <link rel="stylesheet" href="theme-system.css?v=20261118-global-contrast-nav-v1">
+  <link rel="stylesheet" href="theme-system.css?v=20261124-client-text-contrast-v1">
   <script src="theme-system.js?v=20261115-global-theme-v1" defer></script>
 </head>
 <body>
@@ -78,6 +78,8 @@
             <div class="fleet-controls" aria-label="Filtrer et trier les véhicules">
                 <label>Rechercher un véhicule<input id="fleet-search" type="search" placeholder="Nom, UID, marque ou modèle"></label>
                 <label>Capacité<select id="fleet-seats"><option value="all">Toutes</option></select></label>
+                <label>Transmission<select id="fleet-transmission"><option value="all">Toutes</option></select></label>
+                <label>Chauffeur<select id="fleet-driver-mode"><option value="all">Avec ou sans chauffeur</option><option value="with_driver">Avec chauffeur</option><option value="without_driver">Sans chauffeur</option></select></label>
                 <label>Prix maximal par jour<input id="fleet-max-price" type="number" min="0" placeholder="Ex. 150000"></label>
                 <label>Ordre d’affichage<select id="fleet-sort"><option value="price-asc" selected>Prix croissant</option><option value="name">Nom</option><option value="price-desc">Prix décroissant</option><option value="popular">Popularité</option></select></label>
             </div>
@@ -322,7 +324,7 @@
     <script src="navigation.js?v=20260929-1"></script>
     <script src="contract-terms.js?v=20261116-self-drive-immobilisation"></script>
     <script src="booking-periods.js?v=20261115-multi-period-documents"></script>
-<script src="script.js?v=20261121-duration-days"></script><script src="client-signature.js?v=20261114-signature-modal-panel-fix"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261111-vehicle-uid"></script>
+<script src="script.js?v=20261124-vehicle-filter-transmission-driver"></script><script src="client-signature.js?v=20261114-signature-modal-panel-fix"></script><script src="quote.js?v=20261008-1"></script><script src="quote-interactions.js?v=20261111-vehicle-uid"></script>
     <script src="enhancements.js?v=20261119-client-submit-feedback-v1"></script>
     <script src="partner-requests.js?v=20261108-partner-modal"></script>
     <script src="client-invoice-link.js?v=20261027-invoice-redirect-fix"></script>

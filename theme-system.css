@@ -353,3 +353,23 @@ body[data-theme] .sidebar .nav button:focus-visible { outline: 3px solid var(--u
 /* Les libellés compacts gardent une taille minimale lisible, surtout sur mobile. */
 body[data-theme] :is(.metric-label, .pill, .badge, .tag, .chip, .status-pill) { font-size: max(.75rem, 12px); }
 body[data-theme] .sidebar .nav :is(button, .nav-group > summary) { font-size: max(.875rem, 14px); }
+
+/* Contraste renforcé pour le texte posé sur les images et le bloc marketing du pied de page. */
+body[data-theme] #hero-banner::before {
+  background: linear-gradient(180deg, rgba(4, 12, 22, .66), rgba(4, 12, 22, .78)) !important;
+}
+body[data-theme] #hero-banner :is(#hero-title, #hero-slogan, #hero-desc) {
+  color: #fff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, .95), 0 0 20px rgba(0, 0, 0, .72);
+}
+body[data-theme] #hero-title { font-weight: 800; }
+body[data-theme] #hero-desc { max-width: 680px; margin-inline: auto; line-height: 1.6; }
+body[data-theme] footer.footer-fixed .footer-marketing {
+  background: #0b1f33 !important;
+  border-color: #d9a441 !important;
+}
+body[data-theme] footer.footer-fixed .footer-marketing :is(h2, p, strong, small, span) {
+  color: #f5f7fa !important;
+}
+body[data-theme] footer.footer-fixed .footer-marketing .footer-eyebrow,
+body[data-theme] footer.footer-fixed .footer-marketing i { color: #f0c568 !important; }

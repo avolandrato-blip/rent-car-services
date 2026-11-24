@@ -231,10 +231,12 @@ function renderPublicCars() {
     const maxPrice = Number(document.getElementById('fleet-max-price')?.value || Infinity);
     const sort = document.getElementById('fleet-sort')?.value || 'price-asc';
     const transmissionFilter = document.getElementById('fleet-transmission')?.value || 'all';
+    const driverFilter = document.getElementById('fleet-driver-mode')?.value || 'all';
     let cars = publicCars.filter(group => {
         const car = group.vehicle || group;
         const haystack = `${car.name || car.nom || ''} ${car.make || ''} ${car.model || ''} ${car.uid || ''}`.toLowerCase();
-        return (!search || haystack.includes(search)) && (transmissionFilter === 'all' || car.transmission === transmissionFilter) && (seats === 'all' || String(car.seats ?? car.places) === seats) && Number(car.price_per_day || 0) <= maxPrice;
+        const driverMode = car.driver_mode || 'without_driver';
+        return (!search || haystack.includes(search)) && (transmissionFilter === 'all' || car.transmission === transmissionFilter) && (driverFilter === 'all' || driverMode === driverFilter) && (seats === 'all' || String(car.seats ?? car.places) === seats) && Number(car.price_per_day || 0) <= maxPrice;
     });
     cars.sort((a,b) => { const av=a.vehicle||a,bv=b.vehicle||b; return sort === 'popular' ? (publicRentalCounts[b.id] || 0) - (publicRentalCounts[a.id] || 0) : sort === 'price-asc' ? Number(av.price_per_day||0)-Number(bv.price_per_day||0) : sort === 'price-desc' ? Number(bv.price_per_day||0)-Number(av.price_per_day||0) : String(a.displayName || av.name).localeCompare(String(b.displayName || bv.name), 'fr') || String(av.uid || a.id || '').localeCompare(String(bv.uid || b.id || ''), 'fr'); });
     document.getElementById('cars-grid').innerHTML = cars.map(group => {
@@ -259,7 +261,7 @@ function renderPublicCars() {
 }
 
 function bindPublicCarFilters() {
-    ['fleet-search','fleet-seats','fleet-max-price','fleet-sort','fleet-transmission'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars));
+    ['fleet-search','fleet-seats','fleet-max-price','fleet-sort','fleet-transmission','fleet-driver-mode'].forEach(id => document.getElementById(id)?.addEventListener('input', renderPublicCars));
 }
 
 async function loadCars() {

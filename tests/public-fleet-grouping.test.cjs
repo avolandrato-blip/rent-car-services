@@ -38,9 +38,14 @@ test('le catalogue rend les voitures si le filtre transmission est absent', () =
   const script = read('script.js');
   assert.match(script, /const transmissionFilter = document\.getElementById\('fleet-transmission'\)\?\.value \|\| 'all'/);
   assert.match(script, /transmissionFilter === 'all' \|\| car\.transmission === transmissionFilter/);
+  assert.match(script, /const driverFilter = document\.getElementById\('fleet-driver-mode'\)\?\.value \|\| 'all'/);
+  assert.match(script, /driverFilter === 'all' \|\| driverMode === driverFilter/);
+  assert.match(script, /'fleet-driver-mode'/);
+  assert.match(read('index.html'), /id="fleet-transmission"/);
+  assert.match(read('index.html'), /id="fleet-driver-mode"/);
   assert.doesNotMatch(script, /\btransmission === 'all'/);
   assert.match(script, /fleet-sort','fleet-transmission'/);
-  assert.match(read('index.html'), /script\.js\?v=20261112-fix-empty-catalogue/);
+  assert.match(read('index.html'), /script\.js\?v=20261124-vehicle-filter-transmission-driver/);
 });
 
 test('les réservations et disponibilités portent sur une seule unité physique par UID', () => {
