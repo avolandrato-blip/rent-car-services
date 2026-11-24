@@ -20,6 +20,13 @@ test('le contrat sans chauffeur est subdivisé et conserve les règles de rembou
   assert.match(html, /Pour tout autre manquement[\s\S]*aucun remboursement des jours restants n’est dû/);
 });
 
+test('le contrat sans chauffeur précise la réparation des dégâts imputables au locataire et l’immobilisation de plus d’un jour', () => {
+  const html = terms.buildContractTerms(false, '0_30');
+  assert.match(html, /tous les frais nécessaires à la réparation et à la remise en état du véhicule sont à sa charge/);
+  assert.match(html, /Si la réparation immobilise le véhicule pendant plus d’une journée[\s\S]*pour chaque jour d’immobilisation/);
+  assert.match(html, /Une panne mécanique indépendante du comportement du locataire ne lui est pas imputée/);
+});
+
 test('le contrat avec chauffeur conserve son contenu distinct sans la clause d’usage commercial', () => {
   const html = terms.buildContractTerms(true, '0_30');
   assert.match(html, /Article 12 : Conditions particulières de la location avec chauffeur/);
