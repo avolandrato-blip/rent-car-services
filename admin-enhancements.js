@@ -132,24 +132,155 @@
     return `<div id="office-booking" class="card office-booking-card"><div class="section-head"><div><h2>Nouvelle réservation bureau</h2><span class="eyebrow">Même logique que la réservation client</span></div><button type="button" class="btn outline" id="office-booking-toggle">Réduire</button></div><form id="office-booking-form" class="form-grid"><div class="field"><label>Véhicule</label><select id="office-vehicle" required></select></div><div class="field"><label>Type de location</label><select id="office-rental-type"><option value="day">Jour — 07h00 à 18h00</option><option value="night">Nuit — 19h00 à 06h00</option><option value="24h">24 heures</option></select></div><div class="field"><label>Date de départ</label><input id="office-start-date" type="date" required></div><div class="field"><label>Heure de départ</label><input id="office-start-time" type="time" value="07:00" required></div><div class="field"><label>Date de retour</label><input id="office-end-date" type="date" required></div><div class="field"><label>Heure de retour</label><input id="office-end-time" type="time" value="18:00" required></div><div class="field full"><label>Client existant</label><select id="office-existing-customer"><option value="">Nouveau client</option></select><small class="field-note">Choisissez un client pour préremplir ses informations.</small></div><div class="field"><label>Nom et prénom</label><input id="office-name" required></div><div class="field"><label>Téléphone</label><input id="office-phone" required></div><div class="field"><label>WhatsApp</label><input id="office-whatsapp" required></div><div class="field"><label>Email</label><input id="office-email" type="email"></div><div class="field full"><label>Adresse</label><input id="office-address"></div><div class="field"><label>Permis de conduire</label><input id="office-license"></div><div class="field"><label>Numéro CIN</label><input id="office-cin"></div><div class="field"><label>Départ</label><input id="office-from" placeholder="Lieu de départ"></div><div class="field"><label>Destination</label><input id="office-to" placeholder="Destination"></div><div class="field"><label><input id="office-delivery" type="checkbox"> Livraison — 20 000 Ar</label></div><div class="field"><label><input id="office-recovery" type="checkbox"> Récupération — 20 000 Ar</label></div><div class="field"><label><input id="office-driver" type="checkbox"> Chauffeur</label></div><div class="field"><label>Code promo manuel</label><input id="office-promo" placeholder="7JOUR ou 10JOUR"></div><div class="field"><label>Acompte (Ar)</label><input id="office-deposit" type="number" min="0" value="0"></div><div class="field"><label>Mode de paiement</label><select id="office-payment"><option value="">Aucun acompte</option><option value="espece">Espèce</option><option value="mobile_money">Mobile Money</option></select></div><div class="field full"><label>Notes</label><textarea id="office-notes" rows="2"></textarea></div><div class="field full"><p id="office-quote" class="booking-result"></p><button class="btn primary" type="submit">Enregistrer la réservation bureau</button></div></form><p id="office-result" class="booking-result"></p></div>`;
   }
 
+  function calculateOfficeBookingQuote(vehicle, start, end, options = {}) {
+    if (!vehicle || !start || !end || end <= start) return null;
+    const hours = (end - start) / 3600000;
+    const billedHours = Math.max(1, Math.ceil(hours));
+    const days = Math.max(1, Math.ceil(hours / 24));
+    const rate12 = Number(vehicle.price_12h || vehicle.price_per_day || 0);
+    const hasRate24 = Number(vehicle.price_24h) > 0;
+    const rate24 = hasRate24 ? Number(vehicle.price_24h) : 0;
+    let rentalBeforeDiscount = 0;
+    let requiresQuote = false;
+    let quoteReason = '';
+
+    // Keep the office booking on the same 0–30 km tariff as the standard local booking flow.
+    if (billedHours <= 12) rentalBeforeDiscount = rate12;
+    else if (!hasRate24) { requiresQuote = true; quoteReason = 'Tarif 24 heures non renseigné'; }
+    else if (billedHours <= 24) rentalBeforeDiscount = rate24;
+    else if (billedHours <= 36) rentalBeforeDiscount = rate24 + rate12;
+    else if (billedHours <= 48) rentalBeforeDiscount = rate24 * 2;
+    else rentalBeforeDiscount = rate12 * days;
+
+    const discountRate = billedHours > 48 ? (days >= 10 ? 0.10 : days >= 5 ? 0.03 : 0) : 0;
+    const rental = requiresQuote ? 0 : Math.round(rentalBeforeDiscount * (1 - discountRate));
+    const durationDiscount = requiresQuote ? 0 : rentalBeforeDiscount - rental;
+    const deliveryFee = options.delivery ? 20000 : 0;
+    const recoveryFee = options.recovery ? 20000 : 0;
+    const driverRate = Number(vehicle.driver_mode === 'with_driver' ? (vehicle.extra_driver_fee || 0) : (vehicle.driver_fee || 30000));
+    const chauffeurFee = options.driver ? driverRate * days : 0;
+    const extraFees = deliveryFee + recoveryFee + chauffeurFee;
+    return { vehicle, start, end, hours, billedHours, days, rate12, rate24, rentalBeforeDiscount, durationDiscount, rental, deliveryFee, recoveryFee, chauffeurFee, options: extraFees, total: rental + extraFees, requiresQuote, quoteReason };
+  }
+
+  function officePromoEligibility(quote, promo) {
+    if (!promo) return { valid: true, discount: 0 };
+    const minimumDays = Number(promo.minimum_days || 0);
+    if (minimumDays && Number(quote?.days || 0) < minimumDays) {
+      return { valid: false, discount: 0, message: `Le code ${promo.code} nécessite au moins ${minimumDays} jours.` };
+    }
+    const base = Number(quote?.total || 0);
+    const raw = promo.discount_type === 'percent' ? base * Number(promo.discount_value || 0) / 100 : Number(promo.discount_value || 0);
+    return { valid: true, discount: Math.min(base, Math.max(0, raw)) };
+  }
+
+  window.RentCarOfficePricing = { quote: calculateOfficeBookingQuote, promoEligibility: officePromoEligibility };
+
   function setupOfficeBooking() {
     const table = $('reservations-table'); if (!table || $('office-booking')) return;
     const db = window.rentCarSupabase;
     table.insertAdjacentHTML('beforebegin', officeBookingMarkup());
-    const form = $('office-booking-form'); const ids = ['office-vehicle','office-start-date','office-start-time','office-end-date','office-end-time','office-rental-type','office-deposit','office-delivery','office-recovery','office-driver','office-promo'];
+    const form = $('office-booking-form');
+    const ids = ['office-vehicle','office-start-date','office-start-time','office-end-date','office-end-time','office-rental-type','office-deposit','office-delivery','office-recovery','office-driver','office-promo'];
     const moneyValue = value => `${Number(value || 0).toLocaleString('fr-FR')} Ar`;
-    const getQuote = () => { const v=(typeof vehicles!=='undefined'?vehicles:[]).find(x=>x.id===$('office-vehicle')?.value); const start=$('office-start-date')?.value&&$('office-start-time')?.value?new Date(`${$('office-start-date').value}T${$('office-start-time').value}`):null; const end=$('office-end-date')?.value&&$('office-end-time')?.value?new Date(`${$('office-end-date').value}T${$('office-end-time').value}`):null; if(!v||!start||!end||end<=start)return null; const hours=(end-start)/3600000,days=Math.max(1,Math.ceil(hours/24)),rate12=Number(v.price_12h||v.price_per_day||0),rate24=Number(v.price_24h||rate12*2),rental=hours<=12?rate12:hours<=24?rate24:rate24*Math.ceil(hours/24),options=($('office-delivery').checked?20000:0)+($('office-recovery').checked?20000:0)+($('office-driver').checked?Number(v.driver_fee||30000)*days:0); return {v,start,end,days,rental,options,total:rental+options}; };
-    const refresh = () => { const q=getQuote(); const el=$('office-quote'); if(!q){if(el)el.textContent='';return;} el.textContent=`${q.v.name} — ${q.days} jour(s) — Location ${moneyValue(q.rental)} + options ${moneyValue(q.options)} = ${moneyValue(q.total)}`; };
-    ids.forEach(id=>$(id)?.addEventListener('input',refresh)); ids.forEach(id=>$(id)?.addEventListener('change',refresh));
-    $('office-booking-toggle')?.addEventListener('click',()=>{form.classList.toggle('hidden');$('office-booking-toggle').textContent=form.classList.contains('hidden')?'Développer':'Réduire';});
-    form.addEventListener('submit', async event => { event.preventDefault(); const q=getQuote(), result=$('office-result'); if(!q)return result.textContent='Vérifiez le véhicule et les dates.'; const conflict=(typeof reservations!=='undefined'?reservations:[]).some(r=>r.vehicle_id===q.v.id&&['reserved','pre_reserved'].includes(r.status)&&new Date(r.start_at)<q.end&&new Date(r.end_at)>q.start)||(typeof maintenances!=='undefined'?maintenances:[]).some(m=>m.vehicle_id===q.v.id&&new Date(m.start_at)<q.end&&new Date(m.end_at)>q.start); if(conflict)return result.textContent='Ce véhicule est indisponible sur cette période.'; let promo=null,discount=0,code=$('office-promo').value.trim().toUpperCase(); if(code){const lookup=await db.from('promo_codes').select('code,discount_type,discount_value,minimum_days').eq('code',code).eq('active',true).maybeSingle(); if(lookup.error||!lookup.data)return result.textContent='Code promo invalide ou inactif.'; promo=lookup.data;if(Number(promo.minimum_days||0)>q.days)return result.textContent=`Le code ${promo.code} nécessite au moins ${promo.minimum_days} jours.`; discount=promo.discount_type==='percent'?q.total*Number(promo.discount_value)/100:Number(promo.discount_value);} const total=Math.max(0,q.total-Math.min(q.total,discount)), customer={full_name:$('office-name').value.trim(),phone:$('office-phone').value.trim(),whatsapp_phone:$('office-whatsapp').value.trim(),email:$('office-email').value.trim()||null,address:$('office-address').value.trim()||null,driving_license:$('office-license').value.trim()||null,cin:$('office-cin').value.trim()||null}; const cr=await db.from('customers').insert(customer).select('id').single(); if(cr.error)return result.textContent=`Client non enregistré : ${cr.error.message}`; const payload={vehicle_id:q.v.id,customer_id:cr.data.id,customer_name:customer.full_name,customer_phone:customer.phone,whatsapp_phone:customer.whatsapp_phone,customer_email:customer.email,customer_address:customer.address,customer_license:customer.driving_license,customer_cin:customer.cin,start_at:q.start.toISOString(),end_at:q.end.toISOString(),with_driver:$('office-driver').checked,rental_type:$('office-rental-type').value,daily_rate:Number(q.v.price_per_day||0),rate_12h:Number(q.v.price_12h||q.v.price_per_day||0),rate_24h:Number(q.v.price_24h||0),days:q.days,trip_from:$('office-from').value.trim()||null,trip_to:$('office-to').value.trim()||null,delivery_fee:$('office-delivery').checked?20000:0,recovery_fee:$('office-recovery').checked?20000:0,chauffeur_fee:$('office-driver').checked?Number(q.v.driver_fee||30000)*q.days:0,extra_fees:q.options,total_amount:total,promo_code:promo?.code||null,promo_discount:discount,deposit_amount:Number($('office-deposit').value||0),payment_method:$('office-payment').value||null,notes:$('office-notes').value.trim()||null,status:'reserved'}; const rr=await db.from('reservations').insert(payload).select('reference').single(); if(rr.error)return result.textContent=`Réservation non enregistrée : ${rr.error.message}`; result.textContent=`Réservation ${rr.data.reference} enregistrée.`; form.reset(); refresh(); if(typeof refreshAll==='function')await refreshAll(); });
-    window.refreshOfficeVehicles=()=>{if(!$('office-vehicle'))return;$('office-vehicle').innerHTML=(typeof vehicles!=='undefined'?vehicles:[]).slice().sort((a,b)=>Number(a.price_per_day||0)-Number(b.price_per_day||0)).map(v=>`<option value="${v.id}">${esc(v.name)} — ${money(v.price_per_day)}</option>`).join('');}; window.refreshOfficeVehicles();
+    const getQuote = () => {
+      const vehicle = (typeof vehicles !== 'undefined' ? vehicles : []).find(item => item.id === $('office-vehicle')?.value);
+      const startValue = $('office-start-date')?.value && $('office-start-time')?.value ? new Date(`${$('office-start-date').value}T${$('office-start-time').value}`) : null;
+      const endValue = $('office-end-date')?.value && $('office-end-time')?.value ? new Date(`${$('office-end-date').value}T${$('office-end-time').value}`) : null;
+      if (!startValue || !endValue || endValue <= startValue) return null;
+      return calculateOfficeBookingQuote(vehicle, startValue, endValue, {
+        delivery: $('office-delivery').checked,
+        recovery: $('office-recovery').checked,
+        driver: $('office-driver').checked
+      });
+    };
+    const refresh = () => {
+      const quote = getQuote();
+      const element = $('office-quote');
+      if (!quote) { if (element) element.textContent = ''; return; }
+      if (quote.requiresQuote) { element.textContent = `${quote.quoteReason}. Cette période doit être chiffrée avant l’enregistrement.`; return; }
+      const autoDiscount = quote.durationDiscount ? ` − remise automatique de durée ${moneyValue(quote.durationDiscount)}` : '';
+      element.textContent = `${quote.vehicle.name} — ${quote.days} jour(s) — Location ${moneyValue(quote.rentalBeforeDiscount)}${autoDiscount} + options ${moneyValue(quote.options)} = ${moneyValue(quote.total)}`;
+    };
+    ids.forEach(id => $(id)?.addEventListener('input', refresh));
+    ids.forEach(id => $(id)?.addEventListener('change', refresh));
+    $('office-booking-toggle')?.addEventListener('click', () => {
+      form.classList.toggle('hidden');
+      $('office-booking-toggle').textContent = form.classList.contains('hidden') ? 'Développer' : 'Réduire';
+    });
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const quote = getQuote();
+      const result = $('office-result');
+      if (!quote) return result.textContent = 'Vérifiez le véhicule et les dates.';
+      if (quote.requiresQuote) return result.textContent = `${quote.quoteReason}. Saisissez d’abord un tarif validé.`;
+      const conflict = (typeof reservations !== 'undefined' ? reservations : []).some(row => row.vehicle_id === quote.vehicle.id && ['reserved','pre_reserved'].includes(row.status) && new Date(row.start_at) < quote.end && new Date(row.end_at) > quote.start) || (typeof maintenances !== 'undefined' ? maintenances : []).some(row => row.vehicle_id === quote.vehicle.id && new Date(row.start_at) < quote.end && new Date(row.end_at) > quote.start);
+      if (conflict) return result.textContent = 'Ce véhicule est indisponible sur cette période.';
+
+      let promo = null;
+      let discount = 0;
+      const code = $('office-promo').value.trim().toUpperCase();
+      if (code) {
+        const lookup = await db.from('promo_codes').select('code,discount_type,discount_value,minimum_days').eq('code', code).eq('active', true).maybeSingle();
+        if (lookup.error || !lookup.data) return result.textContent = 'Code promo invalide ou inactif.';
+        promo = lookup.data;
+        const promoState = officePromoEligibility(quote, promo);
+        if (!promoState.valid) return result.textContent = promoState.message;
+        discount = promoState.discount;
+      }
+      const total = Math.max(0, quote.total - discount);
+      const deposit = Math.max(0, Number($('office-deposit').value || 0));
+      if (deposit > total) return result.textContent = 'L’acompte ne peut pas dépasser le montant total après remise.';
+      const paymentMethod = $('office-payment').value || null;
+      if (deposit > 0 && !paymentMethod) return result.textContent = 'Sélectionnez le mode de paiement de l’acompte.';
+      const customer = {
+        full_name: $('office-name').value.trim(), phone: $('office-phone').value.trim(), whatsapp_phone: $('office-whatsapp').value.trim(),
+        email: $('office-email').value.trim() || null, address: $('office-address').value.trim() || null,
+        driving_license: $('office-license').value.trim() || null, cin: $('office-cin').value.trim() || null
+      };
+      const customerResult = await db.from('customers').insert(customer).select('id').single();
+      if (customerResult.error) return result.textContent = `Client non enregistré : ${customerResult.error.message}`;
+      const payload = {
+        vehicle_id: quote.vehicle.id, customer_id: customerResult.data.id, customer_name: customer.full_name,
+        customer_phone: customer.phone, whatsapp_phone: customer.whatsapp_phone, customer_email: customer.email,
+        customer_address: customer.address, customer_license: customer.driving_license, customer_cin: customer.cin,
+        start_at: quote.start.toISOString(), end_at: quote.end.toISOString(), with_driver: $('office-driver').checked,
+        rental_type: $('office-rental-type').value, daily_rate: quote.rate12, rate_12h: quote.rate12, rate_24h: quote.rate24,
+        days: quote.days, distance_band: '0_30', distance_km: null,
+        trip_from: $('office-from').value.trim() || null, trip_to: $('office-to').value.trim() || null,
+        delivery_fee: quote.deliveryFee, recovery_fee: quote.recoveryFee, chauffeur_fee: quote.chauffeurFee,
+        extra_fees: quote.options, total_amount: total, promo_code: promo?.code || null, promo_discount: discount,
+        deposit_amount: deposit, payment_method: paymentMethod,
+        notes: $('office-notes').value.trim() || null, status: 'reserved'
+      };
+      const reservationResult = await db.from('reservations').insert(payload).select('reference').single();
+      if (reservationResult.error) return result.textContent = `Réservation non enregistrée : ${reservationResult.error.message}`;
+      result.textContent = `Réservation ${reservationResult.data.reference} enregistrée.`;
+      form.reset();
+      refresh();
+      if (typeof refreshAll === 'function') await refreshAll();
+    });
+    window.refreshOfficeVehicles = () => {
+      if (!$('office-vehicle')) return;
+      $('office-vehicle').innerHTML = (typeof vehicles !== 'undefined' ? vehicles : []).slice().sort((a, b) => Number(a.price_per_day || 0) - Number(b.price_per_day || 0)).map(vehicle => `<option value="${vehicle.id}">${esc(vehicle.name)} — ${money(vehicle.price_per_day)}</option>`).join('');
+    };
+    window.refreshOfficeVehicles();
     const customerSelect = $('office-existing-customer');
     const customerFields = {name:'office-name', phone:'office-phone', whatsapp_phone:'office-whatsapp', email:'office-email', address:'office-address', driving_license:'office-license', cin:'office-cin'};
-    const findCustomer = id => (typeof customers !== 'undefined' ? customers : []).find(c => c.id === id);
-    const applyCustomer = id => { const customer = id ? findCustomer(id) : null; Object.entries(customerFields).forEach(([key, fieldId]) => { const field = $(fieldId); if (field) field.value = customer?.[key] || ''; }); };
-    window.refreshOfficeCustomers = () => { if (!customerSelect) return; const current = customerSelect.value; const rows = typeof customers !== 'undefined' ? customers : []; customerSelect.innerHTML = '<option value="">Nouveau client</option>' + rows.map(c => `<option value="${esc(c.id)}">${esc(c.full_name)} — ${esc(c.phone || 'Téléphone non renseigné')}</option>`).join(''); if (rows.some(c => c.id === current)) customerSelect.value = current; };
-    customerSelect?.addEventListener('change', () => applyCustomer(customerSelect.value)); window.refreshOfficeCustomers();
+    const findCustomer = id => (typeof customers !== 'undefined' ? customers : []).find(customer => customer.id === id);
+    const applyCustomer = id => {
+      const customer = id ? findCustomer(id) : null;
+      Object.entries(customerFields).forEach(([key, fieldId]) => { const field = $(fieldId); if (field) field.value = customer?.[key] || ''; });
+    };
+    window.refreshOfficeCustomers = () => {
+      if (!customerSelect) return;
+      const current = customerSelect.value;
+      const rows = typeof customers !== 'undefined' ? customers : [];
+      customerSelect.innerHTML = '<option value="">Nouveau client</option>' + rows.map(customer => `<option value="${esc(customer.id)}">${esc(customer.full_name)} — ${esc(customer.phone || 'Téléphone non renseigné')}</option>`).join('');
+      if (rows.some(customer => customer.id === current)) customerSelect.value = current;
+    };
+    customerSelect?.addEventListener('change', () => applyCustomer(customerSelect.value));
+    window.refreshOfficeCustomers();
   }
 
   window.loadSiteSettingsAdmin = async function() {
