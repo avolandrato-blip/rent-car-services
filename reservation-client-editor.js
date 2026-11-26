@@ -9,9 +9,15 @@
     if (!reservation) return alert('Réservation introuvable. Actualisez la liste.');
 
     const allCustomers = typeof customers !== 'undefined' && Array.isArray(customers) ? customers : [];
-    const customer = reservation.customer_id
-      ? allCustomers.find(item => item.id === reservation.customer_id)
-      : null;
+    const periodRows = window.RentCarBookingPeriods?.groupReservations(reservation, allReservations) || [reservation];
+    const reservationIds = [...new Set((periodRows.length ? periodRows : [reservation]).map(item => item.id).filter(Boolean))];
+    const linkedCustomerIds = [...new Set((periodRows.length ? periodRows : [reservation]).map(item => item.customer_id).filter(Boolean))];
+    if (linkedCustomerIds.length > 1) {
+      return alert('Les périodes de cette réservation sont liées à plusieurs fiches client. Aucune modification n’a été faite; vérifiez les fiches liées avant de continuer.');
+    }
+
+    const customerId = linkedCustomerIds[0] || null;
+    const customer = customerId ? allCustomers.find(item => item.id === customerId) : null;
     const current = (reservationKey, customerKey) =>
       reservation[reservationKey] ?? customer?.[customerKey] ?? '';
     const cinIsDuplicate = reservation.cin_is_duplicate ?? customer?.cin_is_duplicate ?? false;
@@ -23,7 +29,7 @@
         <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="reservation-client-edit-title">
           <h2 id="reservation-client-edit-title">Modifier les informations client</h2>
           <p class="muted">Réservation : <strong>${escapeHtml(reservation.reference || '—')}</strong>. Les périodes liées seront actualisées ensemble.</p>
-          ${reservation.customer_id ? '' : '<p class="notice">Cette réservation n’a pas de fiche client liée : les modifications seront enregistrées sur la réservation uniquement.</p>'}
+          ${customerId ? '' : '<p class="notice">Aucune fiche client n’est liée à ces périodes : l’enregistrement créera une fiche client et la reliera aux réservations concernées.</p>'}
           <form id="reservation-client-edit-form" class="form-grid">
             <div class="field"><label for="rce-full-name">Nom et prénom</label><input id="rce-full-name" autocomplete="name" required value="${escapeHtml(current('customer_name', 'full_name'))}"></div>
             <div class="field"><label for="rce-phone">Téléphone</label><input id="rce-phone" autocomplete="tel" required value="${escapeHtml(current('customer_phone', 'phone'))}"></div>
@@ -52,6 +58,10 @@
       const submitButton = form.querySelector('button[type="submit"]');
       submitButton.disabled = true;
       submitButton.textContent = 'Enregistrement…';
+      const resetButton = () => {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enregistrer';
+      };
       const read = fieldId => document.getElementById(fieldId).value.trim() || null;
       const isDuplicate = document.getElementById('rce-cin-type').value === 'true';
       const reservationPayload = {
@@ -84,35 +94,64 @@
         license_expiry: read('rce-license-expiry')
       };
 
-      const periodRows = window.RentCarBookingPeriods?.groupReservations(reservation, allReservations) || [reservation];
-      const reservationIds = [...new Set((periodRows.length ? periodRows : [reservation]).map(item => item.id).filter(Boolean))];
       try {
         const database = typeof db !== 'undefined' ? db : window.rentCarSupabase;
+        let resolvedCustomerId = customerId;
+        let customerWasCreated = false;
+
+        if (!resolvedCustomerId) {
+          const { data: phoneMatches, error: lookupError } = await database
+            .from('customers')
+            .select('id,full_name')
+            .eq('phone', customerPayload.phone)
+            .limit(2);
+          if (lookupError) throw lookupError;
+          if ((phoneMatches || []).length > 1) {
+            alert('Plusieurs fiches client utilisent ce téléphone. Aucune modification n’a été faite; vérifiez la bonne fiche avant de réessayer.');
+            resetButton();
+            return;
+          }
+          if (phoneMatches?.length === 1 && String(phoneMatches[0].full_name || '').trim().toLocaleLowerCase() === customerPayload.full_name.toLocaleLowerCase()) {
+            resolvedCustomerId = phoneMatches[0].id;
+          } else {
+            const { data: createdCustomer, error: createError } = await database
+              .from('customers')
+              .insert(customerPayload)
+              .select('id')
+              .single();
+            if (createError) throw createError;
+            resolvedCustomerId = createdCustomer.id;
+            customerWasCreated = true;
+          }
+        }
+
         const [reservationResult, customerResult] = await Promise.all([
-          database.from('reservations').update(reservationPayload).in('id', reservationIds),
-          reservation.customer_id
-            ? database.from('customers').update(customerPayload).eq('id', reservation.customer_id)
-            : Promise.resolve({ error: null })
+          database.from('reservations').update({ ...reservationPayload, customer_id: resolvedCustomerId }).in('id', reservationIds),
+          customerWasCreated
+            ? Promise.resolve({ error: null })
+            : database.from('customers').update(customerPayload).eq('id', resolvedCustomerId)
         ]);
         if (reservationResult.error || customerResult.error) {
           const outcomes = [
-            reservationResult.error ? `réservation : ${reservationResult.error.message}` : 'réservation enregistrée',
-            reservation.customer_id
-              ? (customerResult.error ? `fiche client : ${customerResult.error.message}` : 'fiche client enregistrée')
-              : 'aucune fiche client liée'
+            reservationResult.error
+              ? `réservation : ${reservationResult.error.message}`
+              : 'réservation enregistrée',
+            customerResult.error
+              ? `fiche client : ${customerResult.error.message}`
+              : (customerWasCreated ? 'fiche client créée' : 'fiche client enregistrée')
           ];
+          if (customerWasCreated && !reservationResult.error) outcomes.push('fiche client liée aux périodes');
+          if (customerWasCreated && reservationResult.error) outcomes.push('la fiche créée reste à lier manuellement');
           alert(`Résultat de la mise à jour : ${outcomes.join(' ; ')}. Vérifiez les informations avant de fermer.`);
           await window.refreshAll?.();
-          submitButton.disabled = false;
-          submitButton.textContent = 'Enregistrer';
+          resetButton();
           return;
         }
         modal.remove();
         await window.refreshAll?.();
       } catch (error) {
         alert(`Modification impossible : ${error?.message || 'erreur inattendue'}`);
-        submitButton.disabled = false;
-        submitButton.textContent = 'Enregistrer';
+        resetButton();
       }
     });
   };
