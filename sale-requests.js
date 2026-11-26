@@ -33,38 +33,18 @@
   });
 
   document.querySelectorAll('.sale-condition-card').forEach(card => {
-    const mobileLayout = window.matchMedia('(max-width: 768px), (hover: none) and (pointer: coarse)');
-    const label = card.getAttribute('aria-label');
-    const syncLayout = () => {
-      if (mobileLayout.matches) {
-        card.classList.remove('flipped');
-        card.removeAttribute('role');
-        card.removeAttribute('tabindex');
-        card.removeAttribute('aria-pressed');
-        card.removeAttribute('aria-label');
-      } else {
-        card.setAttribute('role', 'button');
-        card.setAttribute('tabindex', '0');
-        if (label) card.setAttribute('aria-label', label);
-        card.setAttribute('aria-pressed', String(card.classList.contains('flipped')));
-      }
-    };
     const flip = () => {
-      if (mobileLayout.matches) return;
       const flipped = card.classList.toggle('flipped');
       card.setAttribute('aria-pressed', String(flipped));
     };
-    syncLayout();
-    mobileLayout.addEventListener?.('change', syncLayout);
     card.addEventListener('click', flip);
     card.addEventListener('keydown', event => {
-      if (!mobileLayout.matches && (event.key === 'Enter' || event.key === ' ')) {
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         flip();
       }
     });
   });
-
   const buyerForm = document.getElementById('sale-buyer-form');
   const yearToInput = buyerForm?.elements.namedItem('year_to');
   const validateYears = () => {

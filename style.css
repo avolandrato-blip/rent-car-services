@@ -425,29 +425,5 @@ body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce
 }
 
 
-/* Mobile/tactile : les textes de conditions restent ouverts et lisibles. */
-@media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  .features-grid, .conditions-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 14px; }
-  .flip-card { height: auto !important; min-height: 0; perspective: none; cursor: default; }
-  .flip-card-inner { display: flex; flex-direction: column; height: auto; gap: 0; text-align: left; transform: none !important; transform-style: flat; }
-  .flip-front, .flip-back {
-    position: relative; inset: auto; width: 100%; height: auto; min-height: 0;
-    backface-visibility: visible; transform: none; align-items: stretch;
-    justify-content: flex-start; text-align: left; padding: 0 18px;
-    box-shadow: none;
-  }
-  .flip-front {
-    flex-direction: row; align-items: center; gap: 12px;
-    padding-top: 17px; border-radius: 15px 15px 0 0;
-  }
-  .flip-front i { flex: 0 0 26px; margin: 0; font-size: 1.35rem; text-align: center; }
-  .flip-front h3, .flip-front h4 { margin: 0; text-align: left; font-size: 1rem; line-height: 1.35; }
-  .flip-front span { display: none; }
-  .flip-back {
-    display: block; padding-top: 9px; padding-bottom: 18px;
-    border-radius: 0 0 15px 15px; background: #fff; color: var(--primary);
-  }
-  .flip-back p { margin: 0; font-size: 1rem; line-height: 1.65; text-align: left; overflow-wrap: anywhere; }
-  body[data-theme="royal-night"] .flip-back { background: #12182d; color: #f5f7ff; }
-  body[data-theme="premium-white"] .flip-back { background: #fff; color: #163d5c; }
-}
+/* Verso des cartes de conditions : contraste renforcé pour les textes longs. */
+.flip-back { background-color: #ffffff; color: #163d5c; }

@@ -97,33 +97,3 @@ html.sale-page button:focus-visible { outline: 3px solid #e8b84d; outline-offset
   html.sale-page .btn:active, html.sale-page button:active { transform: none; }
   .sale-marketplace-grid .flip-card-inner { transition: none; }
 }
-
-
-/* Cartes de vente ouvertes sur écran tactile/mobile : lecture directe sans flip. */
-@media (max-width: 768px), (hover: none) and (pointer: coarse) {
-  .sale-marketplace-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 14px; }
-  .sale-marketplace-grid .flip-card { height: auto !important; min-height: 0; perspective: none; cursor: default; }
-  .sale-marketplace-grid .flip-card-inner { display: flex; flex-direction: column; height: auto; gap: 0; text-align: left; transform: none !important; transform-style: flat; }
-  .sale-marketplace-grid .flip-front,
-  .sale-marketplace-grid .flip-back {
-    position: relative; inset: auto; width: 100%; height: auto; min-height: 0;
-    backface-visibility: visible; transform: none; align-items: stretch;
-    justify-content: flex-start; text-align: left; padding: 0 18px;
-    box-shadow: none; border: 0;
-  }
-  .sale-marketplace-grid .flip-front {
-    flex-direction: row; align-items: center; gap: 12px;
-    padding-top: 17px; border-radius: 15px 15px 0 0;
-  }
-  .sale-marketplace-grid .flip-front i { flex: 0 0 26px; margin: 0; font-size: 1.35rem; text-align: center; }
-  .sale-marketplace-grid .flip-front h4 { margin: 0; text-align: left; font-size: 1rem; line-height: 1.35; }
-  .sale-marketplace-grid .flip-front span { display: none; }
-  .sale-marketplace-grid .flip-back {
-    display: block; padding-top: 9px; padding-bottom: 18px;
-    border-radius: 0 0 15px 15px; background: #fff; color: var(--primary);
-    line-height: 1.65;
-  }
-  .sale-marketplace-grid .flip-back p { margin: 0; font-size: 1rem; line-height: 1.65; text-align: left; overflow-wrap: anywhere; }
-  body[data-theme="royal-night"] .sale-marketplace-grid .flip-back { background: #12182d; color: #f5f7ff; }
-  body[data-theme="premium-white"] .sale-marketplace-grid .flip-back { background: #fff; color: #163d5c; }
-}
