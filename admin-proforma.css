@@ -1,0 +1,21 @@
+.proforma-card { margin-top: 24px; }
+.proforma-card .section-head { align-items: flex-start; }
+.proforma-card .section-head h2 { margin: 0 0 6px; }
+.proforma-card .section-head p { margin: 0; }
+.proforma-client-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0 24px; }
+.proforma-client-grid label, .proforma-line label { display: flex; flex-direction: column; gap: 6px; color: var(--text, #263a4b); font-weight: 700; font-size: .9rem; }
+.proforma-client-grid input, .proforma-line input, .proforma-line select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #ccd6df; border-radius: 8px; background: #fff; color: #142b3d; font: inherit; }
+.proforma-address { grid-column: 1 / -1; }
+.proforma-lines-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 10px 0 12px; }
+.proforma-lines-header h3 { margin: 0; }
+.proforma-lines { display: grid; gap: 12px; }
+.proforma-line { display: grid; grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(130px, 1fr)) minmax(135px, auto) auto; gap: 10px; align-items: end; padding: 14px; border: 1px solid #d9e2ea; border-radius: 12px; background: #f7f9fb; }
+.proforma-line-total { align-self: center; color: #163d5c; font-size: .88rem; font-weight: 700; }
+.proforma-remove { min-height: 40px; }
+.proforma-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0; padding: 14px 16px; border: 1px solid #e3cb85; border-radius: 10px; background: #fff8e5; color: #163d5c; font-size: 1.05rem; }
+.proforma-total strong { font-size: 1.3rem; }
+.proforma-sign-options { margin-bottom: 16px; padding: 14px; border-radius: 10px; background: #f0f5f8; }
+.proforma-sign-options label { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.proforma-sign-options p { margin: 6px 0 0; }
+@media (max-width: 900px) { .proforma-line { grid-template-columns: repeat(2,minmax(0,1fr)); } .proforma-vehicle { grid-column: 1/-1; } }
+@media (max-width: 560px) { .proforma-client-grid, .proforma-line { grid-template-columns: 1fr; } .proforma-address, .proforma-vehicle { grid-column: auto; } .proforma-line-total { padding: 6px 0; } .proforma-lines-header .btn { width: 100%; } }
