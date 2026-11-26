@@ -8,3 +8,6 @@
 - [ ] Le partenaire peut affecter une livraison/récupération à un chauffeur disponible et suivre la mission.
 - [ ] Les documents et données sensibles restent cloisonnés par réservation, propriétaire ou attribution.
 - [ ] Les tests ciblés et les tests SQL/RLS disponibles passent.
+
+## Édition client depuis une réservation
+- [x] Depuis une réservation, l’administratrice peut modifier le nom, téléphone, WhatsApp, e-mail, adresse, CIN et ses détails de délivrance, ainsi que le permis et ses dates; les changements sont enregistrés sur les périodes actives liées et sur la fiche client associée lorsqu’elle existe.

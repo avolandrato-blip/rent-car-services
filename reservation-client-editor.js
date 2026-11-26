@@ -1,0 +1,121 @@
+(() => {
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+
+  const openReservationClientEditor = id => {
+    const allReservations = typeof reservations !== 'undefined' && Array.isArray(reservations) ? reservations : [];
+    const reservation = allReservations.find(item => item.id === id);
+    if (!reservation) return alert('Réservation introuvable. Actualisez la liste.');
+
+    const allCustomers = typeof customers !== 'undefined' && Array.isArray(customers) ? customers : [];
+    const customer = reservation.customer_id
+      ? allCustomers.find(item => item.id === reservation.customer_id)
+      : null;
+    const current = (reservationKey, customerKey) =>
+      reservation[reservationKey] ?? customer?.[customerKey] ?? '';
+    const cinIsDuplicate = reservation.cin_is_duplicate ?? customer?.cin_is_duplicate ?? false;
+    const dateValue = value => String(value ?? '').slice(0, 10);
+
+    document.getElementById('reservation-client-edit-modal')?.remove();
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="reservation-client-edit-modal" class="admin-modal-backdrop">
+        <div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="reservation-client-edit-title">
+          <h2 id="reservation-client-edit-title">Modifier les informations client</h2>
+          <p class="muted">Réservation : <strong>${escapeHtml(reservation.reference || '—')}</strong>. Les périodes liées seront actualisées ensemble.</p>
+          ${reservation.customer_id ? '' : '<p class="notice">Cette réservation n’a pas de fiche client liée : les modifications seront enregistrées sur la réservation uniquement.</p>'}
+          <form id="reservation-client-edit-form" class="form-grid">
+            <div class="field"><label for="rce-full-name">Nom et prénom</label><input id="rce-full-name" autocomplete="name" required value="${escapeHtml(current('customer_name', 'full_name'))}"></div>
+            <div class="field"><label for="rce-phone">Téléphone</label><input id="rce-phone" autocomplete="tel" required value="${escapeHtml(current('customer_phone', 'phone'))}"></div>
+            <div class="field"><label for="rce-whatsapp">WhatsApp</label><input id="rce-whatsapp" value="${escapeHtml(current('whatsapp_phone', 'whatsapp_phone'))}"></div>
+            <div class="field"><label for="rce-email">E-mail</label><input id="rce-email" type="email" autocomplete="email" value="${escapeHtml(current('customer_email', 'email'))}"></div>
+            <div class="field full"><label for="rce-address">Adresse</label><input id="rce-address" autocomplete="street-address" value="${escapeHtml(current('customer_address', 'address'))}"></div>
+            <div class="field"><label for="rce-cin">CIN</label><input id="rce-cin" value="${escapeHtml(current('customer_cin', 'cin'))}"></div>
+            <div class="field"><label for="rce-cin-type">Type de CIN</label><select id="rce-cin-type"><option value="false" ${!cinIsDuplicate ? 'selected' : ''}>Originale</option><option value="true" ${cinIsDuplicate ? 'selected' : ''}>Duplicata</option></select></div>
+            <div class="field"><label for="rce-cin-place">CIN délivrée à</label><input id="rce-cin-place" value="${escapeHtml(current('cin_acquired_place', 'cin_acquired_place'))}"></div>
+            <div class="field"><label for="rce-cin-date">Date de délivrance CIN</label><input id="rce-cin-date" type="date" value="${escapeHtml(dateValue(current('cin_acquired_at', 'cin_acquired_at')))}"></div>
+            <div class="field"><label for="rce-license">Numéro de permis</label><input id="rce-license" value="${escapeHtml(current('customer_license', 'driving_license'))}"></div>
+            <div class="field"><label for="rce-license-expiry">Expiration du permis</label><input id="rce-license-expiry" type="date" value="${escapeHtml(dateValue(customer?.license_expiry))}"></div>
+            <div class="field"><label for="rce-license-place">Permis délivré à</label><input id="rce-license-place" value="${escapeHtml(current('license_acquired_place', 'license_acquired_place'))}"></div>
+            <div class="field"><label for="rce-license-date">Date de délivrance permis</label><input id="rce-license-date" type="date" value="${escapeHtml(dateValue(current('license_acquired_at', 'license_acquired_at')))}"></div>
+            <div class="field full"><div class="modal-actions"><button type="button" class="btn outline" id="rce-cancel">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></div>
+          </form>
+        </div>
+      </div>
+    `);
+
+    const modal = document.getElementById('reservation-client-edit-modal');
+    const form = document.getElementById('reservation-client-edit-form');
+    document.getElementById('rce-cancel').addEventListener('click', () => modal.remove());
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Enregistrement…';
+      const read = fieldId => document.getElementById(fieldId).value.trim() || null;
+      const isDuplicate = document.getElementById('rce-cin-type').value === 'true';
+      const reservationPayload = {
+        customer_name: read('rce-full-name'),
+        customer_phone: read('rce-phone'),
+        whatsapp_phone: read('rce-whatsapp'),
+        customer_email: read('rce-email'),
+        customer_address: read('rce-address'),
+        customer_cin: read('rce-cin'),
+        cin_is_duplicate: isDuplicate,
+        cin_acquired_place: read('rce-cin-place'),
+        cin_acquired_at: read('rce-cin-date'),
+        customer_license: read('rce-license'),
+        license_acquired_place: read('rce-license-place'),
+        license_acquired_at: read('rce-license-date')
+      };
+      const customerPayload = {
+        full_name: reservationPayload.customer_name,
+        phone: reservationPayload.customer_phone,
+        whatsapp_phone: reservationPayload.whatsapp_phone,
+        email: reservationPayload.customer_email,
+        address: reservationPayload.customer_address,
+        cin: reservationPayload.customer_cin,
+        cin_is_duplicate: isDuplicate,
+        cin_acquired_place: reservationPayload.cin_acquired_place,
+        cin_acquired_at: reservationPayload.cin_acquired_at,
+        driving_license: reservationPayload.customer_license,
+        license_acquired_place: reservationPayload.license_acquired_place,
+        license_acquired_at: reservationPayload.license_acquired_at,
+        license_expiry: read('rce-license-expiry')
+      };
+
+      const periodRows = window.RentCarBookingPeriods?.groupReservations(reservation, allReservations) || [reservation];
+      const reservationIds = [...new Set((periodRows.length ? periodRows : [reservation]).map(item => item.id).filter(Boolean))];
+      try {
+        const database = typeof db !== 'undefined' ? db : window.rentCarSupabase;
+        const [reservationResult, customerResult] = await Promise.all([
+          database.from('reservations').update(reservationPayload).in('id', reservationIds),
+          reservation.customer_id
+            ? database.from('customers').update(customerPayload).eq('id', reservation.customer_id)
+            : Promise.resolve({ error: null })
+        ]);
+        if (reservationResult.error || customerResult.error) {
+          const outcomes = [
+            reservationResult.error ? `réservation : ${reservationResult.error.message}` : 'réservation enregistrée',
+            reservation.customer_id
+              ? (customerResult.error ? `fiche client : ${customerResult.error.message}` : 'fiche client enregistrée')
+              : 'aucune fiche client liée'
+          ];
+          alert(`Résultat de la mise à jour : ${outcomes.join(' ; ')}. Vérifiez les informations avant de fermer.`);
+          await window.refreshAll?.();
+          submitButton.disabled = false;
+          submitButton.textContent = 'Enregistrer';
+          return;
+        }
+        modal.remove();
+        await window.refreshAll?.();
+      } catch (error) {
+        alert(`Modification impossible : ${error?.message || 'erreur inattendue'}`);
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enregistrer';
+      }
+    });
+  };
+
+  window.openReservationClientEditor = openReservationClientEditor;
+})();
