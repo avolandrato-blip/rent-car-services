@@ -355,6 +355,12 @@
     window.openReservationDateEditor(reservation, { onSaved: () => window.refreshAll?.() });
   };
   window.printReturnForm = openReturnModal;
+  window.applyReservationDiscount = function (id) {
+    const reservation = (typeof reservations !== 'undefined' ? reservations : []).find(row => row.id === id);
+    if (!reservation) return alert('Réservation introuvable. Actualisez le tableau.');
+    if (!window.RentCarDiscountDialog) return alert('Le formulaire de remise n’est pas chargé. Actualisez la page.');
+    window.RentCarDiscountDialog.open(reservation, () => window.refreshAll?.());
+  };
   window.printDocument = printDocumentEnhanced;
   document.addEventListener('DOMContentLoaded', () => { addMaintenanceFields(); addStyles(); setupOfficeBooking(); loadReservationDateEditor(); setTimeout(renderFinanceAnalysis, 1200); setTimeout(() => window.loadAdsAdmin?.(), 800); });
 })();
