@@ -61,7 +61,7 @@
     try {
       if (!db) throw new Error('Connexion à la base de données indisponible.');
       const [vehiclesResponse, signatureResponse] = await Promise.all([
-        db.from('vehicles').select('id,name,make,model,transmission,price_per_day,status').in('status', ['available', 'reserved']).order('name').limit(500),
+        db.from('vehicles').select('id,name,make,model,transmission,price_per_day,status').eq('status', 'available').order('name').limit(500),
         db.from('admin_signature_settings').select('signature_data').eq('id', 'lessor').maybeSingle()
       ]);
       if (vehiclesResponse.error) throw vehiclesResponse.error;
@@ -75,7 +75,7 @@
       addRow();
       $('proforma-status').textContent = state.vehicles.length ? '' : 'Aucun véhicule sélectionnable pour le moment.';
     } catch (error) {
-      $('proforma-status').textContent = `Chargement impossible : ${error.message || error}`;
+      $('proforma-status').textContent = `Chargement des véhicules impossible : ${error.message || error}`;
     } finally {
       state.loading = false;
     }
