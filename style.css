@@ -425,5 +425,15 @@ body[data-theme="royal-night"] .car-tags span { background: #1b2942; color: #dce
 }
 
 
-/* Verso des cartes de conditions : contraste renforcé pour les textes longs. */
-.flip-back { background-color: #ffffff; color: #163d5c; }
+/* Les conditions gardent le flip 3D, avec un verso clair quel que soit le thème. */
+#features-grid .flip-back,
+#conditions-grid .flip-back,
+.sale-marketplace-grid .flip-back {
+  background: #ffffff !important;
+  color: #163d5c !important;
+}
+#features-grid .flip-back p,
+#conditions-grid .flip-back p,
+.sale-marketplace-grid .flip-back p {
+  color: #163d5c !important;
+}
